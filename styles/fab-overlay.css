@@ -393,6 +393,41 @@ body.nk-fab-mode .fab-overlay {
 .fab-tools-btn.fab-tools-open { color: var(--orange); }
 
 /* ================================================================
+   Portrait phone (≤ 900px portrait) — larger touch targets
+   ================================================================ */
+
+@media (max-width: 900px) and (orientation: portrait) {
+  :root {
+    --fab-bar-h: 54px;
+  }
+
+  .fab-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+  }
+
+  .fab-main-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+
+  /* Tempo select: slightly larger tap area */
+  .fab-tempo-select {
+    font-size: 13px;
+    max-width: 84px;
+    padding: 2px 4px;
+  }
+
+  /* Tools panel hand buttons: taller tap area */
+  .fab-tools-hand-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+/* ================================================================
    Fullscreen — fixed elements stay in the normal stacking context
    and are not painted inside the fullscreen top-layer.
    Browser handles this correctly; no extra rules needed.

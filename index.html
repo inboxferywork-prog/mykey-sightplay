@@ -1403,7 +1403,8 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     btn.onclick = () => {
       if (origHandSel) {
         origHandSel.value = btn.dataset.clef;
-        origHandSel.dispatchEvent(new Event('change'));
+        // bubbles:true — parent delegate listener on #learningRow fires correctly
+        origHandSel.dispatchEvent(new Event('change', { bubbles: true }));
       }
       _fabSyncHandBtns();
     };
@@ -1413,7 +1414,8 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     const origSeg = document.getElementById('segmentSelect');
     if (origSeg) {
       origSeg.value = this.value;
-      origSeg.dispatchEvent(new Event('change'));
+      // bubbles:true — parent delegate listener on #segmentsBar fires correctly
+      origSeg.dispatchEvent(new Event('change', { bubbles: true }));
     }
   };
 
@@ -1447,10 +1449,14 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   }, { passive: true });
 
   // --- Keyboard height → --fab-kb-h (positions FAB bar above keyboard) ---
+  // In portrait, kb-wrap is hidden and the note guidance row takes its place.
+  // We sum both so the FAB bar floats above whichever element is visible.
   function _syncKbHeight() {
-    const kbEl = document.querySelector('.kb-wrap');
-    if (!kbEl) return;
-    document.documentElement.style.setProperty('--fab-kb-h', kbEl.offsetHeight + 'px');
+    const kbEl  = document.querySelector('.kb-wrap');
+    const ngrEl = document.getElementById('noteGuidanceRow');
+    const kbH   = kbEl  ? kbEl.offsetHeight  : 0;
+    const ngrH  = ngrEl ? ngrEl.offsetHeight  : 0;
+    document.documentElement.style.setProperty('--fab-kb-h', (kbH + ngrH) + 'px');
   }
   _syncKbHeight();
   window.addEventListener('resize', _syncKbHeight, { passive: true });

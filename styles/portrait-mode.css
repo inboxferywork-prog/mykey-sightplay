@@ -7,27 +7,24 @@
                 _ngrUpdate stub + IIFE, and the _ngrUpdate call in onKeyHighlight.
 
    Constraint:  all portrait-specific overrides are media-query gated.
-                Landscape, fullscreen, and FAB mode are untouched.
+                Landscape and fullscreen are untouched.
    ================================================================ */
 
 /* ================================================================
-   Guidance row — hidden by default; portrait media query activates it.
-   Internal layout rules apply unconditionally (never shown outside portrait).
+   Guidance row — hidden by default everywhere.
+   Portrait media query reveals it.
+   Internal layout rules are at root (harmless when row is hidden).
    ================================================================ */
 
 .note-guidance-row {
   display: none;
 }
 
-/* FAB mode: score fills viewport — guidance row stays hidden even in portrait */
-body.nk-fab-mode .note-guidance-row {
-  display: none !important;
-}
-
 /* ================================================================
    Portrait phone + tablet (≤ 900px portrait)
    — suppress piano keyboard
    — show compact guidance strip
+   — add side breathing to notation viewport
    ================================================================ */
 
 @media (max-width: 900px) and (orientation: portrait) {
@@ -50,11 +47,18 @@ body.nk-fab-mode .note-guidance-row {
     user-select: none;
   }
 
+  /* Notation viewport: 10px side breathing room.
+     ViewportManager._usableWidth() subtracts this padding,
+     so fitWidth() scales to fit inside the padded area automatically. */
+  #notation-viewport {
+    padding-left:  10px;
+    padding-right: 10px;
+  }
+
 }
 
 /* ================================================================
    Guidance strip internals
-   (defined at root — never rendered when note-guidance-row is hidden)
    ================================================================ */
 
 .ngr-half {
@@ -92,7 +96,6 @@ body.nk-fab-mode .note-guidance-row {
   transition: color 0.08s;
 }
 
-/* Active state — notes currently sounding */
 .ngr-lh .ngr-notes.ngr-active { color: var(--lh-color, #ff80c8); font-weight: 600; }
 .ngr-rh .ngr-notes.ngr-active { color: var(--rh-color, #5bc8f5); font-weight: 600; }
 
