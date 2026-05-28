@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RuntimeEngine — Checkpoint 1 Test</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; font-size: 13px; background: #0f0f0f; color: #d0d0d0; padding: 20px; }
+
+    h2 { color: #f0a500; margin-bottom: 16px; font-size: 16px; letter-spacing: 1px; }
+
+    .row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+
+    button {
+      padding: 7px 18px; border: 1px solid #444; background: #1e1e1e;
+      color: #ccc; cursor: pointer; border-radius: 4px; font-family: monospace;
+    }
+    button:hover { background: #2a2a2a; border-color: #666; }
+    button.active { border-color: #f0a500; color: #f0a500; }
+
+    select, input[type=range] { background: #1e1e1e; color: #ccc; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; }
+
+    .stat-bar {
+      display: flex; gap: 20px; padding: 10px 14px;
+      background: #161616; border: 1px solid #2a2a2a; border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .stat { display: flex; flex-direction: column; gap: 2px; }
+    .stat-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { color: #e0e0e0; font-size: 14px; }
+    #statState { color: #f0a500; }
+
+    .progress-wrap {
+      height: 6px; background: #222; border-radius: 3px; margin-bottom: 14px;
+      cursor: pointer; position: relative;
+    }
+    #progressBar {
+      height: 100%; background: #f0a500; border-radius: 3px;
+      width: 0%; transition: none;
+    }
+
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .panel {
+      background: #161616; border: 1px solid #2a2a2a; border-radius: 4px;
+      padding: 10px; display: flex; flex-direction: column;
+    }
+    .panel-title { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+    #activeList {
+      display: flex; flex-direction: column; gap: 4px;
+      min-height: 80px; max-height: 200px; overflow-y: auto;
+    }
+    .active-ev {
+      display: flex; gap: 8px; padding: 4px 6px;
+      background: #1e1e1e; border-radius: 3px; border-left: 3px solid #f0a500;
+      font-size: 12px;
+    }
+    .active-ev.bass { border-left-color: #e07030; }
+    .active-ev.rest { border-left-color: #444; color: #666; }
+    .ev-id   { color: #666; }
+    .ev-note { color: #e0e0e0; min-width: 60px; }
+    .ev-dur  { color: #888; }
+
+    #eventLog {
+      height: 300px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .log-line { padding: 2px 4px; border-radius: 2px; }
+    .log-enter { color: #7ec87e; }
+    .log-exit  { color: #888; }
+    .log-end   { color: #f0a500; font-weight: bold; padding: 4px 0; }
+    .log-info  { color: #5588aa; }
+    .log-time  { color: #555; margin-right: 8px; }
+
+    #songInfo { font-size: 12px; color: #666; margin-bottom: 12px; min-height: 18px; }
+  </style>
+</head>
+<body>
+
+<h2>RuntimeEngine — Checkpoint 1</h2>
+<div id="songInfo">Loading song...</div>
+
+<div class="stat-bar">
+  <div class="stat"><span class="stat-label">State</span><span class="stat-value" id="statState">idle</span></div>
+  <div class="stat"><span class="stat-label">Time</span><span class="stat-value" id="statTime">0 ms</span></div>
+  <div class="stat"><span class="stat-label">Duration</span><span class="stat-value" id="statDuration">— ms</span></div>
+  <div class="stat"><span class="stat-label">Active Events</span><span class="stat-value" id="statActive">0</span></div>
+  <div class="stat"><span class="stat-label">Tempo</span><span class="stat-value" id="statTempo">1.00×</span></div>
+</div>
+
+<div class="progress-wrap" id="progressWrap">
+  <div id="progressBar"></div>
+</div>
+
+<div class="row">
+  <button id="btnPlay">▶ Play</button>
+  <button id="btnPause">⏸ Pause</button>
+  <button id="btnStop">⏹ Stop</button>
+
+  <span style="margin-left:8px; color:#555">Scope:</span>
+  <select id="scopeSelect">
+    <option value="">Full Song</option>
+    <option value="part_1">Part 1</option>
+    <option value="part_2">Part 2</option>
+    <option value="part_3">Part 3</option>
+  </select>
+
+  <span style="margin-left:8px; color:#555">Tempo:</span>
+  <button class="tempo-btn" data-scale="0.50">🐌 Easy</button>
+  <button class="tempo-btn" data-scale="0.63">🐢 Grave</button>
+  <button class="tempo-btn active" data-scale="1.00">🚶 Andante</button>
+  <button class="tempo-btn" data-scale="1.39">🚴 Moderato</button>
+</div>
+
+<div class="row">
+  <span style="color:#555">Song:</span>
+  <button class="song-btn" data-src="songs/simple_test.json">simple_test</button>
+  <button class="song-btn" data-src="songs/test_dotted_sharp.json">test_dotted_sharp</button>
+  <button class="song-btn" data-src="songs/test_pickup_bhand.json">test_pickup_bhand</button>
+</div>
+
+<div class="panels">
+  <div class="panel">
+    <div class="panel-title">Active Events</div>
+    <div id="activeList"><span style="color:#444">— none —</span></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Event Log</div>
+    <div id="eventLog"></div>
+  </div>
+</div>
+
+<script src="src/runtime-engine.js"></script>
+<script>
+  const runtime = new RuntimeEngine();
+
+  // -------------------------------------------------------------------------
+  // DOM refs
+  // -------------------------------------------------------------------------
+  const statState    = document.getElementById('statState');
+  const statTime     = document.getElementById('statTime');
+  const statDuration = document.getElementById('statDuration');
+  const statActive   = document.getElementById('statActive');
+  const statTempo    = document.getElementById('statTempo');
+  const progressBar  = document.getElementById('progressBar');
+  const progressWrap = document.getElementById('progressWrap');
+  const activeList   = document.getElementById('activeList');
+  const eventLog     = document.getElementById('eventLog');
+  const songInfo     = document.getElementById('songInfo');
+  const scopeSelect  = document.getElementById('scopeSelect');
+
+  // -------------------------------------------------------------------------
+  // Runtime callbacks
+  // -------------------------------------------------------------------------
+  runtime
+    .onEventEnter(ev => {
+      updateActivePanel();
+      addLog('enter', ev);
+    })
+    .onEventExit(ev => {
+      updateActivePanel();
+      addLog('exit', ev);
+    })
+    .onTimelineUpdate(t => {
+      statTime.textContent = Math.round(t) + ' ms';
+      statState.textContent = runtime.state;
+      const pct = runtime.duration > 0
+        ? ((t - runtime.scopeStart) / (runtime.scopeEnd - runtime.scopeStart)) * 100
+        : 0;
+      progressBar.style.width = Math.min(100, Math.max(0, pct)).toFixed(2) + '%';
+      statActive.textContent = runtime._activeEvents.size;
+    })
+    .onEnd(() => {
+      statState.textContent = 'ended';
+      progressBar.style.width = '100%';
+      updateActivePanel();
+      addLog('end', null);
+    });
+
+  // -------------------------------------------------------------------------
+  // Load song
+  // -------------------------------------------------------------------------
+  let currentTempoScale = 1.0;
+
+  function loadSong(src) {
+    runtime.stop();
+    clearLog();
+    songInfo.textContent = 'Loading ' + src + '...';
+
+    fetch(src)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        runtime.load(data);
+        const m = data.meta;
+        songInfo.textContent =
+          `${m.title} · ${m.composer} · ${m.level} · ${m.bpm} BPM · ` +
+          `${m.time_signature.join('/')} · key ${m.key_signature} · ` +
+          `${m.hand_mode} · ${data.score.bars.length} bars`;
+        statDuration.textContent = runtime.duration + ' ms';
+        statState.textContent = 'idle';
+        progressBar.style.width = '0%';
+
+        // Populate scope options dynamically
+        while (scopeSelect.options.length > 1) scopeSelect.remove(1);
+        (data.parts || []).forEach(p => {
+          const opt = new Option(p.part_id + ' (bars ' + p.bars[0] + '–' + p.bars[p.bars.length-1] + ')', p.part_id);
+          scopeSelect.add(opt);
+        });
+
+        addLog('info', null, `Loaded: ${m.title} — ${runtime._events.length} events, ${runtime.duration}ms`);
+      })
+      .catch(err => {
+        songInfo.textContent = 'Error: ' + err.message;
+        addLog('info', null, 'Load error: ' + err.message);
+      });
+  }
+
+  // -------------------------------------------------------------------------
+  // Active events panel
+  // -------------------------------------------------------------------------
+  function updateActivePanel() {
+    if (runtime._activeEvents.size === 0) {
+      activeList.innerHTML = '<span style="color:#444">— none —</span>';
+      return;
+    }
+    activeList.innerHTML = '';
+    for (const ev of runtime._activeEvents.values()) {
+      const el = document.createElement('div');
+      el.className = 'active-ev' + (ev.clef === 'bass' ? ' bass' : '') + (ev.type === 'rest' ? ' rest' : '');
+      const noteStr = ev.notes ? ev.notes.join(' ') : 'rest';
+      const remain  = Math.round((ev.t_ms + ev.duration_ms) - runtime.currentTime);
+      el.innerHTML =
+        `<span class="ev-id">${ev.id}</span>` +
+        `<span class="ev-note">${ev.clef[0].toUpperCase()} ${noteStr}</span>` +
+        `<span class="ev-dur">${ev.duration} · ${remain}ms left</span>`;
+      activeList.appendChild(el);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Event log
+  // -------------------------------------------------------------------------
+  function addLog(type, ev, msg) {
+    const line = document.createElement('div');
+    line.className = 'log-line log-' + (type === 'end' ? 'end' : type === 'info' ? 'info' : type === 'enter' ? 'enter' : 'exit');
+
+    const ts = `<span class="log-time">${Math.round(runtime.currentTime)}ms</span>`;
+
+    if (type === 'enter' || type === 'exit') {
+      const arrow = type === 'enter' ? '→ ENTER' : '← EXIT ';
+      const noteStr = ev.notes ? ev.notes.join(' ') : 'rest';
+      line.innerHTML = `${ts}${arrow} ${ev.id}  ${ev.clef}  ${ev.type}  ${noteStr}  [${ev.duration} ${ev.duration_ms}ms]`;
+    } else if (type === 'end') {
+      line.innerHTML = `${ts}━━━ END OF SCOPE ━━━`;
+    } else {
+      line.innerHTML = `${ts}${msg}`;
+    }
+
+    eventLog.appendChild(line);
+    eventLog.scrollTop = eventLog.scrollHeight;
+  }
+
+  function clearLog() {
+    eventLog.innerHTML = '';
+    activeList.innerHTML = '<span style="color:#444">— none —</span>';
+    statTime.textContent = '0 ms';
+    statActive.textContent = '0';
+    progressBar.style.width = '0%';
+  }
+
+  // -------------------------------------------------------------------------
+  // Controls
+  // -------------------------------------------------------------------------
+  document.getElementById('btnPlay').onclick = () => {
+    const partId = scopeSelect.value || undefined;
+    runtime.play({ partId, tempoScale: currentTempoScale });
+    statState.textContent = 'playing';
+  };
+  document.getElementById('btnPause').onclick = () => {
+    runtime.pause();
+    statState.textContent = 'paused';
+  };
+  document.getElementById('btnStop').onclick = () => {
+    runtime.stop();
+    statState.textContent = 'idle';
+    statTime.textContent = '0 ms';
+    progressBar.style.width = '0%';
+    updateActivePanel();
+  };
+
+  document.querySelectorAll('.tempo-btn').forEach(btn => {
+    btn.onclick = () => {
+      currentTempoScale = parseFloat(btn.dataset.scale);
+      runtime.setTempo(currentTempoScale);
+      statTempo.textContent = currentTempoScale.toFixed(2) + '×';
+      document.querySelectorAll('.tempo-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+  });
+
+  document.querySelectorAll('.song-btn').forEach(btn => {
+    btn.onclick = () => loadSong(btn.dataset.src);
+  });
+
+  // Click progress bar to seek
+  progressWrap.onclick = e => {
+    if (runtime.state === 'idle') return;
+    const rect  = progressWrap.getBoundingClientRect();
+    const pct   = (e.clientX - rect.left) / rect.width;
+    const range = runtime.scopeEnd - runtime.scopeStart;
+    runtime.seek(runtime.scopeStart + pct * range);
+  };
+
+  // -------------------------------------------------------------------------
+  // Init — load default song
+  // -------------------------------------------------------------------------
+  loadSong('songs/simple_test.json');
+</script>
+</body>
+</html>

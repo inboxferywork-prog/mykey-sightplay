@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyKey Authoring — Segment Editor</title>
+  <link rel="stylesheet" href="themes/base-ui.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f0f0f;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border:  #2a2a2a;
+      --border2: #444;
+      --text:    #d0d0d0;
+      --muted:   #666;
+      --orange:  #f0a500;
+      --blue:    #4a9eff;
+      --green:   #7ec87e;
+      --red:     #e05050;
+      --yellow:  #d4a838;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* ---- Header ---- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #111;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: baseline; gap: 10px; }
+    .brand-name { font-size: 15px; font-weight: 700; color: var(--orange); }
+    .brand-sub  { font-size: 12px; color: var(--muted); }
+    .header-back {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border2);
+      padding: 5px 11px;
+      border-radius: 6px;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .header-back:hover { color: var(--orange); border-color: var(--orange); }
+
+    /* ---- Main layout ---- */
+    .main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    /* ---- Drop zone ---- */
+    .drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      transition: border-color 0.15s, background 0.15s;
+      cursor: pointer;
+    }
+    .drop-zone.drag-over { border-color: var(--orange); background: rgba(240,165,0,0.05); }
+    .drop-zone-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+    .drop-zone-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .drop-zone-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .drop-zone-hint {
+      font-size: 11px; color: var(--muted);
+      border: 1px solid var(--border);
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 6px;
+      margin-top: 12px;
+      line-height: 1.6;
+      text-align: left;
+    }
+    .drop-zone-hint code {
+      font-family: 'Cascadia Code', Consolas, monospace;
+      font-size: 11px;
+      color: var(--orange);
+    }
+
+    /* ---- Buttons ---- */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 6px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      padding: 7px 16px;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+      line-height: 1.4;
+    }
+    button:hover:not(:disabled) { background: var(--surface2); border-color: #666; }
+    button:disabled { opacity: 0.35; cursor: default; }
+    .btn-primary {
+      background: var(--orange); border-color: var(--orange);
+      color: #000; font-weight: 700;
+    }
+    .btn-primary:hover:not(:disabled) { background: #e09400; border-color: #e09400; }
+    .btn-danger { border-color: var(--red); color: var(--red); }
+    .btn-danger:hover:not(:disabled) { background: rgba(224,80,80,0.1); }
+    .btn-sm { font-size: 12px; padding: 4px 10px; }
+    .btn-icon { font-size: 14px; padding: 4px 8px; border-radius: 4px; }
+
+    /* ---- Section card ---- */
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .count-badge {
+      font-size: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      padding: 1px 8px;
+      border-radius: 10px;
+      color: var(--muted);
+    }
+    .section-actions { margin-left: auto; display: flex; gap: 7px; align-items: center; }
+
+    /* ---- Song info bar ---- */
+    .song-info-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .song-title-display { font-size: 18px; font-weight: 600; color: #e8e8e8; }
+    .info-chip {
+      font-size: 11px; color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 2px 9px; border-radius: 12px;
+    }
+    .info-chip.has-segments { color: var(--blue); border-color: var(--blue); background: rgba(74,158,255,0.08); }
+    .chip-ok   { color: var(--green);  border-color: var(--green);  background: rgba(126,200,126,0.08); }
+    .chip-warn { color: var(--yellow); border-color: var(--yellow); background: rgba(212,168,56,0.08); }
+    .next-steps-card { border-color: var(--blue); }
+    .next-step-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+
+    /* ---- Score preview ---- */
+    .preview-toggle {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--muted);
+      cursor: pointer; user-select: none;
+      margin-bottom: 8px;
+    }
+    .preview-toggle:hover { color: var(--text); }
+    .preview-collapse-btn {
+      font-size: 11px; color: var(--muted); border: none; background: none;
+      padding: 0; cursor: pointer;
+    }
+    .preview-score-wrap {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 8px;
+      overflow-x: auto;
+      min-height: 180px;
+      margin-bottom: 8px;
+    }
+    #previewScore { min-width: 800px; }
+    #previewScore svg { display: block; }
+    .preview-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ---- Auto-generate panel ---- */
+    .autogen-panel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .autogen-field { display: flex; flex-direction: column; gap: 4px; }
+    .autogen-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .autogen-panel select, .autogen-panel input[type=number] {
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border2); border-radius: 4px;
+      padding: 5px 8px; font-family: inherit; font-size: 13px;
+      width: 80px;
+    }
+    .autogen-panel select { width: 130px; }
+
+    /* ---- Segment table ---- */
+    .table-wrap { overflow-x: auto; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+    }
+    th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--border2);
+      white-space: nowrap;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td { padding: 5px 5px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .td-order { color: var(--muted); font-size: 11px; text-align: center; width: 28px; }
+
+    /* Table inputs */
+    .seg-input {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.1s;
+    }
+    .seg-input:focus { border-color: var(--blue); background: var(--surface); }
+    .seg-input.error { border-color: var(--red); }
+    .seg-input-id    { width: 120px; font-family: 'Cascadia Code', Consolas, monospace; font-size: 11px; }
+    .seg-input-label { width: 140px; }
+    .seg-input-bar   { width: 52px; }
+    .seg-input-beat  { width: 44px; }
+    .seg-input-rpts  { width: 40px; }
+    .seg-select      {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid transparent; border-radius: 4px;
+      padding: 3px 6px; font-family: inherit; font-size: 12px;
+      outline: none; width: 100px;
+    }
+    .seg-select:focus { border-color: var(--blue); }
+    .row-actions { display: flex; gap: 3px; white-space: nowrap; }
+
+    /* ---- Validation panel ---- */
+    .val-panel { font-size: 12px; }
+    .val-error   { color: var(--red); }
+    .val-warning { color: var(--yellow); }
+    .val-ok      { color: var(--green); }
+    .val-list    { margin-top: 6px; padding-left: 16px; }
+    .val-list li { margin-bottom: 3px; }
+
+    /* ---- Status bar (sticky bottom) ---- */
+    .status-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 30;
+    }
+    .status-msg { font-size: 12px; flex: 1; }
+    .status-msg.ok  { color: var(--green); }
+    .status-msg.err { color: var(--red); }
+    .status-msg.inf { color: var(--muted); }
+
+    /* ---- Workflow footer ---- */
+    .workflow-footer {
+      font-size: 11px; color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+    .workflow-footer code {
+      font-family: 'Cascadia Code', Consolas, monospace;
+      color: var(--orange);
+      background: var(--surface2);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .workflow-step { display: inline-block; color: var(--blue); font-weight: 600; margin-right: 4px; }
+
+    /* ---- Empty state ---- */
+    .empty-segments {
+      text-align: center; color: var(--muted);
+      padding: 32px 16px; font-size: 13px;
+    }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    /* ---- MXL import ---- */
+    .open-btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+    .btn-mxl { border-color: var(--blue); color: var(--blue); }
+    .btn-mxl:hover:not(:disabled) { background: rgba(74,158,255,0.08); border-color: var(--blue); }
+    .mxl-config {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 14px; margin-top: 2px;
+      display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+    }
+    .mxl-field { display: flex; flex-direction: column; gap: 3px; }
+    .mxl-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .mxl-config input[type=number], .mxl-config select, .mxl-config input[type=text] {
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border2); border-radius: 4px;
+      padding: 4px 7px; font-family: inherit; font-size: 12px;
+    }
+    .mxl-config input[type=number] { width: 80px; }
+    .mxl-config select { width: 148px; }
+    .mxl-config input[type=text] { width: 130px; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="brand">
+    <span class="brand-name">🎹 MyKey Authoring</span>
+    <span class="brand-sub">Segment Editor</span>
+  </div>
+  <a href="index.html" class="header-back">← App</a>
+</header>
+
+<div class="main">
+
+  <!-- ===== OPEN SECTION ===== -->
+  <div id="openSection">
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-title">Buka song.json atau import .mxl</div>
+      <div class="drop-zone-sub">Drag &amp; drop, atau pilih file di bawah</div>
+      <div class="open-btn-row">
+        <button id="btnOpenFile">📄 Buka song.json…</button>
+        <button id="btnOpenMxl" class="btn-mxl">🎵 Import .mxl / .xml ▾</button>
+      </div>
+      <!-- MXL import config (hidden until btnOpenMxl clicked) -->
+      <div id="mxlConfigPanel" class="mxl-config hidden">
+        <div class="mxl-field">
+          <label class="mxl-lbl" for="cfgBpm">BPM override</label>
+          <input type="number" id="cfgBpm" min="20" max="300" placeholder="auto">
+        </div>
+        <div class="mxl-field">
+          <label class="mxl-lbl" for="cfgLevel">Level</label>
+          <select id="cfgLevel">
+            <option value="early_beginner" selected>Early Beginner</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="mxl-field">
+          <label class="mxl-lbl" for="cfgPartSize">Bar / Part</label>
+          <input type="number" id="cfgPartSize" min="1" max="32" value="4">
+        </div>
+        <div class="mxl-field">
+          <label class="mxl-lbl" for="cfgId">Song ID</label>
+          <input type="text" id="cfgId" placeholder="auto dari judul">
+        </div>
+        <button id="btnBrowseMxl" class="btn-primary btn-sm" style="align-self:flex-end">Browse…</button>
+      </div>
+      <div class="drop-zone-hint" style="margin-top:12px">
+        <strong>Via browser (baru):</strong> Import .mxl langsung → edit segmen → download<br>
+        <strong>Via Python (lengkap):</strong><br>
+        <code>python tools/mxl_to_song.py input.mxl songs/nama.json</code><br>
+        Buka song.json di sini → edit segmen → simpan<br>
+        <code>python tools/update_song_index.py</code>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+    <input type="file" id="mxlInput" accept=".mxl,.xml,.musicxml" style="display:none">
+  </div>
+
+  <!-- ===== EDITOR (hidden until file loaded) ===== -->
+  <div id="editorSection" class="hidden">
+
+    <!-- Song info -->
+    <div class="song-info-bar" id="songInfoBar">
+      <span class="song-title-display" id="infoTitle">—</span>
+      <span class="info-chip" id="infoBpm">—</span>
+      <span class="info-chip" id="infoTimeSig">—</span>
+      <span class="info-chip" id="infoKey">—</span>
+      <span class="info-chip" id="infoBars">—</span>
+      <span class="info-chip" id="infoLevel">—</span>
+      <span class="info-chip has-segments hidden" id="infoSegments">—</span>
+      <span class="info-chip hidden" id="infoRegistry">—</span>
+      <button id="btnChangeFile" class="btn-sm" style="margin-left:auto">↗ Buka file lain</button>
+    </div>
+
+    <!-- Score preview (collapsible) -->
+    <div class="section-card" id="previewCard">
+      <div class="preview-toggle" id="previewToggle">
+        <span id="previewArrow">▸</span>
+        <span>Pratinjau Notasi</span>
+        <span id="previewSegLabel" style="font-size:11px; color:var(--blue); margin-left:4px;"></span>
+      </div>
+      <div id="previewBody" class="hidden">
+        <div class="preview-score-wrap">
+          <div id="previewScore"></div>
+        </div>
+        <div class="preview-controls">
+          <button id="btnPreviewFull" class="btn-sm">Semua Bar</button>
+          <button id="btnPreviewSelected" class="btn-sm" disabled>Pratinjau Segmen Dipilih</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segment editor -->
+    <div class="section-card">
+      <div class="section-header">
+        <span class="section-title">Learning Segments</span>
+        <span class="count-badge" id="segCount">0</span>
+        <div class="section-actions">
+          <button id="btnAddSegment" class="btn-sm">+ Tambah Segmen</button>
+          <button id="btnAutoGenToggle" class="btn-sm">⚙ Auto-Generate ▾</button>
+        </div>
+      </div>
+
+      <!-- Auto-generate panel (hidden by default) -->
+      <div id="autogenPanel" class="autogen-panel hidden">
+        <div class="autogen-field">
+          <label class="autogen-label" for="agBars">Bar per grup</label>
+          <input type="number" id="agBars" min="1" max="32" value="4">
+        </div>
+        <div class="autogen-field">
+          <label class="autogen-label" for="agRepeats">Saran ulang</label>
+          <input type="number" id="agRepeats" min="1" max="5" value="1">
+        </div>
+        <div class="autogen-field">
+          <label class="autogen-label" for="agLang">Bahasa label</label>
+          <select id="agLang">
+            <option value="id" selected>Indonesian</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <button id="btnDoGenerate" class="btn-sm btn-primary">Generate</button>
+        <span style="font-size:11px;color:var(--muted);margin-left:4px;">⚠ menggantikan semua segmen yang ada</span>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table id="segTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Segment ID</th>
+              <th>Label</th>
+              <th>Bar Mulai</th>
+              <th>Beat</th>
+              <th title="end_beat=1: bar ini eksklusif (tidak dimainkan). end_beat>1: bar ini inklusif (dimainkan sampai end_beat).">Bar Akhir †</th>
+              <th title="Beat=1 → eksklusif. Beat>1 → inklusif (bar terakhir dimainkan sampai beat ini).">Beat †</th>
+              <th>Tangan</th>
+              <th>Ulang</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="segBody"></tbody>
+        </table>
+        <div id="emptySegments" class="empty-segments">
+          Belum ada segmen — klik <strong>+ Tambah Segmen</strong> atau <strong>⚙ Auto-Generate</strong>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.6">
+        † <strong>Konvensi Bar Akhir / Beat:</strong>
+        Saat <code>Beat=1</code>, Bar Akhir bersifat <em>eksklusif</em> — bar tersebut tidak dimainkan
+        (contoh: Bar Akhir=5 Beat=1 → dimainkan sampai akhir bar 4).
+        Saat <code>Beat&gt;1</code>, Bar Akhir bersifat <em>inklusif</em> — dimainkan sampai beat tersebut
+        (contoh: Bar Akhir=3 Beat=3 → dimainkan sampai beat 3 bar 3).
+      </div>
+    </div>
+
+    <!-- Validation panel -->
+    <div class="section-card" id="validationCard">
+      <div class="section-title" style="margin-bottom:10px">Validasi</div>
+      <div class="val-panel" id="valPanel">
+        <span class="val-ok">✓ Siap</span>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted)">
+        Validasi penuh via Python:
+        <code id="validateCmd" style="font-family:'Cascadia Code',Consolas,monospace;color:var(--orange);background:var(--surface2);padding:2px 6px;border-radius:3px;user-select:all;"></code>
+      </div>
+    </div>
+
+    <!-- Next steps (shown after save/download) -->
+    <div class="section-card next-steps-card hidden" id="nextStepsCard">
+      <div class="section-title">Langkah Berikutnya</div>
+      <div style="font-size:12px; color:var(--text); line-height:1.7">
+        <strong id="nextStepsSavedAs" style="color:var(--green)">song.json</strong> tersimpan.
+        Pastikan file ada di folder <code>songs/</code>, lalu perbarui song registry:
+      </div>
+      <div class="next-step-row">
+        <button id="btnUpdateIndex" class="btn-primary btn-sm">⚡ Update songs/index.json</button>
+        <span style="font-size:11px;color:var(--muted)">atau jalankan <code>python tools/update_song_index.py</code></span>
+      </div>
+    </div>
+
+    <!-- Workflow footer -->
+    <div class="workflow-footer">
+      <strong>Workflow via browser:</strong><br>
+      <span class="workflow-step">1.</span> Import .mxl / .xml langsung → generate song.json otomatis<br>
+      <span class="workflow-step">2.</span> Edit segmen → klik <strong>💾 Simpan</strong> atau <strong>⬇ Download</strong><br>
+      <span class="workflow-step">3.</span> Pindahkan ke <code>songs/</code> → <code>python tools/update_song_index.py</code><br><br>
+      <strong>Workflow via Python (akurasi lebih tinggi):</strong><br>
+      <span class="workflow-step">1.</span> <code>python tools/mxl_to_song.py input.mxl songs/nama.json</code><br>
+      <span class="workflow-step">2.</span> Buka song.json di sini → edit segmen → simpan<br>
+      <span class="workflow-step">3.</span> <code>python tools/validate_song.py songs/nama.json</code><br>
+      <span class="workflow-step">4.</span> <code>python tools/update_song_index.py</code> → lagu muncul otomatis
+    </div>
+
+  </div><!-- /editorSection -->
+</div><!-- /main -->
+
+<!-- Status bar -->
+<div class="status-bar" id="statusBar">
+  <span class="status-msg inf" id="statusMsg">Buka file song.json untuk memulai</span>
+  <button id="btnValidate" class="btn-sm" disabled>✓ Validasi</button>
+  <button id="btnSave" class="btn-primary btn-sm" disabled>💾 Simpan</button>
+  <button id="btnDownload" class="btn-sm" disabled>⬇ Download</button>
+</div>
+
+<!-- Scripts — same load order as index.html -->
+<script src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.js"></script>
+<script>window.Vex = { Flow: window.VexFlow };</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="src/notation-renderer.js"></script>
+<script src="src/learning-state.js"></script>
+<script>
+'use strict';
+
+// -----------------------------------------------------------------------
+// State
+// -----------------------------------------------------------------------
+let _songData     = null;   // loaded song.json object
+let _songFileName = null;   // filename string for save dialog
+let _segments     = [];     // current learning_segments (plain objects)
+let _selectedRow  = -1;     // index of selected segment for preview (-1 = none)
+let _previewOpen  = false;  // preview panel expanded?
+let _registryData = null;   // fetched songs/index.json (null = not yet fetched)
+
+// Renderer — used for score preview (passive display only, no runtime)
+const renderer     = new NotationRenderer();
+const learningState = new LearningModeState();
+
+// -----------------------------------------------------------------------
+// DOM refs
+// -----------------------------------------------------------------------
+const openSection    = document.getElementById('openSection');
+const editorSection  = document.getElementById('editorSection');
+const dropZone       = document.getElementById('dropZone');
+const fileInput      = document.getElementById('fileInput');
+const segBody        = document.getElementById('segBody');
+const segCount       = document.getElementById('segCount');
+const emptySegments  = document.getElementById('emptySegments');
+const valPanel       = document.getElementById('valPanel');
+const statusMsg      = document.getElementById('statusMsg');
+const previewScore   = document.getElementById('previewScore');
+const previewBody    = document.getElementById('previewBody');
+const previewArrow   = document.getElementById('previewArrow');
+const previewSegLabel = document.getElementById('previewSegLabel');
+const autogenPanel   = document.getElementById('autogenPanel');
+const validateCmd    = document.getElementById('validateCmd');
+
+// -----------------------------------------------------------------------
+// File open — drag-drop + click
+// -----------------------------------------------------------------------
+document.getElementById('btnOpenFile').onclick = () => fileInput.click();
+document.getElementById('btnChangeFile').onclick = () => {
+  _confirmNavigate(() => {
+    editorSection.classList.add('hidden');
+    openSection.classList.remove('hidden');
+    _songData = null; _segments = [];
+    _setStatusMsg('Buka file song.json untuk memulai', 'inf');
+  });
+};
+
+// MXL import button — toggle config panel
+const mxlInput        = document.getElementById('mxlInput');
+const mxlConfigPanel  = document.getElementById('mxlConfigPanel');
+document.getElementById('btnOpenMxl').onclick = () => {
+  mxlConfigPanel.classList.toggle('hidden');
+};
+document.getElementById('btnBrowseMxl').onclick = () => mxlInput.click();
+
+fileInput.onchange = e => {
+  const file = e.target.files?.[0];
+  if (file) _readFile(file);
+  fileInput.value = '';
+};
+
+mxlInput.onchange = e => {
+  const file = e.target.files?.[0];
+  if (file) _handleMxlFile(file);
+  mxlInput.value = '';
+};
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files?.[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'json') {
+    _readFile(file);
+  } else if (['mxl', 'xml', 'musicxml'].includes(ext)) {
+    mxlConfigPanel.classList.remove('hidden');
+    _handleMxlFile(file);
+  } else {
+    _setStatusMsg('File tidak didukung — gunakan .json, .mxl, atau .xml', 'err');
+  }
+});
+
+function _readFile(file) {
+  _songFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      _loadSongData(data);
+    } catch (err) {
+      _setStatusMsg('JSON tidak valid: ' + err.message, 'err');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// -----------------------------------------------------------------------
+// Load song data — populate UI
+// -----------------------------------------------------------------------
+function _loadSongData(data) {
+  if (!data?.score?.bars) {
+    _setStatusMsg('File tidak valid: tidak ada score.bars', 'err');
+    return;
+  }
+
+  _songData = data;
+  _segments = (data.learning_segments || []).map(s => ({ ...s }));
+
+  // Song info chips
+  const m = data.meta || {};
+  document.getElementById('infoTitle').textContent   = m.title || _songFileName || '—';
+  document.getElementById('infoBpm').textContent     = (m.bpm || '?') + ' BPM';
+  document.getElementById('infoTimeSig').textContent = Array.isArray(m.time_signature) ? m.time_signature.join('/') : '—';
+  document.getElementById('infoKey').textContent     = 'Key ' + (m.key_signature || '?');
+  document.getElementById('infoBars').textContent    = data.score.bars.length + ' bars';
+  document.getElementById('infoLevel').textContent   = m.level || '—';
+
+  const segChip = document.getElementById('infoSegments');
+  if (_segments.length) {
+    segChip.textContent = _segments.length + ' segments';
+    segChip.classList.remove('hidden');
+  } else {
+    segChip.classList.add('hidden');
+  }
+
+  // Registry chip — show placeholder, then async update
+  const regChip = document.getElementById('infoRegistry');
+  regChip.textContent = '⋯ registry';
+  regChip.className = 'info-chip';
+  regChip.classList.remove('hidden');
+  _registryData = null;
+  _checkRegistryStatus();
+
+  // Hide next-steps card when a new file is loaded
+  document.getElementById('nextStepsCard').classList.add('hidden');
+
+  // Python validate command
+  if (_songFileName) {
+    validateCmd.textContent = 'python tools/validate_song.py songs/' + _songFileName;
+  }
+
+  // Enable buttons
+  document.getElementById('btnValidate').disabled = false;
+  document.getElementById('btnSave').disabled     = false;
+  document.getElementById('btnDownload').disabled = false;
+  document.getElementById('btnPreviewSelected').disabled = (_selectedRow < 0);
+
+  // Switch panels
+  openSection.classList.add('hidden');
+  editorSection.classList.remove('hidden');
+
+  // Render full score preview
+  _renderPreview(null);
+
+  // Build table + validate
+  _renderTable();
+  _runValidation();
+  _setStatusMsg('File dimuat: ' + (_songFileName || 'song.json'), 'inf');
+}
+
+// -----------------------------------------------------------------------
+// Score preview
+// -----------------------------------------------------------------------
+document.getElementById('previewToggle').onclick = () => _togglePreview();
+
+function _togglePreview() {
+  _previewOpen = !_previewOpen;
+  previewBody.classList.toggle('hidden', !_previewOpen);
+  previewArrow.textContent = _previewOpen ? '▾' : '▸';
+  if (_previewOpen) _renderPreview(_selectedRow >= 0 ? _selectedRow : null);
+}
+
+function _renderPreview(segIndex) {
+  if (!_songData) return;
+
+  if (segIndex !== null && segIndex >= 0 && segIndex < _segments.length) {
+    const seg = _segments[segIndex];
+    const bars = _computeSegmentBars(seg.start_bar, seg.end_bar, seg.end_beat ?? 1);
+    const clef = _codeToClef(seg.visible_clefs);
+    const visibleClefs = clef === 'both' ? null : [clef];
+    renderer.render(_songData, previewScore, { visibleBars: bars, visibleClefs });
+    previewSegLabel.textContent = '(' + (seg.label || seg.segment_id || '') + ')';
+  } else {
+    renderer.render(_songData, previewScore);
+    previewSegLabel.textContent = '';
+  }
+}
+
+document.getElementById('btnPreviewFull').onclick = () => {
+  _selectedRow = -1;
+  document.getElementById('btnPreviewSelected').disabled = true;
+  document.querySelectorAll('.seg-row').forEach(r => r.classList.remove('sel'));
+  _renderPreview(null);
+  if (!_previewOpen) _togglePreview();
+};
+document.getElementById('btnPreviewSelected').onclick = () => {
+  if (_selectedRow >= 0) {
+    _renderPreview(_selectedRow);
+    if (!_previewOpen) _togglePreview();
+  }
+};
+
+function _computeSegmentBars(startBar, endBar, endBeat = 1) {
+  if (!_songData) return [];
+  const maxBar = endBeat > 1 ? endBar : endBar - 1;
+  return _songData.score.bars
+    .filter(b => b.bar >= startBar && b.bar <= maxBar)
+    .map(b => b.bar);
+}
+
+// visible_clefs array → "both" | "treble" | "bass"
+function _codeToClef(arr) {
+  if (!Array.isArray(arr)) return 'both';
+  if (arr.includes('treble') && arr.includes('bass')) return 'both';
+  if (arr.includes('treble')) return 'treble';
+  if (arr.includes('bass'))   return 'bass';
+  return 'both';
+}
+
+// "both" | "treble" | "bass" → visible_clefs array
+function _clefToCode(val) {
+  if (val === 'treble') return ['treble'];
+  if (val === 'bass')   return ['bass'];
+  return ['treble', 'bass'];
+}
+
+// -----------------------------------------------------------------------
+// Segment table rendering
+// -----------------------------------------------------------------------
+function _renderTable() {
+  segBody.innerHTML = '';
+  const count = _segments.length;
+  segCount.textContent = count;
+  emptySegments.style.display = count ? 'none' : 'block';
+
+  _segments.forEach((seg, i) => {
+    const tr = document.createElement('tr');
+    tr.className = 'seg-row' + (_selectedRow === i ? ' sel' : '');
+    tr.dataset.idx = i;
+    tr.style.cssText = _selectedRow === i
+      ? 'background:rgba(74,158,255,0.07);'
+      : '';
+
+    const clefVal = _codeToClef(seg.visible_clefs);
+
+    tr.innerHTML = `
+      <td class="td-order">${i + 1}</td>
+      <td><input class="seg-input seg-input-id" data-field="segment_id" value="${_esc(seg.segment_id || '')}" placeholder="seg_phrase_a"></td>
+      <td><input class="seg-input seg-input-label" data-field="label" value="${_esc(seg.label || '')}" placeholder="Frasa A"></td>
+      <td><input class="seg-input seg-input-bar" type="number" data-field="start_bar" min="1" value="${seg.start_bar ?? 1}"></td>
+      <td><input class="seg-input seg-input-beat" type="number" data-field="start_beat" min="1" value="${seg.start_beat ?? 1}"></td>
+      <td><input class="seg-input seg-input-bar" type="number" data-field="end_bar" min="1" value="${seg.end_bar ?? 2}"></td>
+      <td><input class="seg-input seg-input-beat" type="number" data-field="end_beat" min="1" value="${seg.end_beat ?? 1}"></td>
+      <td><select class="seg-select" data-field="visible_clefs">
+        <option value="both"   ${clefVal === 'both'   ? 'selected' : ''}>Kedua</option>
+        <option value="treble" ${clefVal === 'treble' ? 'selected' : ''}>Kanan</option>
+        <option value="bass"   ${clefVal === 'bass'   ? 'selected' : ''}>Kiri</option>
+      </select></td>
+      <td><input class="seg-input seg-input-rpts" type="number" data-field="suggested_repeats" min="1" max="5" value="${seg.suggested_repeats ?? 1}"></td>
+      <td class="row-actions">
+        <button class="btn-icon" data-action="up"      title="Naik"   ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="btn-icon" data-action="down"    title="Turun"  ${i === count - 1 ? 'disabled' : ''}>↓</button>
+        <button class="btn-icon btn-danger" data-action="del" title="Hapus">✕</button>
+        <button class="btn-icon" data-action="preview" title="Pratinjau">👁</button>
+      </td>`;
+
+    segBody.appendChild(tr);
+  });
+
+  // Event delegation on tbody
+  segBody.onclick  = _tableClick;
+  segBody.oninput  = _tableInput;
+  segBody.onchange = _tableInput;
+}
+
+function _esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function _tableClick(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const tr  = btn.closest('tr[data-idx]');
+  const idx = parseInt(tr.dataset.idx);
+  const action = btn.dataset.action;
+
+  if (action === 'up' && idx > 0) {
+    [_segments[idx - 1], _segments[idx]] = [_segments[idx], _segments[idx - 1]];
+    _selectedRow = idx - 1;
+    _renderTable(); _runValidation();
+  } else if (action === 'down' && idx < _segments.length - 1) {
+    [_segments[idx], _segments[idx + 1]] = [_segments[idx + 1], _segments[idx]];
+    _selectedRow = idx + 1;
+    _renderTable(); _runValidation();
+  } else if (action === 'del') {
+    if (_segments.length === 1 || confirm('Hapus segmen ini?')) {
+      _segments.splice(idx, 1);
+      if (_selectedRow >= _segments.length) _selectedRow = _segments.length - 1;
+      _renderTable(); _runValidation();
+    }
+  } else if (action === 'preview') {
+    _selectedRow = idx;
+    _renderTable();
+    document.getElementById('btnPreviewSelected').disabled = false;
+    _renderPreview(idx);
+    if (!_previewOpen) _togglePreview();
+    previewBody.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function _tableInput(e) {
+  const input = e.target.closest('[data-field]');
+  if (!input) return;
+  const tr    = input.closest('tr[data-idx]');
+  if (!tr) return;
+  const idx   = parseInt(tr.dataset.idx);
+  const field = input.dataset.field;
+  const seg   = _segments[idx];
+
+  if (field === 'visible_clefs') {
+    seg.visible_clefs = _clefToCode(input.value);
+  } else if (['start_bar', 'start_beat', 'end_bar', 'end_beat', 'suggested_repeats', 'order'].includes(field)) {
+    const n = parseInt(input.value);
+    seg[field] = isNaN(n) ? 1 : n;
+  } else {
+    seg[field] = input.value.trim() || input.value;
+  }
+
+  _runValidation();
+}
+
+// -----------------------------------------------------------------------
+// Add segment
+// -----------------------------------------------------------------------
+document.getElementById('btnAddSegment').onclick = () => {
+  const lastSeg = _segments[_segments.length - 1];
+  const bars    = _songData?.score.bars || [];
+  const barNums = bars.map(b => b.bar);
+  const lastBar = barNums.length ? barNums[barNums.length - 1] : 1;
+
+  let startBar = 1;
+  if (lastSeg) {
+    startBar = lastSeg.end_bar ?? (lastSeg.start_bar + 4);
+  }
+  const endBar = Math.min(startBar + 4, lastBar + 1);
+
+  const n      = _segments.length;
+  const suffix = _indexToLetters(n).toUpperCase();
+
+  _segments.push({
+    segment_id:        'seg_phrase_' + suffix.toLowerCase(),
+    label:             'Frasa ' + suffix,
+    start_bar:         startBar,
+    start_beat:        1,
+    end_bar:           endBar,
+    end_beat:          1,
+    visible_clefs:     ['treble', 'bass'],
+    suggested_repeats: 1,
+    order:             n + 1,
+  });
+
+  _renderTable();
+  _runValidation();
+  segBody.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+// -----------------------------------------------------------------------
+// Auto-generate
+// -----------------------------------------------------------------------
+document.getElementById('btnAutoGenToggle').onclick = () => {
+  autogenPanel.classList.toggle('hidden');
+};
+
+document.getElementById('btnDoGenerate').onclick = () => {
+  if (!_songData) return;
+  if (_segments.length && !confirm('Ini akan menggantikan semua segmen yang ada. Lanjutkan?')) return;
+
+  const barsPerGroup = parseInt(document.getElementById('agBars').value) || 4;
+  const repeats      = parseInt(document.getElementById('agRepeats').value) || 1;
+  const lang         = document.getElementById('agLang').value;
+
+  const barNums = _songData.score.bars.map(b => b.bar).sort((a, b) => a - b);
+  _segments = _generateSegments(barNums, barsPerGroup, repeats, lang);
+
+  // Pickup detection note (informational)
+  const bar1 = _songData.score.bars.find(b => b.bar === 1);
+  if (bar1) {
+    const beats = bar1.beats || [];
+    const minBeat = beats.length ? Math.min(...beats.map(e => e.beat ?? 1)) : 1;
+    if (minBeat > 1) {
+      _setStatusMsg('Pickup bar terdeteksi (beat minimum = ' + minBeat + ') — bar 1 disertakan di segmen pertama', 'inf');
+    }
+  }
+
+  autogenPanel.classList.add('hidden');
+  _renderTable();
+  _runValidation();
+};
+
+function _generateSegments(barNums, barsPerGroup, repeats, lang) {
+  if (!barNums.length) return [];
+  const lastBar = barNums[barNums.length - 1];
+  const groups  = [];
+  for (let i = 0; i < barNums.length; i += barsPerGroup) {
+    groups.push(barNums.slice(i, i + barsPerGroup));
+  }
+
+  return groups.map((group, idx) => {
+    const isLast = idx === groups.length - 1;
+    const endBar = isLast ? lastBar + 1 : groups[idx + 1][0];
+    const suffix = _indexToLetters(idx);
+    const label  = lang === 'en'
+      ? 'Phrase ' + suffix.toUpperCase()
+      : 'Frasa '  + suffix.toUpperCase();
+    return {
+      segment_id:        'seg_phrase_' + suffix,
+      label,
+      start_bar:         group[0],
+      start_beat:        1,
+      end_bar:           endBar,
+      end_beat:          1,
+      visible_clefs:     ['treble', 'bass'],
+      suggested_repeats: repeats,
+      order:             idx + 1,
+    };
+  });
+}
+
+function _indexToLetters(n) {
+  let s = '';
+  n = n + 1;
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    s = String.fromCharCode(97 + rem) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
+// -----------------------------------------------------------------------
+// Validation
+// -----------------------------------------------------------------------
+function _runValidation() {
+  const errors   = [];
+  const warnings = [];
+
+  if (!_songData) return;
+
+  const barSet  = new Set(_songData.score.bars.map(b => b.bar));
+  const barNums = [...barSet].sort((a, b) => a - b);
+  const lastBar = barNums[barNums.length - 1];
+  const ids     = new Set();
+
+  _segments.forEach((seg, i) => {
+    const n = i + 1;
+
+    // ID
+    if (!seg.segment_id?.trim()) {
+      errors.push(`Segmen ${n}: ID kosong`);
+    } else if (ids.has(seg.segment_id)) {
+      errors.push(`Segmen ${n}: ID "${seg.segment_id}" duplikat`);
+    } else {
+      ids.add(seg.segment_id);
+      if (!/^[a-z_][a-z0-9_]*$/.test(seg.segment_id)) {
+        warnings.push(`Segmen ${n}: ID "${seg.segment_id}" disarankan lowercase snake_case`);
+      }
+    }
+
+    // Label
+    if (!seg.label?.trim()) {
+      warnings.push(`Segmen ${n}: Label kosong`);
+    }
+
+    // Bars
+    const sb = seg.start_bar, eb = seg.end_bar;
+    if (!Number.isInteger(sb) || sb < 1) errors.push(`Segmen ${n}: start_bar tidak valid`);
+    if (!Number.isInteger(eb) || eb < 1) errors.push(`Segmen ${n}: end_bar tidak valid`);
+    if (Number.isInteger(sb) && Number.isInteger(eb) && sb >= eb) {
+      errors.push(`Segmen ${n}: start_bar (${sb}) harus lebih kecil dari end_bar (${eb})`);
+    }
+    if (Number.isInteger(sb) && !barSet.has(sb)) {
+      warnings.push(`Segmen ${n}: start_bar ${sb} tidak ada di score`);
+    }
+
+    // Repeats
+    const r = seg.suggested_repeats;
+    if (!Number.isInteger(r) || r < 1 || r > 5) {
+      warnings.push(`Segmen ${n}: suggested_repeats harus 1–5`);
+    }
+  });
+
+  // Coverage check
+  if (_segments.length > 0 && barNums.length > 0) {
+    const firstSeg = _segments[0];
+    const lastSeg  = _segments[_segments.length - 1];
+
+    if (Number.isInteger(firstSeg.start_bar) && firstSeg.start_bar > barNums[0]) {
+      warnings.push(`Bar ${barNums[0]}–${firstSeg.start_bar - 1} tidak dicakup segmen manapun`);
+    }
+    if (Number.isInteger(lastSeg.end_bar) && lastSeg.end_bar < lastBar + 1) {
+      warnings.push(`Bar ${lastSeg.end_bar}–${lastBar} tidak dicakup segmen manapun (end_bar terakhir harus = ${lastBar + 1})`);
+    }
+
+    // Gap check between consecutive segments
+    for (let i = 0; i < _segments.length - 1; i++) {
+      const a = _segments[i], b = _segments[i + 1];
+      if (Number.isInteger(a.end_bar) && Number.isInteger(b.start_bar) && a.end_bar !== b.start_bar) {
+        warnings.push(`Gap antara segmen ${i + 1} dan ${i + 2}: end_bar (${a.end_bar}) ≠ start_bar (${b.start_bar})`);
+      }
+    }
+  }
+
+  // Render validation panel
+  let html = '';
+  if (!errors.length && !warnings.length) {
+    html = '<span class="val-ok">✓ Semua cek lulus — siap disimpan</span>';
+    _setStatusMsg('Validasi lulus', 'ok');
+  } else {
+    if (errors.length) {
+      html += `<div class="val-error">✕ ${errors.length} error:</div><ul class="val-list">`;
+      errors.forEach(e => { html += `<li class="val-error">${_esc(e)}</li>`; });
+      html += '</ul>';
+      _setStatusMsg(errors.length + ' error validasi', 'err');
+    }
+    if (warnings.length) {
+      html += `<div class="val-warning" style="margin-top:${errors.length?'8px':'0'}">⚠ ${warnings.length} peringatan:</div><ul class="val-list">`;
+      warnings.forEach(w => { html += `<li class="val-warning">${_esc(w)}</li>`; });
+      html += '</ul>';
+      if (!errors.length) _setStatusMsg(warnings.length + ' peringatan validasi', 'inf');
+    }
+  }
+  valPanel.innerHTML = html;
+
+  // Highlight error rows in table
+  document.querySelectorAll('.seg-row').forEach(tr => {
+    tr.style.outline = '';
+  });
+}
+
+// -----------------------------------------------------------------------
+// Save / Download
+// -----------------------------------------------------------------------
+function _buildOutputData() {
+  const copy = JSON.parse(JSON.stringify(_songData));
+  const segs = _segments.map((seg, i) => ({ ...seg, order: i + 1 }));
+  if (segs.length) {
+    copy.learning_segments = segs;
+  } else {
+    delete copy.learning_segments;
+  }
+  return copy;
+}
+
+document.getElementById('btnValidate').onclick = () => {
+  _runValidation();
+  _setStatusMsg('Validasi selesai', 'inf');
+};
+
+document.getElementById('btnSave').onclick = async () => {
+  if (!_songData) return;
+  const json = JSON.stringify(_buildOutputData(), null, 2) + '\n';
+
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: _songFileName || 'song.json',
+        types: [{ description: 'Song JSON', accept: { 'application/json': ['.json'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      _setStatusMsg('Tersimpan ✓ ' + (_songFileName || 'song.json'), 'ok');
+      _showNextSteps(_songFileName || 'song.json');
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      // fallthrough to download
+    }
+  }
+  _downloadJson(json);
+};
+
+document.getElementById('btnDownload').onclick = () => {
+  if (!_songData) return;
+  _downloadJson(JSON.stringify(_buildOutputData(), null, 2) + '\n');
+};
+
+function _downloadJson(json) {
+  const blob = new Blob([json], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = _songFileName || 'song.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  _setStatusMsg('Diunduh ✓ — pindahkan ke songs/, lalu klik Update songs/index.json', 'inf');
+  _showNextSteps(_songFileName || 'song.json');
+}
+
+// -----------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------
+function _setStatusMsg(msg, type) {
+  statusMsg.textContent = msg;
+  statusMsg.className   = 'status-msg ' + (type || 'inf');
+}
+
+function _confirmNavigate(cb) {
+  if (_segments.length || _songData) {
+    if (!confirm('Perubahan yang belum disimpan akan hilang. Lanjutkan?')) return;
+  }
+  cb();
+}
+
+// -----------------------------------------------------------------------
+// Registry — fetch, check, and update songs/index.json
+// -----------------------------------------------------------------------
+function _buildSongLabel(data) {
+  const m  = data?.meta || {};
+  const ts = Array.isArray(m.time_signature) ? m.time_signature.join('/') : '?/?';
+  const nb = data?.score?.bars?.length || 0;
+  const key    = (m.key_signature && m.key_signature !== 'C') ? ' · Key ' + m.key_signature : '';
+  const pickup = (data?.parts || []).some(p => p.has_pickup) ? ' · pickup' : '';
+  const segs   = (data?.learning_segments?.length || 0) ? ' · segments' : '';
+  return `${m.title || 'Untitled'} — ${ts} · ${m.bpm || '?'} BPM · ${nb} bars${pickup}${key}${segs}`;
+}
+
+function _buildSongEntry(data, filename) {
+  return { src: 'songs/' + filename, label: _buildSongLabel(data) };
+}
+
+async function _fetchRegistry() {
+  try {
+    const r = await fetch('songs/index.json?t=' + Date.now());
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function _checkRegistryStatus() {
+  if (!_songData || !_songFileName) return;
+  const chip = document.getElementById('infoRegistry');
+  _registryData = await _fetchRegistry();
+  if (!_registryData) {
+    chip.textContent = '? registry';
+    chip.className = 'info-chip';
+    return;
+  }
+  const src   = 'songs/' + _songFileName;
+  const found = (_registryData.songs || []).some(e => e.src === src);
+  const total = (_registryData.songs || []).length;
+  if (found) {
+    chip.textContent = `✓ registry (${total})`;
+    chip.className = 'info-chip chip-ok';
+  } else {
+    chip.textContent = `⚠ belum (${total} lagu)`;
+    chip.className = 'info-chip chip-warn';
+  }
+}
+
+async function _generateUpdatedIndexJson() {
+  const reg   = _registryData || await _fetchRegistry() || { songs: [] };
+  const songs = (reg.songs || []).slice();
+  const src   = 'songs/' + _songFileName;
+  const entry = _buildSongEntry(_buildOutputData(), _songFileName);
+  const idx   = songs.findIndex(e => e.src === src);
+  if (idx >= 0) songs[idx] = entry;
+  else songs.push(entry);
+  return JSON.stringify({ songs }, null, 2) + '\n';
+}
+
+async function _saveUpdatedIndex() {
+  if (!_songData || !_songFileName) return;
+  _setStatusMsg('Membuat index.json…', 'inf');
+  try {
+    const json = await _generateUpdatedIndexJson();
+    if ('showSaveFilePicker' in window) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'index.json',
+          types: [{ description: 'Index JSON', accept: { 'application/json': ['.json'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(json);
+        await writable.close();
+        _registryData = JSON.parse(json);
+        _checkRegistryStatus();
+        _setStatusMsg('index.json disimpan ✓ — pastikan letaknya di songs/', 'ok');
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') { _setStatusMsg('Batal', 'inf'); return; }
+      }
+    }
+    const blob = new Blob([json], { type: 'application/json' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'index.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    _registryData = JSON.parse(json);
+    _checkRegistryStatus();
+    _setStatusMsg('index.json diunduh — pindahkan ke songs/index.json', 'ok');
+  } catch (err) {
+    _setStatusMsg('Gagal update index: ' + err.message, 'err');
+  }
+}
+
+function _showNextSteps(savedAs) {
+  const card = document.getElementById('nextStepsCard');
+  card.classList.remove('hidden');
+  document.getElementById('nextStepsSavedAs').textContent = savedAs || _songFileName || 'song.json';
+  _checkRegistryStatus();
+}
+
+document.getElementById('btnUpdateIndex').onclick = () => _saveUpdatedIndex();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MXL / MusicXML Import Pipeline
+// Mirrors mxl_to_song.py logic. Handles score-partwise format only (piano MVP).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Note type → duration string (mirrors DURATION_MAP in mxl_to_song.py)
+const _MXL_TYPE_DUR = {
+  'whole':'w', 'half':'h', 'quarter':'q',
+  'eighth':'8', '16th':'16', '32nd':'32',
+};
+
+// Fifths → major key name (index 0=Cb, 7=C, 14=C#)
+const _MXL_FIFTHS = ['Cb','Gb','Db','Ab','Eb','Bb','F','C','G','D','A','E','B','F#','C#'];
+
+function _mxlKeyName(fifths, mode) {
+  const idx = (parseInt(fifths) || 0) + 7;
+  const major = _MXL_FIFTHS[Math.max(0, Math.min(14, idx))] || 'C';
+  return mode === 'minor' ? major + 'm' : major;
+}
+
+// step + alter + octave → "C4", "F#3", "Bb5" format
+function _mxlPitch(step, alterStr, octave) {
+  const a = Math.round(parseFloat(alterStr || '0'));
+  const acc = ({1:'#', 2:'##', [-1]:'b', [-2]:'bb'})[a] || '';
+  return step + acc + octave;
+}
+
+// Note type + dots → duration string
+function _mxlDurStr(typeName, dots) {
+  return (_MXL_TYPE_DUR[typeName] || 'q') + (dots > 0 ? '.' : '');
+}
+
+// Quarter-length offset → ms via cumulative tempo map
+// Identical algorithm to offset_to_ms() in mxl_to_song.py
+function _mxlToMs(ql, tmap) {
+  let ms = 0;
+  for (let i = 0; i < tmap.length; i++) {
+    const segStart = tmap[i][0], segBpm = tmap[i][1];
+    const segEnd = (i + 1 < tmap.length) ? tmap[i+1][0] : Infinity;
+    if (ql <= segStart) break;
+    ms += (Math.min(ql, segEnd) - segStart) * (60000 / segBpm);
+  }
+  return Math.round(ms);
+}
+
+// Title → snake_case slug (mirrors slugify() in mxl_to_song.py)
+function _mxlSlugify(text) {
+  return (text || 'untitled').toLowerCase().trim()
+    .replace(/[^\w\s-]/g, '').replace(/[\s-]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'untitled';
+}
+
+// Build cumulative tempo map [[ql_offset, bpm], ...] from first part
+function _mxlBuildTempoMap(partEl, defaultBpm) {
+  const map = [];
+  let tsB = 4, tsBT = 4, absQl = 0;
+
+  for (const mEl of partEl.querySelectorAll(':scope > measure')) {
+    const tb  = mEl.querySelector('attributes > time > beats');
+    const tbt = mEl.querySelector('attributes > time > beat-type');
+    if (tb)  tsB  = parseInt(tb.textContent)  || 4;
+    if (tbt) tsBT = parseInt(tbt.textContent) || 4;
+
+    for (const mt of mEl.querySelectorAll('direction > direction-type > metronome')) {
+      const pm = mt.querySelector('per-minute');
+      if (!pm) continue;
+      const bpm = parseFloat(pm.textContent);
+      if (!isNaN(bpm) && bpm > 0 && !map.some(t => Math.abs(t[0] - absQl) < 0.001))
+        map.push([absQl, bpm]);
+    }
+
+    absQl += tsB * (4 / tsBT);
+  }
+
+  if (!map.length || map[0][0] > 0.001) map.unshift([0, defaultBpm]);
+  return map.sort((a, b) => a[0] - b[0]);
+}
+
+// Detect clef from first clef element in part (G sign = treble, F sign = bass)
+function _mxlDetectClef(partEl) {
+  const sign = partEl.querySelector('measure > attributes > clef > sign');
+  return sign?.textContent?.trim().toUpperCase() === 'F' ? 'bass' : 'treble';
+}
+
+// Parse one MusicXML part into an event list
+function _mxlParsePart(partEl, clef, tmap, evStart) {
+  const evs = [];
+  let ctr = evStart, divisions = 1, tsB = 4, tsBT = 4, absQl = 0;
+
+  const measures = [...partEl.querySelectorAll(':scope > measure')];
+  for (let barIdx = 0; barIdx < measures.length; barIdx++) {
+    const mEl = measures[barIdx];
+    const barN = barIdx + 1; // sequential 1-based (Opsi A: pickup = bar 1)
+
+    const d   = mEl.querySelector('attributes > divisions');
+    const tb  = mEl.querySelector('attributes > time > beats');
+    const tbt = mEl.querySelector('attributes > time > beat-type');
+    if (d)   divisions = parseInt(d.textContent)   || 1;
+    if (tb)  tsB       = parseInt(tb.textContent)  || 4;
+    if (tbt) tsBT      = parseInt(tbt.textContent) || 4;
+
+    const beatDurQl = 4 / tsBT; // quarter lengths per beat
+    let posQl = 0;               // running position within measure (quarter lengths)
+    let lastNoteAbsQl = absQl;   // abs ql of last non-chord note
+
+    for (const nEl of mEl.querySelectorAll(':scope > note')) {
+      if (nEl.querySelector('grace')) continue; // skip grace notes (MVP)
+      // Voice 1 only — voice 2+ notes appear after a <backup> element and would
+      // have incorrect t_ms without full backup/forward tracking (MVP constraint)
+      const voiceEl = nEl.querySelector('voice');
+      if (voiceEl && voiceEl.textContent.trim() !== '1') continue;
+
+      const isChord = !!nEl.querySelector('chord');
+      const isRest  = !!nEl.querySelector('rest');
+      const durDivs = parseInt(nEl.querySelector('duration')?.textContent || '0');
+      const durQl   = divisions > 0 ? durDivs / divisions : 0;
+      const noteAbsQl = isChord ? lastNoteAbsQl : (absQl + posQl);
+
+      if (!isChord) { lastNoteAbsQl = absQl + posQl; posQl += durQl; }
+
+      const t_ms        = _mxlToMs(noteAbsQl, tmap);
+      const duration_ms = _mxlToMs(noteAbsQl + durQl, tmap) - t_ms;
+      if (duration_ms <= 0 && !isRest) continue;
+
+      const typeEl = nEl.querySelector('type');
+      const dots   = nEl.querySelectorAll('dot').length;
+      const durStr = typeEl ? _mxlDurStr(typeEl.textContent.trim(), dots) : 'q';
+
+      // Beat: 1-indexed position within measure
+      const rawBeat = (noteAbsQl - absQl) / beatDurQl + 1;
+      const beat    = Math.abs(rawBeat - Math.round(rawBeat)) < 0.01
+        ? Math.round(rawBeat) : parseFloat(rawBeat.toFixed(4));
+
+      if (isRest) {
+        evs.push({
+          id:`ev_${String(ctr++).padStart(6,'0')}`,
+          bar:barN, beat, clef, type:'rest',
+          duration:durStr, duration_ms, t_ms,
+        });
+        continue;
+      }
+
+      // Pitch
+      const step  = nEl.querySelector('pitch > step')?.textContent?.trim();
+      const oct   = nEl.querySelector('pitch > octave')?.textContent?.trim();
+      const alter = nEl.querySelector('pitch > alter')?.textContent?.trim() || '0';
+      if (!step || !oct) continue;
+      const pitch = _mxlPitch(step, alter, oct);
+
+      if (isChord) {
+        // Merge into previous event — don't emit a new event
+        const prev = evs[evs.length - 1];
+        if (prev && prev.t_ms === t_ms && prev.clef === clef && prev.type !== 'rest') {
+          if (prev.type === 'note') prev.type = 'chord';
+          prev.notes.push(pitch);
+          for (const te of nEl.querySelectorAll('tie')) {
+            const tt = te.getAttribute('type');
+            if (tt === 'start' || tt === 'continue') prev.tie_start = true;
+            if (tt === 'stop'  || tt === 'continue') prev.tie_stop  = true;
+          }
+        }
+        continue;
+      }
+
+      // Tie flags
+      let tieStart = false, tieStop = false;
+      for (const te of nEl.querySelectorAll('tie')) {
+        const tt = te.getAttribute('type');
+        if (tt === 'start' || tt === 'continue') tieStart = true;
+        if (tt === 'stop'  || tt === 'continue') tieStop  = true;
+      }
+
+      // Articulations (staccato)
+      const arts = nEl.querySelector('notations > articulations > staccato') ? ['staccato'] : [];
+
+      // Slur flags
+      let slurStart = false, slurStop = false;
+      for (const sl of nEl.querySelectorAll('notations > slur')) {
+        const tt = sl.getAttribute('type');
+        if (tt === 'start') slurStart = true;
+        if (tt === 'stop')  slurStop  = true;
+      }
+
+      // Fingering
+      const fEl = nEl.querySelector('notations > technical > fingering');
+      const finger = fEl ? (parseInt(fEl.textContent) || null) : null;
+
+      const ev = {
+        id: `ev_${String(ctr++).padStart(6,'0')}`,
+        bar:barN, beat, clef, type:'note', notes:[pitch],
+        duration:durStr, duration_ms, t_ms,
+        finger, tie_start:tieStart, tie_stop:tieStop,
+        tolerance_cents: 50,
+      };
+      if (arts.length) ev.articulations = arts;
+      if (slurStart)   ev.slur_start    = true;
+      if (slurStop)    ev.slur_stop     = true;
+      evs.push(ev);
+    }
+
+    absQl += posQl; // advance absolute position by actual notes in this measure
+  }
+
+  return [evs, ctr];
+}
+
+// Add pair_with_id for simultaneous treble/bass events (mirrors pair_simultaneous())
+function _mxlPairSimultaneous(events) {
+  const byTime = {};
+  events.forEach(ev => (byTime[ev.t_ms] = byTime[ev.t_ms] || []).push(ev));
+  Object.values(byTime).forEach(group => {
+    const tr = group.find(e => e.clef === 'treble');
+    const ba = group.find(e => e.clef === 'bass');
+    if (tr && ba) { tr.pair_with_id = ba.id; ba.pair_with_id = tr.id; }
+  });
+}
+
+// Group events into score.bars[] structure
+function _mxlBuildBars(events) {
+  const map = {};
+  events.forEach(ev => (map[ev.bar] = map[ev.bar] || []).push(ev));
+  return Object.keys(map).map(Number).sort((a, b) => a - b)
+    .map(bar => ({ bar, beats: map[bar] }));
+}
+
+// Build parts[] — same algorithm as build_parts_list() in mxl_to_song.py
+function _mxlBuildParts(events, partSize, hasPickup) {
+  if (!events.length) return [];
+  const maxBar = Math.max(...events.map(e => e.bar));
+  const parts = [];
+  let idx = 1, start = 1;
+  while (start <= maxBar) {
+    const end = Math.min(start + partSize - 1, maxBar);
+    parts.push({
+      part_id: `part_${idx}`, label: `Part ${idx}`,
+      bars: Array.from({ length: end - start + 1 }, (_, i) => start + i),
+      has_pickup: idx === 1 && !!hasPickup,
+      example_audio: null,
+    });
+    start = end + 1; idx++;
+  }
+  return parts;
+}
+
+// Main converter: MusicXML text + config → song.json object
+function _parseMusicXML(xmlText, cfg) {
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror'))
+    throw new Error('XML parse error — file mungkin rusak atau bukan MusicXML');
+
+  const partEls = [...doc.querySelectorAll('score-partwise > part')];
+  if (!partEls.length)
+    throw new Error('Tidak ada part ditemukan — hanya format score-partwise yang didukung');
+
+  // Title / composer
+  const title    = doc.querySelector('work-title')?.textContent?.trim()
+                || doc.querySelector('movement-title')?.textContent?.trim()
+                || 'Untitled';
+  const composer = doc.querySelector('creator[type="composer"]')?.textContent?.trim() || '';
+
+  // Time signature + key from first measure of first part
+  const firstM = partEls[0].querySelector(':scope > measure');
+  const tsB    = parseInt(firstM?.querySelector('attributes > time > beats')?.textContent || '4');
+  const tsBT   = parseInt(firstM?.querySelector('attributes > time > beat-type')?.textContent || '4');
+  const fifths = firstM?.querySelector('attributes > key > fifths')?.textContent || '0';
+  const mode   = firstM?.querySelector('attributes > key > mode')?.textContent || 'major';
+  const keySig = _mxlKeyName(fifths, mode);
+
+  // Pickup detection: first measure shorter than full measure?
+  const firstMDiv  = parseInt(firstM?.querySelector('attributes > divisions')?.textContent || '1') || 1;
+  let firstMDurQl  = 0;
+  firstM?.querySelectorAll(':scope > note').forEach(n => {
+    if (!n.querySelector('chord'))
+      firstMDurQl += parseInt(n.querySelector('duration')?.textContent || '0') / firstMDiv;
+  });
+  const hasPickup = firstMDurQl < (tsB * (4 / tsBT)) * 0.99 && firstMDurQl > 0;
+
+  // Tempo map (fallback BPM from config or default 72)
+  const defaultBpm = (cfg.bpm > 0 ? cfg.bpm : null) || 72;
+  const tmap = _mxlBuildTempoMap(partEls[0], defaultBpm);
+  const detectedBpm = tmap[0][1];
+  const bpmOut = (detectedBpm === Math.round(detectedBpm)) ? Math.round(detectedBpm) : detectedBpm;
+
+  // Parse all parts
+  let evCtr = 1, allEvents = [];
+  const clefs = [];
+  for (const partEl of partEls) {
+    const clef = _mxlDetectClef(partEl);
+    clefs.push(clef);
+    const [evs, nextCtr] = _mxlParsePart(partEl, clef, tmap, evCtr);
+    allEvents = allEvents.concat(evs);
+    evCtr = nextCtr;
+  }
+
+  // Sort: t_ms asc, treble before bass at same t_ms
+  allEvents.sort((a, b) => a.t_ms - b.t_ms || (a.clef === 'treble' ? 0 : 1) - (b.clef === 'treble' ? 0 : 1));
+
+  // Pair simultaneous treble/bass events
+  _mxlPairSimultaneous(allEvents);
+
+  // Active clefs + hand mode
+  const activeClefs = ['treble', 'bass'].filter(c => clefs.includes(c));
+  const handMode = activeClefs.length >= 2 ? 'both'
+    : activeClefs[0] === 'treble' ? 'rh_only' : 'lh_only';
+
+  const partSize = cfg.partSize || 4;
+  const songId   = cfg.id || _mxlSlugify(title);
+
+  return {
+    meta: {
+      id: songId, title, composer,
+      level: cfg.level || 'early_beginner',
+      bpm: bpmOut,
+      time_signature: [tsB, tsBT],
+      key_signature: keySig,
+      hand_mode: handMode,
+      active_clefs: activeClefs,
+      freq_split_hz: 261.63,
+      part_size_bars: partSize,
+      background_music: null, example_audio: null,
+      hint_config: {
+        auto_hint_timeout_ms: 7000, auto_play_timeout_ms: 12000,
+        show_note_name_always: true, show_keyboard_highlight: true,
+        show_fingering_always: true,
+        hint_penalty: { auto_highlight:-3, auto_play:-5, tap_note:-5, question_mark:-8, wrong_2x_narrowing:-5 },
+      },
+    },
+    parts: _mxlBuildParts(allEvents, partSize, hasPickup),
+    score: { bars: _mxlBuildBars(allEvents) },
+    scoring: {
+      perfect_window_ms: 150, good_window_ms: 400,
+      points_per_note: { perfect:10, good:6, late:3, miss:0 },
+      timing_bonus: true, streak_bonus: { every:5, bonus:10 },
+    },
+  };
+}
+
+// Unzip .mxl (ZIP container) → MusicXML text
+async function _unzipMxl(file) {
+  let zip;
+  try { zip = await JSZip.loadAsync(await file.arrayBuffer()); }
+  catch(e) { throw new Error('Tidak dapat membuka .mxl: ' + e.message); }
+
+  // Find rootfile path from META-INF/container.xml
+  let xmlPath = null;
+  const containerFile = zip.file('META-INF/container.xml');
+  if (containerFile) {
+    const cxml = await containerFile.async('text');
+    xmlPath = new DOMParser().parseFromString(cxml, 'application/xml')
+      .querySelector('rootfile')?.getAttribute('full-path');
+  }
+
+  // Fallback: first .xml / .musicxml not in META-INF
+  if (!xmlPath) {
+    const keys = Object.keys(zip.files)
+      .filter(k => !k.startsWith('META') && (k.endsWith('.xml') || k.endsWith('.musicxml')));
+    xmlPath = keys[0];
+  }
+
+  if (!xmlPath || !zip.file(xmlPath))
+    throw new Error('File MusicXML tidak ditemukan dalam .mxl');
+
+  return zip.file(xmlPath).async('text');
+}
+
+// Read MXL / XML / MusicXML file and import into editor
+async function _handleMxlFile(file) {
+  _setStatusMsg('Membaca file…', 'inf');
+  try {
+    const cfg = {
+      bpm:      parseFloat(document.getElementById('cfgBpm').value) || 0,
+      level:    document.getElementById('cfgLevel').value,
+      partSize: parseInt(document.getElementById('cfgPartSize').value) || 4,
+      id:       document.getElementById('cfgId').value.trim() || null,
+    };
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    let xmlText;
+    if (ext === 'mxl') {
+      _setStatusMsg('Membuka arsip .mxl…', 'inf');
+      xmlText = await _unzipMxl(file);
+    } else {
+      xmlText = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload  = e => res(e.target.result);
+        r.onerror = () => rej(new Error('Gagal membaca file'));
+        r.readAsText(file);
+      });
+    }
+
+    _setStatusMsg('Mengkonversi MusicXML → song.json…', 'inf');
+    const songData = _parseMusicXML(xmlText, cfg);
+
+    // Set suggested save filename
+    _songFileName = file.name.replace(/\.(mxl|xml|musicxml)$/i, '.json');
+    document.getElementById('mxlConfigPanel').classList.add('hidden');
+
+    _loadSongData(songData);
+    const nb = songData.score?.bars?.length || 0;
+    const ne = songData.score?.bars?.reduce((s, b) => s + b.beats.length, 0) || 0;
+    _setStatusMsg(
+      `Import selesai: "${songData.meta?.title}" — ${nb} bar, ${ne} event. ` +
+      'Cek preview lalu edit segmen.', 'ok'
+    );
+  } catch(err) {
+    _setStatusMsg('Import gagal: ' + err.message, 'err');
+    console.error('[MXL Import]', err);
+  }
+}
+
+// -----------------------------------------------------------------------
+// Init
+// -----------------------------------------------------------------------
+_setStatusMsg('Buka file song.json untuk memulai', 'inf');
+</script>
+
+</body>
+</html>

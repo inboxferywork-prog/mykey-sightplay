@@ -1,0 +1,200 @@
+/* ================================================================
+   float-controls.css — MyKey SightPlay
+   Experimental Detached Floating Controls Mode
+
+   Activation:  set FLOAT_CONTROLS = true in index.html (adds body.nk-float-controls)
+                a toggle button in the header also flips the class at runtime.
+
+   Rollback:    set FLOAT_CONTROLS = false  (or comment out the classList.add call)
+                the button still appears but starts in off-state.
+                To remove entirely: delete this file + its <link> tag + the
+                FLOAT_CONTROLS block in index.html.
+
+   Constraints: ALL rules scoped to body.nk-float-controls.
+                Viewport, camera, transform math: untouched.
+                Fullscreen, landscape coordinator: untouched.
+                Keyboard system: untouched.
+   ================================================================ */
+
+/* ================================================================
+   Chrome geometry tokens
+   --fc-header-h  : must match header { height } in base-ui.css (52px)
+   --fc-progress-h: full-width progress strip height
+   --fc-bar-h     : compact controls bar height
+   --fc-total-h   : floating chrome below header = progress + bar
+   ================================================================ */
+
+:root {
+  --fc-header-h:   52px;
+  --fc-progress-h: 4px;
+  --fc-bar-h:      42px;
+  --fc-total-h:    calc(var(--fc-progress-h) + var(--fc-bar-h));
+}
+
+/* Landscape — header is 42px (mobile-layout.css rule), bar shorter to save height */
+@media (max-width: 900px) and (orientation: landscape) {
+  :root {
+    --fc-header-h: 42px;
+    --fc-bar-h:    34px;
+  }
+}
+
+/* ================================================================
+   Toggle button — lives in header-right, visible in all modes.
+   Styled like #authoringLink to match the header chrome.
+   Active (floating on) state highlighted in --orange.
+   ================================================================ */
+
+.fc-toggle-btn {
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--border2);
+  background: transparent;
+  padding: 5px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  line-height: 1;
+  transition: color 0.12s, border-color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.fc-toggle-btn:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+body.nk-float-controls .fc-toggle-btn {
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+/* ================================================================
+   Flow items removed from the flex column in floating mode.
+   Song-meta and stage-strip are informational chrome that yield
+   their space to the notation area.
+   ================================================================ */
+
+body.nk-float-controls .song-meta   { display: none; }
+body.nk-float-controls .stage-strip { display: none; }
+
+/* ================================================================
+   App body — replace normal top padding with floating chrome height.
+   Left/right padding is inherited unchanged from base-ui.css and
+   mobile-layout.css breakpoint rules (higher specificity here only
+   for padding-top, leaving horizontal paddings untouched).
+   ================================================================ */
+
+body.nk-float-controls .app-body {
+  padding-top: var(--fc-total-h);
+}
+
+/* ================================================================
+   Floating progress bar — full-width strip pinned immediately below
+   the <header>. Removed from document flow so score-card expands.
+   Hover grows upward keeping the bottom edge stable at the controls
+   bar boundary (fc-header-h + fc-progress-h).
+   ================================================================ */
+
+body.nk-float-controls .progress-wrap {
+  position: fixed;
+  top: var(--fc-header-h);
+  left: 0;
+  right: 0;
+  z-index: 51;
+  height: var(--fc-progress-h);
+  border-radius: 0;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+body.nk-float-controls .progress-wrap:hover {
+  height: 6px;
+  top: calc(var(--fc-header-h) - 2px);  /* slide up 2px, bottom edge stays fixed */
+  margin-bottom: 0;
+}
+
+/* ================================================================
+   Floating controls bar — compact strip pinned below progress bar.
+   Uses header-bg and border tokens so it is theme-aware.
+   backdrop-filter provides readability over the score SVG.
+   ================================================================ */
+
+body.nk-float-controls .controls {
+  position: fixed;
+  top: calc(var(--fc-header-h) + var(--fc-progress-h));
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: var(--fc-bar-h);
+  padding: 0 16px;
+  margin-bottom: 0;
+  /* Override column layout from base-ui.css */
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ================================================================
+   Action row — horizontal, no wrap, scrollable.
+   scrollbar hidden for clean mobile look.
+   ================================================================ */
+
+body.nk-float-controls .action-row {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0;
+}
+body.nk-float-controls .action-row::-webkit-scrollbar { display: none; }
+
+/* ================================================================
+   Button compaction — override min-width: 160px from base-ui.css
+   so the primary button fits in a compact floating bar.
+   ================================================================ */
+
+body.nk-float-controls .btn-primary {
+  min-width: 0;
+  padding: 5px 12px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+body.nk-float-controls .btn-reset    { flex-shrink: 0; }
+body.nk-float-controls .tempo-label  { flex-shrink: 0; white-space: nowrap; }
+body.nk-float-controls .controls select { flex-shrink: 0; }
+
+/* ================================================================
+   Non-essential items — hidden in the compact floating bar.
+   Loop controls are dev scaffolding; deferred to normal-mode use.
+   action-note and btn-skip are low-priority on mobile.
+   ================================================================ */
+
+body.nk-float-controls .action-note    { display: none; }
+body.nk-float-controls .btn-skip       { display: none; }
+body.nk-float-controls .loop-controls  { display: none; }
+
+/* ================================================================
+   Portrait phone (≤ 600px) — tighter horizontal padding on bar.
+   ================================================================ */
+
+@media (max-width: 600px) {
+  body.nk-float-controls .controls {
+    padding: 0 10px;
+  }
+}
+
+/* ================================================================
+   Fullscreen — the fixed progress-wrap and controls bar are in the
+   normal stacking context. When .score-card enters fullscreen the
+   browser elevates it to the top layer; fixed elements remain in
+   the page layer and are not visible inside fullscreen.
+   No extra rules needed — browser handles this correctly.
+   ================================================================ */

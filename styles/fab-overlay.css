@@ -1,0 +1,399 @@
+/* ================================================================
+   fab-overlay.css — MyKey SightPlay
+   Experimental True Floating Controls — FAB Overlay Mode
+
+   Activation:  const FAB_CONTROLS = true in index.html.
+                #btnFloatToggle in header also toggles at runtime.
+   Rollback:    set FAB_CONTROLS = false. No class added = no effect.
+   Full remove: delete this file + its <link> + #fabOverlay HTML +
+                FAB_CONTROLS block + _initFab() IIFE in index.html.
+
+   Architecture: all rules scoped to body.nk-fab-mode.
+   Viewport, transform math, fullscreen, keyboard: untouched.
+   Controls are true overlays — zero layout footprint.
+   ================================================================ */
+
+/* ================================================================
+   Geometry tokens
+   --fab-kb-h  : keyboard wrap height — set by JS after layout
+   --fab-bar-h : FAB pill bar height
+   ================================================================ */
+
+:root {
+  --fab-kb-h:  170px;   /* fallback; _syncKbHeight() overrides live */
+  --fab-bar-h:  48px;
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  :root {
+    --fab-bar-h: 40px;
+  }
+}
+
+/* ================================================================
+   Remove all flow-based chrome from layout
+   Notation (.score-card flex:1) becomes the sole vertical owner.
+   ================================================================ */
+
+body.nk-fab-mode header            { display: none; }
+body.nk-fab-mode .song-meta        { display: none; }
+body.nk-fab-mode .stage-strip      { display: none; }
+body.nk-fab-mode .progress-wrap    { display: none; }
+body.nk-fab-mode .controls         { display: none; }
+body.nk-fab-mode .status-bar       { display: none; }
+body.nk-fab-mode .viewport-controls { display: none; }
+
+/* Full viewport height — header (52px) is now removed */
+body.nk-fab-mode .app-body {
+  height: 100vh;
+  padding: 0;
+}
+
+/* Score card: edge-to-edge — no border or radius needed at edges */
+body.nk-fab-mode .score-card {
+  border-radius: 0;
+  border-top:   none;
+  border-left:  none;
+  border-right: none;
+}
+
+/* ================================================================
+   Header toggle button — active state when viewed from normal mode.
+   (Button is hidden when nk-fab-mode is on; this rule covers
+   the brief moment before class is applied on first toggle.)
+   ================================================================ */
+
+body.nk-fab-mode .fc-toggle-btn {
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+/* ================================================================
+   FAB overlay container — fixed full-viewport, transparent to input.
+   Children opt in to pointer events individually.
+   ================================================================ */
+
+.fab-overlay { display: none; }
+
+body.nk-fab-mode .fab-overlay {
+  display: block;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200;
+  pointer-events: none;   /* pass-through: score pan/zoom works beneath */
+}
+
+/* ================================================================
+   Progress strip — 3 px line pinned to viewport top
+   ================================================================ */
+
+.fab-progress {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--progress-track);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.fab-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--orange);
+  border-radius: 0 2px 2px 0;
+}
+
+.fab-progress:hover { height: 5px; }
+
+/* ================================================================
+   Song picker panel — appears above FAB bar on song-button tap
+   ================================================================ */
+
+.fab-song-panel {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--fab-kb-h) + var(--fab-bar-h) + 10px);
+  max-height: 38vh;
+  display: none;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+}
+
+.fab-song-panel.fab-panel-open { display: flex; }
+
+.fab-song-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.fab-song-panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.fab-song-list {
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fab-song-item {
+  display: block;
+  width: 100%;
+  padding: 11px 14px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.08s;
+}
+
+.fab-song-item:last-child { border-bottom: none; }
+
+.fab-song-item:hover,
+.fab-song-item.fab-song-active {
+  background: var(--surface2);
+  color: var(--orange);
+}
+
+/* ================================================================
+   FAB controls bar — compact pill floating above keyboard
+   ================================================================ */
+
+.fab-bar {
+  position: absolute;
+  bottom: calc(var(--fab-kb-h) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: var(--fab-bar-h);
+  padding: 0 12px;
+  pointer-events: auto;
+  background: var(--header-bg);
+  border: 1px solid var(--border2);
+  border-radius: 28px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.50);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+  max-width: calc(100vw - 32px);
+  user-select: none;
+}
+
+/* Generic icon button — circular, transparent base */
+.fab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fab-btn:hover:not(:disabled)  { background: rgba(255,255,255,0.07); color: var(--orange); }
+.fab-btn:active:not(:disabled) { background: rgba(255,255,255,0.13); }
+.fab-btn:disabled               { opacity: 0.28; cursor: default; }
+
+/* Primary play/pause — filled orange circle */
+.fab-main-btn {
+  width: 34px;
+  height: 34px;
+  background: var(--orange);
+  color: #000;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.fab-main-btn:hover:not(:disabled) { background: var(--orange-hover); color: #000; }
+.fab-main-btn:active:not(:disabled) { background: var(--orange-hover); }
+
+/* Song button */
+.fab-song-btn { font-size: 16px; color: var(--muted); }
+.fab-song-btn:hover:not(:disabled) { color: var(--blue); background: rgba(255,255,255,0.07); }
+.fab-song-btn.fab-song-open { color: var(--blue); }
+
+/* Exit button */
+.fab-exit-btn { font-size: 12px; color: var(--muted); }
+
+/* Close button inside song panel header */
+.fab-close-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+/* Separator */
+.fab-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 3px;
+}
+
+/* Tempo select — compact, styled to bar color */
+.fab-tempo-select {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  padding: 0 2px;
+  max-width: 76px;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ================================================================
+   Portrait phone (≤ 600px) — tighten bar
+   ================================================================ */
+
+@media (max-width: 600px) {
+  .fab-bar { padding: 0 10px; gap: 2px; }
+}
+
+/* ================================================================
+   Tools panel — appears above FAB bar on ⚙ button tap
+   ================================================================ */
+
+.fab-tools-panel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--fab-kb-h) + var(--fab-bar-h) + 10px);
+  min-width: 220px;
+  max-width: calc(100vw - 32px);
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+}
+
+.fab-tools-panel.fab-panel-open { display: flex; }
+
+.fab-tools-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.fab-tools-section:last-child { border-bottom: none; }
+
+.fab-tools-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  min-width: 32px;
+}
+
+.fab-tools-hand-group {
+  display: flex;
+  gap: 4px;
+}
+
+.fab-tools-hand-btn {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+}
+
+.fab-tools-hand-btn:hover {
+  background: rgba(255,255,255,0.07);
+  color: var(--text);
+  border-color: var(--border2);
+}
+
+.fab-tools-hand-btn.fab-tools-hand-active[data-clef="both"]   {
+  background: rgba(240,165,0,0.15);
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.fab-tools-hand-btn.fab-tools-hand-active[data-clef="treble"] {
+  background: rgba(91,200,245,0.15);
+  border-color: var(--rh-color, #5bc8f5);
+  color: var(--rh-color, #5bc8f5);
+}
+
+.fab-tools-hand-btn.fab-tools-hand-active[data-clef="bass"]   {
+  background: rgba(255,128,200,0.15);
+  border-color: var(--lh-color, #ff80c8);
+  color: var(--lh-color, #ff80c8);
+}
+
+.fab-tools-select {
+  flex: 1;
+  background: var(--surface2, var(--surface));
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tools button — ⚙ icon in FAB bar */
+.fab-tools-btn { font-size: 15px; color: var(--muted); }
+.fab-tools-btn:hover:not(:disabled) { color: var(--text); background: rgba(255,255,255,0.07); }
+.fab-tools-btn.fab-tools-open { color: var(--orange); }
+
+/* ================================================================
+   Fullscreen — fixed elements stay in the normal stacking context
+   and are not painted inside the fullscreen top-layer.
+   Browser handles this correctly; no extra rules needed.
+   ================================================================ */

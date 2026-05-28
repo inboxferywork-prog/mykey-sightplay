@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MyKey Music Labs</title>
+  <link rel="stylesheet" href="themes/base-ui.css">
+  <link rel="stylesheet" href="themes/children-fun.css">
+  <link rel="stylesheet" href="styles/mobile-layout.css">
+  <link rel="stylesheet" href="styles/float-controls.css">
+  <link rel="stylesheet" href="styles/fab-overlay.css">
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- Header                                                        -->
+<!-- ============================================================ -->
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-name">🎹 MyKey Music Labs</span>
+      <span class="brand-tagline">Sight Playing Education</span>
+    </div>
+    <div class="header-right">
+      <span class="header-label">Song:</span>
+      <select id="songSelect"></select>
+      <button id="btnFloatToggle" class="fc-toggle-btn" title="Toggle floating controls">⊡ Float</button>
+      <a href="authoring.html" id="authoringLink" title="Segment Authoring Tool">✏ Author</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- App body                                                      -->
+<!-- ============================================================ -->
+<div class="app-body">
+
+  <!-- Song meta -->
+  <div class="song-meta">
+    <span id="songTitle">Loading…</span>
+    <span class="meta-chip" id="metaBpm">— BPM</span>
+    <span class="meta-chip" id="metaTimeSig">—/—</span>
+    <span class="meta-chip" id="metaKey">key —</span>
+    <span class="meta-chip" id="metaBars">— bars</span>
+    <span class="meta-chip" id="metaLevel">—</span>
+  </div>
+
+  <!-- Stage strip — compact -->
+  <div class="stage-strip">
+    <div class="stage-badge">
+      <div class="stage-dot"></div>
+      <span class="stage-name">Stage 1 — Explore</span>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap" id="progressWrap">
+    <div id="progressFill"></div>
+  </div>
+
+  <!-- Controls — 2-row compact layout -->
+  <div class="controls">
+
+    <!-- Row 1: Primary actions + loop controls -->
+    <div class="action-row">
+      <button class="btn-primary" id="btnMain">▶ Start Explore</button>
+      <button class="btn-reset" id="btnReset" disabled>⏹ Reset</button>
+      <span class="tempo-label">Tempo</span>
+      <select id="tempoSelect" title="Tempo">
+        <option value="0.5000">🐌 Easy</option>
+        <option value="0.6250">🐢 Grave</option>
+        <option value="1.0000" selected>🚶 Andante</option>
+        <option value="1.3889">🚴 Moderato</option>
+      </select>
+
+      <!-- HAND filter — hidden for single-clef songs -->
+      <div class="control-group group-hand" id="learningRow" style="display:none">
+        <span class="group-label group-label-hand">Hand</span>
+        <select id="handSelect">
+          <option value="both">Both</option>
+          <option value="treble">RH</option>
+          <option value="bass">LH</option>
+        </select>
+      </div>
+
+      <span class="action-note" id="actionNote"></span>
+
+      <!-- PRACTICE PART — segments bar, shown only when song has segments -->
+      <div class="segments-bar control-group group-practice" id="segmentsBar" style="display:none"></div>
+
+      <!-- Loop controls (promoted to production UI) -->
+      <div class="loop-controls">
+        <span class="loop-label">Practice Part</span>
+        <button class="loop-btn" id="btnDevLoopSelect">☞ Select Loop</button>
+        <button class="loop-btn" id="btnDevLoopRepeat" disabled>↺ Repeat</button>
+        <button class="loop-btn" id="btnDevLoopClear" disabled>✕ Clear</button>
+        <span class="loop-status" id="devLoopStatus">no loop</span>
+      </div>
+
+      <button class="btn-skip" id="btnSkip">Skip → Stage 2</button>
+      <!-- Dev preset — hidden, kept for JS binding -->
+      <button id="btnDevLoop1" style="display:none" aria-hidden="true">Bars 5–6</button>
+    </div>
+
+  </div>
+
+  <!-- Score card — viewport layer wraps renderer output -->
+  <div class="score-card has-viewport">
+    <div id="notation-viewport">
+      <div id="notation-camera">
+        <div id="score">
+          <div class="score-loading">Loading notation…</div>
+        </div>
+      </div>
+    </div>
+    <!-- Viewport controls overlay — zoom, fit-width, fullscreen -->
+    <div class="viewport-controls" id="vpControls">
+      <button class="vp-btn vp-active" id="btnVpFitWidth" title="Fit Width">↔</button>
+      <div class="vp-sep"></div>
+      <button class="vp-btn" id="btnVpZoomOut" title="Zoom Out">−</button>
+      <span class="vp-scale-label" id="vpScaleLabel">100%</span>
+      <button class="vp-btn" id="btnVpZoomIn" title="Zoom In">+</button>
+      <div class="vp-sep"></div>
+      <button class="vp-btn" id="btnVpReset" title="Reset Zoom">1×</button>
+      <button class="vp-btn" id="btnVpFullscreen" title="Fullscreen">⛶</button>
+    </div>
+  </div>
+
+  <!-- Status bar — compact playback info -->
+  <div class="status-bar">
+    <span class="status-item">
+      <span class="status-lbl">Bar</span>
+      <span class="status-val" id="statusBarNum">—</span>
+    </span>
+    <span class="status-sep">·</span>
+    <span class="status-item">
+      <span class="status-lbl">Time</span>
+      <span class="status-val" id="timeDisplay">0:00 / 0:00</span>
+    </span>
+    <span class="seg-mode-badge" id="segModeBadge" style="margin-left:4px;"></span>
+  </div>
+
+  <!-- Keyboard visualization -->
+  <div class="kb-wrap">
+    <div class="kb-header">
+      <span class="kb-header-label">Piano</span>
+      <span class="kb-notename">
+        <select id="noteNameMode">
+          <option value="letter">Letter (C D E)</option>
+          <option value="solfege">Solfège (Do Re Mi)</option>
+          <option value="number">Numbers (1 2 3)</option>
+        </select>
+      </span>
+    </div>
+    <div id="keyboardEl"></div>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- FAB Overlay — experimental true floating controls           -->
+<!-- Visible only in body.nk-fab-mode. Zero layout footprint.  -->
+<!-- ============================================================ -->
+<div id="fabOverlay" class="fab-overlay" aria-hidden="true">
+
+  <!-- Thin progress strip at viewport top -->
+  <div class="fab-progress" id="fabProgressWrap">
+    <div class="fab-progress-fill" id="fabProgressFill"></div>
+  </div>
+
+  <!-- Song picker panel (shown/hidden by song button) -->
+  <div class="fab-song-panel" id="fabSongPanel" aria-hidden="true">
+    <div class="fab-song-panel-header">
+      <span class="fab-song-panel-title">Select Song</span>
+      <button class="fab-btn fab-close-btn" id="fabSongClose" title="Close">×</button>
+    </div>
+    <div class="fab-song-list" id="fabSongList"></div>
+  </div>
+
+  <!-- Tools panel (shown/hidden by ⚙ button) -->
+  <div class="fab-tools-panel" id="fabToolsPanel" aria-hidden="true">
+    <div class="fab-tools-section" id="fabHandSection">
+      <span class="fab-tools-label">Hand</span>
+      <div class="fab-tools-hand-group">
+        <button class="fab-tools-hand-btn" data-clef="both">Both</button>
+        <button class="fab-tools-hand-btn" data-clef="treble">RH</button>
+        <button class="fab-tools-hand-btn" data-clef="bass">LH</button>
+      </div>
+    </div>
+    <div class="fab-tools-section" id="fabPartSection" style="display:none">
+      <span class="fab-tools-label">Part</span>
+      <select id="fabPartSelect" class="fab-tools-select"></select>
+    </div>
+  </div>
+
+  <!-- Compact floating controls pill above keyboard -->
+  <div class="fab-bar" id="fabBar">
+    <button class="fab-btn fab-song-btn" id="fabSongBtn" title="Select Song">♪</button>
+    <div class="fab-sep"></div>
+    <button class="fab-btn fab-main-btn" id="fabBtnMain" title="Play / Pause">▶</button>
+    <button class="fab-btn fab-reset-btn" id="fabBtnReset" title="Reset" disabled>⏹</button>
+    <div class="fab-sep"></div>
+    <select class="fab-tempo-select" id="fabTempoSelect" title="Tempo">
+      <option value="0.5000">🐌 Easy</option>
+      <option value="0.6250">🐢 Grave</option>
+      <option value="1.0000" selected>🚶 Normal</option>
+      <option value="1.3889">🚴 Fast</option>
+    </select>
+    <div class="fab-sep"></div>
+    <button class="fab-btn fab-tools-btn" id="fabToolsBtn" title="Hand &amp; Part">⚙</button>
+    <button class="fab-btn fab-exit-btn" id="fabExitBtn" title="Exit compact mode">⊠</button>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- ============================================================ -->
+<!-- Scripts                                                       -->
+<!-- Load order: VexFlow UMD (sets window.VexFlow) → Vex bridge   -->
+<!-- → runtime-engine → notation-renderer → app code              -->
+<!-- ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.js"></script>
+<script>window.Vex = { Flow: window.VexFlow };</script>
+<script src="src/runtime-engine.js"></script>
+<script src="src/notation-renderer.js"></script>
+<script src="src/viewport-manager.js"></script>
+<script src="src/landscape-coordinator.js"></script>
+<script src="src/reading-window.js"></script>
+<script src="src/learning-state.js"></script>
+<script src="src/keyboard-viz.js"></script>
+<script src="src/song-loader.js"></script>
+<script src="src/practice-loop.js"></script>
+<script>
+'use strict';
+
+// -----------------------------------------------------------------------
+// Experimental: true floating overlay (FAB) mode — notation-first.
+// Set to false to revert to normal flow-based layout.
+// #btnFloatToggle in the header also toggles at runtime.
+// -----------------------------------------------------------------------
+const FAB_CONTROLS = true;
+if (FAB_CONTROLS) document.body.classList.add('nk-fab-mode');
+
+// Previous float-controls experiment (repositioned in flow) — disabled.
+const FLOAT_CONTROLS = false;
+if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
+
+// -----------------------------------------------------------------------
+// Engine instances — created once (SPEC §3.3: one engine, one responsibility)
+// -----------------------------------------------------------------------
+const runtime       = new RuntimeEngine();
+const renderer      = new NotationRenderer();
+const learningState = new LearningModeState();
+const keyboardViz   = new KeyboardViz();
+
+// ViewportManager — presentation layer only. Isolated from runtime + renderer internals.
+// Manages zoom, pan, fullscreen, orientation for the notation viewport.
+const viewportManager = new ViewportManager();
+viewportManager
+  .init(
+    document.getElementById('notation-viewport'),
+    document.getElementById('notation-camera')
+  )
+  .onFullscreenChange(_vpSyncFullscreenBtn);
+
+// LandscapeViewportCoordinator — manages orientation classes and rotation transition guard.
+// Additive layer: no coupling to renderer or runtime.
+const landscapeCoordinator = new LandscapeViewportCoordinator();
+landscapeCoordinator.init({
+  scoreCardEl: document.querySelector('.score-card'),
+  cameraEl:    document.getElementById('notation-camera'),
+  viewportManager,
+});
+
+// ContextAwareReadingWindow — calmer, anticipatory scroll behavior during playback.
+// Replaces renderer.scrollToBar() in the onEventEnter handler only.
+// Jump-to scrolls (segment nav, loop nav) still use renderer.scrollToBar().
+const readingWindow = new ContextAwareReadingWindow();
+readingWindow.init(document.getElementById('notation-viewport'));
+readingWindow.setViewportManager(viewportManager);  // enables orientation-reset on reframe
+
+// Composite scale callback — UI label + zoom-aware reading window update.
+// Wired here (after readingWindow init) so both consumers are available.
+// readingWindow.setViewportScale() adjusts effective dead zone and reading
+// position at higher zoom levels for earlier, calmer reframing (Task 2B).
+viewportManager.onScaleChange(s => {
+  _vpUpdateScaleLabel(s);
+  readingWindow.setViewportScale(s);
+});
+
+// Practice loop — runtime-only, session-scoped. Completely separate from
+// learning_segments (authored curriculum). See src/practice-loop.js.
+const practiceLoop  = new PracticeLoop();
+
+// Loop selection interaction state — interaction layer only, no semantic authority.
+// mode: 'off' | 'selecting'   startId: event ID of first clicked note (or null)
+const _loopSelect = { mode: 'off', startId: null };
+
+// Attach keyboard visualization — builds initial DOM.
+keyboardViz.render(document.getElementById('keyboardEl'));
+
+// -----------------------------------------------------------------------
+// UI state
+// -----------------------------------------------------------------------
+let currentSong        = null;   // loaded song.json object
+let currentTempoScale  = 1.0;   // active multiplier (recomputed on song load)
+let uiState            = 'idle'; // 'idle' | 'playing' | 'paused' | 'ended'
+let lastBar            = -1;    // for scroll-to-bar on bar change
+let activeSegmentIndex = -1;    // -1 = no segment active; ≥0 = index in resolvedSegments
+
+// -----------------------------------------------------------------------
+// DOM refs
+// -----------------------------------------------------------------------
+const btnMain      = document.getElementById('btnMain');
+const btnReset     = document.getElementById('btnReset');
+const btnSkip      = document.getElementById('btnSkip');
+const progressFill = document.getElementById('progressFill');
+const progressWrap = document.getElementById('progressWrap');
+const timeDisplay  = document.getElementById('timeDisplay');
+const actionNote   = document.getElementById('actionNote');
+const scoreEl       = document.getElementById('score');
+const songSelect    = document.getElementById('songSelect');
+const segmentsBar   = document.getElementById('segmentsBar');
+const segModeBadge  = document.getElementById('segModeBadge');
+const learningRow   = document.getElementById('learningRow');
+
+// -----------------------------------------------------------------------
+// Song loader — fetch, engine init, meta display, parts bar
+// -----------------------------------------------------------------------
+const songLoader = new SongLoader({
+  runtime, renderer, learningState, keyboardViz,
+  elements: {
+    scoreEl,
+    songTitle:   document.getElementById('songTitle'),
+    metaBpm:     document.getElementById('metaBpm'),
+    metaTimeSig: document.getElementById('metaTimeSig'),
+    metaKey:     document.getElementById('metaKey'),
+    metaBars:    document.getElementById('metaBars'),
+    metaLevel:   document.getElementById('metaLevel'),
+  },
+  onBeforeLoad() {
+    _setUIState('idle');
+    actionNote.textContent = '';
+    lastBar = -1;
+    practiceLoop.deactivate();
+    _loopSelect.mode = 'off';
+    _loopSelect.startId = null;
+    scoreEl?.closest?.('.score-card')?.classList.remove('loop-selecting');
+    _syncDevLoopPanel();
+  },
+  onSuccess(data) {
+    currentSong = data;
+    _syncLearningControls();
+    _updateProgress(0);
+    _updateTime(0);
+    activeSegmentIndex = -1;
+    _rebuildSegmentsBar(songLoader.resolvedSegments);
+    _syncSegmentsBar();
+    _updateStatusBarNum(-1);
+    _applyNoteNameMode();
+    // Re-apply viewport mode after render to reset pan and confirm scale
+    if (viewportManager.isFitMode) viewportManager.fitWidth();
+    _vpUpdateScaleLabel(viewportManager.scale);
+  },
+  onTempoScaleUpdate(scale) { currentTempoScale = scale; },
+});
+
+// -----------------------------------------------------------------------
+// Explore Audio — minimal piano synth, Web Audio API
+// TEMP_MVP: replaced by example_audio MP3 when audio files available
+// -----------------------------------------------------------------------
+const _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function _audioResume() {
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+}
+
+function _noteToHz(name) {
+  const m = name.match(/^([A-G])(#{1,2}|b{1,2})?(\d+)$/);
+  if (!m) return null;
+  const steps = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  let semi = steps[m[1]];
+  const acc = m[2] || '';
+  if      (acc === '#')  semi += 1;
+  else if (acc === '##') semi += 2;
+  else if (acc === 'b')  semi -= 1;
+  else if (acc === 'bb') semi -= 2;
+  const midi = (parseInt(m[3]) + 1) * 12 + semi; // C4 = MIDI 60
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+// writtenDurationMs — the notated rhythmic value from song.json (duration_ms).
+//   Drives the timeline beat grid, highlight windows, and score layout.
+//   Must never change: altering it would shift the beat grid under the player.
+//
+// performedDurationMs — the audible sustain sent to the audio envelope.
+//   Articulation affects this value only. Score layout and timing are unaffected.
+//   Staccato: ~50% of written duration. Normal: full written duration.
+function _playNote(noteNames, writtenDurationMs, articulations) {
+  if (!noteNames || !noteNames.length) return;
+  const now = _audioCtx.currentTime;
+
+  const isStaccato = Array.isArray(articulations) && articulations.includes('staccato');
+  const performedDurationMs = isStaccato ? writtenDurationMs * 0.5 : writtenDurationMs;
+  const dur = Math.max(0.05, performedDurationMs / 1000);
+
+  const vol = 0.30 / Math.sqrt(noteNames.length); // chord compensation
+
+  noteNames.forEach(name => {
+    const freq = _noteToHz(name);
+    if (!freq) return;
+
+    const osc  = _audioCtx.createOscillator();
+    const gain = _audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(_audioCtx.destination);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(vol, now + 0.006);
+
+    if (isStaccato) {
+      // Sharp cutoff at performed duration — audibly detached.
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.06);
+      osc.start(now);
+      osc.stop(now + dur + 0.08);
+    } else {
+      // Piano-like envelope: fast attack, exponential decay + release.
+      gain.gain.exponentialRampToValueAtTime(vol * 0.4, now + 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.4);
+      osc.start(now);
+      osc.stop(now + dur + 0.5);
+    }
+  });
+}
+
+// -----------------------------------------------------------------------
+// Runtime → Interaction adapter → Renderer wiring
+// (ui-shell orchestration pattern, SPEC §3.4 + runtime-contract.md §11)
+//
+// Ownership layers (top → bottom):
+//   LearningModeState  — decides highlight style and audio gate (presentation)
+//   NotationRenderer   — applies SVG CSS class (visual only, no semantic authority)
+//   RuntimeEngine      — fires events at correct t_ms (timing authority, untouched)
+//
+// Layer 3 semantic contracts are frozen — do NOT add articulation, tie, slur,
+// or duration logic here. Those live in the renderer and learning-state only.
+// -----------------------------------------------------------------------
+runtime
+  .onEventEnter(ev => {
+    // 1. Bar scroll — always, regardless of clef filter (SPEC §5.4)
+    //    CONTRACT: onEventEnter fires BEFORE onEventExit within the same tick
+    //    (runtime-contract.md §4.5). This means at a bar boundary, the new bar's
+    //    first note ENTERS before the old bar's last note EXITS. Scroll is triggered
+    //    here (on enter) so it fires at the correct bar, not the departing bar.
+    //    If this ordering ever changed, the scroll would jump to the wrong bar.
+    if (ev.bar !== lastBar) {
+      lastBar = ev.bar;
+      readingWindow.scrollToBar(ev.bar, scoreEl);
+      _updateStatusBarNum(ev.bar);
+    }
+
+    // 2. SVG highlight — only for clefs active in current learning filter.
+    //    Inactive-clef events are not highlighted (no dim/ghost — clean visual focus).
+    //    renderer.render() always shows all notes regardless of this filter.
+    if (learningState.isClefActive(ev.clef)) {
+      renderer.highlight(ev.id, learningState.getHighlightStyle(ev));
+    }
+
+    // 3. Audio — learning state decides (rest / tie_stop / filtered clef → silent).
+    //    Articulation + tie semantics are preserved inside _playNote and learningState.
+    if (learningState.shouldPlayAudio(ev)) {
+      _playNote(ev.notes, ev.duration_ms, ev.articulations);
+    }
+
+    // 4. Keyboard highlight state — hook for future visual piano keyboard.
+    //    learningState updates _keyboardState and fires onKeyHighlight callback.
+    learningState.notifyEventEnter(ev);
+  })
+  .onEventExit(ev => {
+    // clearHighlight is always called; no-op if event was never highlighted.
+    renderer.clearHighlight(ev.id);
+    // Sync keyboard state for future keyboard component.
+    learningState.notifyEventExit(ev);
+  })
+  .onTimelineUpdate(t => {
+    _updateProgress(t);
+    _updateTime(t);
+  })
+  .onEnd(() => {
+    renderer.clearAll();  // scope ended — clear all remaining highlights
+    keyboardViz.clear();
+    // Auto-repeat: loop scope restarts after a brief pause so the boundary is perceptible.
+    // Does NOT affect learning_segments — repeat_enabled is loop-scoped state only.
+    if (practiceLoop.active && practiceLoop.repeat_enabled) {
+      lastBar = -1;
+      _updateProgress(0);
+      _updateTime(0);
+      setTimeout(() => {
+        if (!practiceLoop.active || !practiceLoop.repeat_enabled) { _setUIState('ended'); return; }
+        runtime.stop();
+        runtime.play({ start_ms: practiceLoop.start_ms, end_ms: practiceLoop.end_ms, tempoScale: currentTempoScale });
+        if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
+        _setUIState('playing');
+      }, 350);
+    } else {
+      _setUIState('ended');
+    }
+  });
+
+// -----------------------------------------------------------------------
+// Learning state wiring
+// -----------------------------------------------------------------------
+
+// Sync learning controls UI to current learningState.
+// Called on song load and whenever learningState fires onChange.
+function _syncLearningControls() {
+  // Always show the hand-filter row after a song loads
+  learningRow.style.display = '';
+
+  document.getElementById('handSelect').value = learningState.clefFilter;
+}
+
+// Fire _syncLearningControls whenever learningState changes (e.g. setClefFilter)
+learningState.onChange(() => _syncLearningControls());
+
+// Keyboard highlight hook — forward typed events to KeyboardViz presentation layer.
+// kh = { type: 'enter'|'exit'|'clear', notes, clef, color?, eventId? }
+learningState.onKeyHighlight(kh => keyboardViz.onHighlight(kh));
+
+// Hand-filter dropdown — change event updates the clef filter.
+learningRow.addEventListener('change', e => {
+  if (e.target.id !== 'handSelect') return;
+  learningState.setClefFilter(e.target.value);
+
+  // Re-render with active scope (loop > segment > full song) + new clef filter
+  if (currentSong) {
+    const seg = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
+    const clef = e.target.value;
+    const visibleClefs = clef === 'both' ? null : [clef];
+    // Loop viewport takes priority over segment scope for rendering
+    const visibleBars = practiceLoop.active ? practiceLoop.bars : (seg ? seg.bars : null);
+    renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs });
+    if (!practiceLoop.active && seg) _applyBeatDim(currentSong, seg);
+    const scrollBar = practiceLoop.active ? practiceLoop.start_bar : (seg ? seg.start_bar : null);
+    if (scrollBar != null) renderer.scrollToBar(scrollBar);
+  }
+});
+
+// Score click handler — resolves click → semantic event ID → loop selection.
+// Interaction layer only: no timing or semantic-layer authority.
+scoreEl.addEventListener('click', e => {
+  if (_loopSelect.mode !== 'selecting') return;
+  const noteEl = e.target.closest('[data-event-id]');
+  if (!noteEl || !currentSong) return;
+  const eventId = noteEl.dataset.eventId;
+
+  if (!_loopSelect.startId) {
+    // First click — mark start, wait for end click
+    _loopSelect.startId = eventId;
+    renderer.markLoopBoundary(eventId, 'start');
+    _syncDevLoopPanel();
+    _showToast('Click end note to complete the loop');
+  } else if (eventId !== _loopSelect.startId) {
+    // Second click — activate loop from the two event IDs
+    const startId = _loopSelect.startId;
+    _loopSelect.startId = null;
+    _loopSelect.mode = 'off';
+    scoreEl.closest('.score-card').classList.remove('loop-selecting');
+
+    try {
+      practiceLoop.activateFromEvents(startId, eventId, currentSong);
+    } catch (err) {
+      _showToast('Loop selection failed: ' + err.message);
+      _syncDevLoopPanel();
+      return;
+    }
+    _activatePracticeLoop(null);  // null: loop already activated above
+    // Re-add marks after render() rebuilt the DOM (render clears all SVG classes)
+    // Marks reflect user's click order; loop plays temporal order regardless
+    renderer.markLoopBoundary(startId, 'start');
+    renderer.markLoopBoundary(eventId, 'end');
+    _syncDevLoopPanel();
+    _showToast('Loop set · Press ▶ to play');
+  }
+});
+
+// -----------------------------------------------------------------------
+// Segment navigation — guided learning
+// -----------------------------------------------------------------------
+
+// Rebuild the segments bar DOM from the resolved segments array.
+// Shows the bar when segments exist; hides it otherwise.
+function _rebuildSegmentsBar(segments) {
+  segmentsBar.innerHTML = '';
+  if (!segments || !segments.length) {
+    segmentsBar.style.display = 'none';
+    return;
+  }
+  segmentsBar.style.display = 'flex';
+
+  const lbl = document.createElement('span');
+  lbl.className   = 'segment-label-tag';
+  lbl.textContent = 'Song Part';
+  segmentsBar.appendChild(lbl);
+
+  const sel = document.createElement('select');
+  sel.id        = 'segmentSelect';
+  sel.className = 'segment-select';
+
+  const allOpt       = document.createElement('option');
+  allOpt.value       = '-1';
+  allOpt.textContent = 'All';
+  sel.appendChild(allOpt);
+
+  segments.forEach((seg, i) => {
+    const opt       = document.createElement('option');
+    opt.value       = i;
+    opt.textContent = seg.label || seg.id || ('Part ' + (i + 1));
+    sel.appendChild(opt);
+  });
+
+  segmentsBar.appendChild(sel);
+}
+
+// Sync segment button states and the segment mode badge.
+function _syncSegmentsBar() {
+  const segments = songLoader.resolvedSegments;
+  const hasSeg   = activeSegmentIndex >= 0;
+
+  const sel = document.getElementById('segmentSelect');
+  if (sel) sel.value = String(activeSegmentIndex);
+
+  // Segment mode badge in stage strip
+  if (hasSeg) {
+    const seg = segments[activeSegmentIndex];
+    segModeBadge.textContent = seg.label ? 'Practice: ' + seg.label : '';
+    segModeBadge.classList.add('visible');
+  } else {
+    segModeBadge.textContent = '';
+    segModeBadge.classList.remove('visible');
+  }
+
+  // Keep idle-state button label in sync (segment change may not go through _setUIState)
+  if (uiState === 'idle') {
+    const _seg = hasSeg ? segments[activeSegmentIndex] : null;
+    btnMain.textContent = _seg ? ('▶ Practice ' + _seg.label) : '▶ Start Explore';
+  }
+}
+
+// Activate a segment by index. Stops playback, re-renders focused bars, scrolls to start.
+function _activateSegment(index) {
+  const segments = songLoader.resolvedSegments;
+  if (index < 0 || index >= segments.length) return;
+
+  const seg = segments[index];
+  activeSegmentIndex = index;
+
+  // Segment and part selection are mutually exclusive scopes
+  songLoader.setSelectedPart('');
+
+  // Stop playback cleanly before scope change
+  if (uiState === 'playing' || uiState === 'paused') {
+    runtime.stop();
+    renderer.clearAll();
+    keyboardViz.clear();
+    lastBar = -1;
+    _updateProgress(0);
+    _updateTime(0);
+    _setUIState('idle');
+  }
+
+  // Re-render score to show only this segment's bars, filtered by current clef setting
+  if (currentSong) {
+    const clef = learningState.clefFilter;
+    const visibleClefs = clef === 'both' ? null : [clef];
+    renderer.render(currentSong, scoreEl, { visibleBars: seg.bars, visibleClefs });
+    _applyBeatDim(currentSong, seg);
+  }
+
+  // Scroll to segment start bar
+  if (seg.start_bar != null) renderer.scrollToBar(seg.start_bar);
+
+  _syncSegmentsBar();
+}
+
+// Dim notes outside the active beat range — presentation-layer only, no renderer mutation.
+// First bar: dim events before start_beat. Last bar: dim events after end_beat.
+function _applyBeatDim(data, seg) {
+  if (!data) return;
+  const startBeat = seg.start_beat ?? 1;
+  const endBeat   = seg.end_beat   ?? 1;
+
+  if (startBeat > 1) {
+    const bar = data.score.bars.find(b => b.bar === seg.start_bar);
+    if (bar) {
+      (bar.beats || []).forEach(ev => {
+        if (ev.beat < startBeat) renderer.dimEvent(ev.id);
+      });
+    }
+  }
+
+  if (endBeat > 1) {
+    const bar = data.score.bars.find(b => b.bar === seg.end_bar);
+    if (bar) {
+      (bar.beats || []).forEach(ev => {
+        if (ev.beat > endBeat) renderer.dimEvent(ev.id);
+      });
+    }
+  }
+}
+
+// Deactivate segment mode — return to full-song state.
+function _deactivateSegment() {
+  activeSegmentIndex = -1;
+
+  // Re-render full score (all bars, current clef filter still applies)
+  if (currentSong) {
+    const clef = learningState.clefFilter;
+    const visibleClefs = clef === 'both' ? null : [clef];
+    renderer.render(currentSong, scoreEl, { visibleClefs });  // no visibleBars = all bars
+  }
+
+  _syncSegmentsBar();
+}
+
+// -----------------------------------------------------------------------
+// Practice loop activation — runtime viewport, isolated from learning_segments
+// -----------------------------------------------------------------------
+
+// Activate a practice loop viewport. Stops current playback, re-renders to loop bars.
+// params: bar-based options passed to practiceLoop.activate(), OR null if the caller
+//   has already activated the loop via practiceLoop.activateFromEvents() / .activate().
+// Does NOT modify activeSegmentIndex, songLoader.resolvedSegments, or song.json.
+function _activatePracticeLoop(params) {
+  if (!currentSong) return;
+  if (params) practiceLoop.activate(params, currentSong);
+  if (!practiceLoop.active) return;
+
+  if (uiState === 'playing' || uiState === 'paused') {
+    runtime.stop();
+    renderer.clearAll();
+    keyboardViz.clear();
+    lastBar = -1;
+    _updateProgress(0);
+    _updateTime(0);
+    _setUIState('idle');
+  }
+
+  // Respect current clef filter unless loop specifies its own visible_clefs
+  const visibleClefs = practiceLoop.visible_clefs
+    || (learningState.clefFilter !== 'both' ? [learningState.clefFilter] : null);
+  renderer.render(currentSong, scoreEl, { visibleBars: practiceLoop.bars, visibleClefs });
+  if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
+
+  _updateProgress(0);
+  _updateTime(0);
+}
+
+// Deactivate the loop and restore the previous scope (active segment or full song).
+// Segment selection is preserved — practiceLoop does not own activeSegmentIndex.
+function _deactivatePracticeLoop() {
+  if (uiState === 'playing' || uiState === 'paused') {
+    runtime.stop();
+    renderer.clearAll();
+    keyboardViz.clear();
+    lastBar = -1;
+    _setUIState('idle');
+  }
+
+  practiceLoop.deactivate();
+
+  if (!currentSong) return;
+
+  const seg = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
+  const clef = learningState.clefFilter;
+  const visibleClefs = clef === 'both' ? null : [clef];
+
+  if (seg) {
+    renderer.render(currentSong, scoreEl, { visibleBars: seg.bars, visibleClefs });
+    _applyBeatDim(currentSong, seg);
+    if (seg.start_bar != null) renderer.scrollToBar(seg.start_bar);
+  } else {
+    renderer.render(currentSong, scoreEl, { visibleClefs });
+  }
+
+  _updateProgress(0);
+  _updateTime(0);
+  _syncSegmentsBar();
+}
+
+// Segments dropdown — change event selects or clears the active segment.
+segmentsBar.addEventListener('change', e => {
+  if (e.target.id !== 'segmentSelect') return;
+  const idx = parseInt(e.target.value);
+  if (idx < 0) _deactivateSegment();
+  else _activateSegment(idx);
+});
+
+// -----------------------------------------------------------------------
+// Progress + time display
+// -----------------------------------------------------------------------
+function _updateProgress(t) {
+  const start = runtime.scopeStart;
+  const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
+  const range = end - start;
+  const pct   = range > 0 ? ((t - start) / range) * 100 : 0;
+  progressFill.style.width = Math.min(100, Math.max(0, pct)).toFixed(2) + '%';
+}
+
+function _updateTime(t) {
+  const start = runtime.scopeStart;
+  const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
+  const cur   = Math.max(0, t - start);
+  const tot   = Math.max(0, end - start);
+  const fmt   = ms => {
+    const s = Math.floor(ms / 1000);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  };
+  timeDisplay.textContent = fmt(cur) + ' / ' + fmt(tot);
+}
+
+// -----------------------------------------------------------------------
+// UI state machine
+// -----------------------------------------------------------------------
+function _setUIState(state) {
+  uiState = state;
+  switch (state) {
+    case 'idle': {
+      const _idleSeg = activeSegmentIndex >= 0 ? songLoader?.resolvedSegments?.[activeSegmentIndex] : null;
+      btnMain.textContent = _idleSeg ? ('▶ Practice ' + _idleSeg.label) : '▶ Start Explore';
+      btnMain.disabled    = false;
+      btnReset.disabled   = true;
+      actionNote.textContent = '';
+      break;
+    }
+    case 'playing':
+      btnMain.textContent = '⏸ Pause';
+      btnMain.disabled    = false;
+      btnReset.disabled   = false;
+      actionNote.textContent = '';
+      break;
+    case 'paused':
+      btnMain.textContent = '▶ Resume';
+      btnMain.disabled    = false;
+      btnReset.disabled   = false;
+      actionNote.textContent = '';
+      break;
+    case 'ended':
+      btnMain.textContent    = '↺ Replay';
+      btnMain.disabled       = false;
+      btnReset.disabled      = false;
+      actionNote.textContent = '✓ Explore complete!';
+      break;
+  }
+}
+
+// -----------------------------------------------------------------------
+// Button handlers
+// -----------------------------------------------------------------------
+
+// Main button: Start / Pause / Resume / Replay
+btnMain.onclick = () => {
+  _audioResume();  // browser autoplay policy: resume AudioContext on user gesture
+  if (uiState === 'idle') {
+    lastBar = -1;
+    // Loop scope overrides segment scope — authored learning_segments are NOT modified.
+    if (practiceLoop.active) {
+      runtime.play({ start_ms: practiceLoop.start_ms, end_ms: practiceLoop.end_ms, tempoScale: currentTempoScale });
+      if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
+    } else {
+      const seg = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
+      if (seg) {
+        // Segment-scoped play — null end_ms means play to song end (Infinity)
+        runtime.play({ start_ms: seg.start_ms, end_ms: seg.end_ms ?? Infinity, tempoScale: currentTempoScale });
+        if (seg.start_bar != null) renderer.scrollToBar(seg.start_bar);
+      } else {
+        const partId = songLoader.selectedPart || undefined;
+        runtime.play({ partId, tempoScale: currentTempoScale });
+      }
+    }
+    _setUIState('playing');
+
+  } else if (uiState === 'playing') {
+    runtime.pause();
+    _setUIState('paused');
+
+  } else if (uiState === 'paused') {
+    // Resume — runtime.play() from paused preserves position (per runtime-contract §3)
+    runtime.play({ tempoScale: currentTempoScale });
+    _setUIState('playing');
+
+  } else if (uiState === 'ended') {
+    // Replay — stop() resets engine to idle, then play() fresh start
+    runtime.stop();
+    renderer.clearAll();  // stop() does not fire exits
+    keyboardViz.clear();
+    lastBar = -1;
+    if (practiceLoop.active) {
+      runtime.play({ start_ms: practiceLoop.start_ms, end_ms: practiceLoop.end_ms, tempoScale: currentTempoScale });
+      if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
+    } else {
+      const seg = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
+      if (seg) {
+        runtime.play({ start_ms: seg.start_ms, end_ms: seg.end_ms ?? Infinity, tempoScale: currentTempoScale });
+        if (seg.start_bar != null) renderer.scrollToBar(seg.start_bar);
+      } else {
+        const partId = songLoader.selectedPart || undefined;
+        runtime.play({ partId, tempoScale: currentTempoScale });
+      }
+    }
+    _setUIState('playing');
+  }
+};
+
+// Reset — always goes back to idle
+btnReset.onclick = () => {
+  runtime.stop();
+  renderer.clearAll();  // stop() does not fire exits
+  keyboardViz.clear();
+  lastBar = -1;
+  _updateProgress(0);
+  _updateTime(0);
+  _updateStatusBarNum(-1);
+  _setUIState('idle');
+};
+
+// Tempo select
+document.getElementById('tempoSelect').onchange = function() {
+  const scale = parseFloat(this.value);
+  if (isNaN(scale)) return;
+  currentTempoScale = scale;
+  runtime.setTempo(currentTempoScale);
+};
+
+// Song select
+songSelect.onchange = e => songLoader.load(e.target.value);
+
+// Progress bar click → seek (only from playing or paused)
+progressWrap.onclick = e => {
+  if (uiState !== 'playing' && uiState !== 'paused') return;
+  const rect  = progressWrap.getBoundingClientRect();
+  const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const start = runtime.scopeStart;
+  const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
+  // seek() fires onEventExit for active events before repositioning (renderer clears via callback)
+  runtime.seek(start + pct * (end - start));
+};
+
+// Skip → Stage 2 (not yet implemented — CP2)
+btnSkip.onclick = () => {
+  _showToast('Stage 2 — Recognize will be available in Checkpoint 2.');
+};
+
+// -----------------------------------------------------------------------
+// Toast helper
+// -----------------------------------------------------------------------
+function _showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// -----------------------------------------------------------------------
+// Dev loop controls — temporary developer scaffolding
+// Verifies PracticeLoop state is isolated from learning_segments.
+// Remove before production deployment.
+// -----------------------------------------------------------------------
+
+function _syncDevLoopPanel() {
+  const statusEl  = document.getElementById('devLoopStatus');
+  const clearBtn  = document.getElementById('btnDevLoopClear');
+  const repeatBtn = document.getElementById('btnDevLoopRepeat');
+  const selectBtn = document.getElementById('btnDevLoopSelect');
+
+  if (statusEl) {
+    if (_loopSelect.mode === 'selecting') {
+      statusEl.textContent = _loopSelect.startId ? 'click end note…' : 'click start note…';
+    } else if (practiceLoop.active) {
+      statusEl.textContent = 'active: bars ' + practiceLoop.start_bar + '–' + practiceLoop.end_bar;
+    } else {
+      statusEl.textContent = 'inactive';
+    }
+  }
+
+  if (clearBtn) clearBtn.disabled = !practiceLoop.active;
+
+  if (repeatBtn) {
+    repeatBtn.disabled    = !practiceLoop.active;
+    repeatBtn.textContent = practiceLoop.repeat_enabled ? '↺ Repeat ON' : '↺ Repeat';
+    repeatBtn.style.color = practiceLoop.repeat_enabled ? '#7ec87e' : '#4a7a4a';
+  }
+
+  if (selectBtn) {
+    const isSelecting = _loopSelect.mode === 'selecting';
+    selectBtn.textContent   = isSelecting ? '× Cancel' : '☞ Select';
+    selectBtn.style.color   = isSelecting ? '#e07878' : '#4a7a4a';
+    selectBtn.style.borderColor = isSelecting ? '#3a2a2a' : '#2a3a2a';
+  }
+}
+
+document.getElementById('btnDevLoop1').onclick = () => {
+  if (!currentSong) { _showToast('No song loaded'); return; }
+  _activatePracticeLoop({ start_bar: 5, start_beat: 1, end_bar: 7, end_beat: 1 });
+  _syncDevLoopPanel();
+};
+
+document.getElementById('btnDevLoopSelect').onclick = () => {
+  if (_loopSelect.mode === 'selecting') {
+    // Cancel — remove any partial selection mark, exit mode
+    _loopSelect.mode = 'off';
+    _loopSelect.startId = null;
+    scoreEl.closest('.score-card').classList.remove('loop-selecting');
+    renderer.clearLoopMarks();
+  } else {
+    // Enter event-based selection mode
+    _loopSelect.mode = 'selecting';
+    _loopSelect.startId = null;
+    scoreEl.closest('.score-card').classList.add('loop-selecting');
+    _showToast('Click start note to begin loop selection');
+  }
+  _syncDevLoopPanel();
+};
+
+document.getElementById('btnDevLoopRepeat').onclick = function () {
+  if (!practiceLoop.active) return;
+  practiceLoop.repeat_enabled = !practiceLoop.repeat_enabled;
+  _syncDevLoopPanel();
+};
+
+document.getElementById('btnDevLoopClear').onclick = () => {
+  // Also exit any active selection mode
+  _loopSelect.mode = 'off';
+  _loopSelect.startId = null;
+  scoreEl.closest('.score-card').classList.remove('loop-selecting');
+  practiceLoop.repeat_enabled = false;
+  _deactivatePracticeLoop();
+  _syncDevLoopPanel();
+};
+
+// -----------------------------------------------------------------------
+// Note Name Mode — presentation-layer display mapping (Task 5)
+// Maps keyboard note labels to Letter / Solfège / Numbers.
+// Runtime-only: does NOT touch MIDI data, playback, or renderer semantics.
+// -----------------------------------------------------------------------
+
+let _noteNameMode = 'letter';
+
+const _SOLFEGE = ['Do','Do♯','Re','Re♯','Mi','Fa','Fa♯','Sol','Sol♯','La','La♯','Si'];
+const _NUMBERS  = ['1','1♯','2','2♯','3','4','4♯','5','5♯','6','6♯','7'];
+
+function _noteToSemi(letterName) {
+  const m = letterName.match(/^([A-G])(#{1,2}|b{1,2})?/);
+  if (!m) return -1;
+  const steps = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  let s = steps[m[1]] || 0;
+  if (m[2]) {
+    if (m[2][0] === '#') s += m[2].length;
+    else if (m[2][0] === 'b') s -= m[2].length;
+  }
+  return ((s % 12) + 12) % 12;
+}
+
+function _applyNoteNameMode() {
+  const mode = _noteNameMode;
+  document.querySelectorAll('.nk-kb-note-label').forEach(lbl => {
+    if (!lbl.dataset.origName) lbl.dataset.origName = lbl.textContent;
+    const semi = _noteToSemi(lbl.dataset.origName);
+    if (semi < 0) return;
+    if (mode === 'solfege')     lbl.textContent = _SOLFEGE[semi];
+    else if (mode === 'number') lbl.textContent = _NUMBERS[semi];
+    else                        lbl.textContent = lbl.dataset.origName;
+  });
+}
+
+const _noteNameModeEl = document.getElementById('noteNameMode');
+if (_noteNameModeEl) {
+  _noteNameModeEl.addEventListener('change', e => {
+    _noteNameMode = e.target.value;
+    _applyNoteNameMode();
+  });
+}
+
+// -----------------------------------------------------------------------
+// Status bar — bar number updater (Task 6)
+// -----------------------------------------------------------------------
+
+function _updateStatusBarNum(bar) {
+  const el = document.getElementById('statusBarNum');
+  if (el) el.textContent = (bar != null && bar >= 0) ? String(bar) : '—';
+}
+
+// -----------------------------------------------------------------------
+// Viewport controls wiring
+// ViewportManager owns all transform state. These buttons are purely UI.
+// -----------------------------------------------------------------------
+
+function _vpUpdateScaleLabel(scale) {
+  const el = document.getElementById('vpScaleLabel');
+  if (el) el.textContent = Math.round(scale * 100) + '%';
+}
+
+function _vpSyncFitBtn() {
+  const btn = document.getElementById('btnVpFitWidth');
+  if (btn) btn.classList.toggle('vp-active', viewportManager.isFitMode);
+}
+
+function _vpSyncFullscreenBtn() {
+  const btn = document.getElementById('btnVpFullscreen');
+  if (!btn) return;
+  const isFS = viewportManager.isFullscreen;
+  btn.classList.toggle('vp-active', isFS);
+  btn.title = isFS ? 'Exit Fullscreen' : 'Fullscreen';
+}
+
+document.getElementById('btnVpFitWidth').onclick = () => {
+  viewportManager.fitWidth();
+  _vpSyncFitBtn();
+};
+
+document.getElementById('btnVpZoomIn').onclick = () => {
+  viewportManager.zoomIn();
+  _vpSyncFitBtn();
+};
+
+document.getElementById('btnVpZoomOut').onclick = () => {
+  viewportManager.zoomOut();
+  _vpSyncFitBtn();
+};
+
+document.getElementById('btnVpReset').onclick = () => {
+  viewportManager.resetZoom();
+  _vpSyncFitBtn();
+};
+
+document.getElementById('btnVpFullscreen').onclick = () => {
+  viewportManager.toggleFullscreen();
+};
+
+// Apply fit-width on initial load so mobile portrait gets a readable scale immediately.
+viewportManager.fitWidth();
+_vpUpdateScaleLabel(viewportManager.scale);
+
+// FAB mode toggle — header button enters compact notation-first mode.
+// Exit is via the ⊠ button inside the FAB bar itself.
+document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
+  document.body.classList.toggle('nk-fab-mode');
+  if (viewportManager.isFitMode) viewportManager.fitWidth();
+  _vpUpdateScaleLabel(viewportManager.scale);
+});
+
+// -----------------------------------------------------------------------
+// FAB overlay wiring — proxy + MutationObserver pattern.
+// Existing functions and variables are NOT modified; this block only
+// observes them and mirrors state to the overlay elements.
+// Disable: set FAB_CONTROLS = false at top of script.
+// -----------------------------------------------------------------------
+(function _initFab() {
+  // Only wire when the class was added on page load. The toggle button
+  // can later add/remove the class dynamically; observers remain active.
+  const fabBtnMain    = document.getElementById('fabBtnMain');
+  const fabBtnReset   = document.getElementById('fabBtnReset');
+  const fabTempoSel   = document.getElementById('fabTempoSelect');
+  const fabProgressWr = document.getElementById('fabProgressWrap');
+  const fabProgressFl = document.getElementById('fabProgressFill');
+  const fabSongPanel  = document.getElementById('fabSongPanel');
+  const fabSongList   = document.getElementById('fabSongList');
+  const fabSongBtn    = document.getElementById('fabSongBtn');
+  const fabSongClose  = document.getElementById('fabSongClose');
+  const fabExitBtn    = document.getElementById('fabExitBtn');
+  const origTempoSel  = document.getElementById('tempoSelect');
+
+  if (!fabBtnMain) return;  // overlay not in DOM
+
+  // --- Proxy clicks to original handlers ---
+  fabBtnMain.onclick  = () => btnMain.onclick?.();
+  fabBtnReset.onclick = () => btnReset.onclick?.();
+
+  fabExitBtn.onclick = () => {
+    document.body.classList.remove('nk-fab-mode');
+    if (viewportManager.isFitMode) viewportManager.fitWidth();
+    _vpUpdateScaleLabel(viewportManager.scale);
+  };
+
+  // --- Tempo: mirror original select ---
+  fabTempoSel.value = origTempoSel?.value || '1.0000';
+  fabTempoSel.onchange = function() {
+    if (origTempoSel) origTempoSel.value = this.value;
+    origTempoSel?.dispatchEvent(new Event('change'));
+  };
+
+  // --- Progress bar seek ---
+  fabProgressWr.addEventListener('click', e => {
+    if (uiState !== 'playing' && uiState !== 'paused') return;
+    const rect  = fabProgressWr.getBoundingClientRect();
+    const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const start = runtime.scopeStart;
+    const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
+    runtime.seek(start + pct * (end - start));
+  });
+
+  // --- MutationObservers: keep FAB state mirrored ---
+
+  // Main button label + disabled state
+  const _syncMain = () => {
+    const t = btnMain.textContent.trim();
+    fabBtnMain.textContent = t.startsWith('⏸') ? '⏸' : '▶';
+    fabBtnMain.disabled    = btnMain.disabled;
+  };
+  _syncMain();
+  new MutationObserver(_syncMain).observe(btnMain, {
+    childList: true, subtree: true, characterData: true, attributes: true,
+  });
+
+  // Reset button disabled state
+  const _syncReset = () => { fabBtnReset.disabled = btnReset.disabled; };
+  _syncReset();
+  new MutationObserver(_syncReset).observe(btnReset, {
+    attributes: true, attributeFilter: ['disabled'],
+  });
+
+  // Progress fill width
+  new MutationObserver(() => {
+    fabProgressFl.style.width = progressFill.style.width;
+  }).observe(progressFill, { attributes: true, attributeFilter: ['style'] });
+
+  // --- Song picker ---
+  function _fabBuildSongList() {
+    fabSongList.innerHTML = '';
+    const current = songSelect.value;
+    Array.from(songSelect.options).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'fab-song-item' + (opt.value === current ? ' fab-song-active' : '');
+      btn.textContent = opt.textContent;
+      btn.onclick = () => {
+        songSelect.value = opt.value;
+        songSelect.dispatchEvent(new Event('change'));
+        _fabClosePanel();
+      };
+      fabSongList.appendChild(btn);
+    });
+  }
+
+  function _fabClosePanel() {
+    fabSongPanel.classList.remove('fab-panel-open');
+    fabSongPanel.setAttribute('aria-hidden', 'true');
+    fabSongBtn.classList.remove('fab-song-open');
+  }
+
+  fabSongBtn.onclick = () => {
+    if (fabSongPanel.classList.contains('fab-panel-open')) {
+      _fabClosePanel();
+    } else {
+      _fabBuildSongList();
+      fabSongPanel.classList.add('fab-panel-open');
+      fabSongPanel.setAttribute('aria-hidden', 'false');
+      fabSongBtn.classList.add('fab-song-open');
+    }
+  };
+  fabSongClose.onclick = _fabClosePanel;
+
+  // ---- Tools panel (hand + part selection) --------------------------------
+
+  const fabToolsBtn   = document.getElementById('fabToolsBtn');
+  const fabToolsPanel = document.getElementById('fabToolsPanel');
+  const fabPartSect   = document.getElementById('fabPartSection');
+  const fabPartSel    = document.getElementById('fabPartSelect');
+  const fabHandBtns   = Array.from(document.querySelectorAll('#fabHandSection .fab-tools-hand-btn'));
+  const origHandSel   = document.getElementById('handSelect');
+
+  function _fabCloseTools() {
+    fabToolsPanel.classList.remove('fab-panel-open');
+    fabToolsPanel.setAttribute('aria-hidden', 'true');
+    fabToolsBtn.classList.remove('fab-tools-open');
+  }
+
+  function _fabSyncHandBtns() {
+    const val = origHandSel?.value || 'both';
+    fabHandBtns.forEach(b => {
+      b.classList.toggle('fab-tools-hand-active', b.dataset.clef === val);
+    });
+  }
+
+  function _fabSyncPart() {
+    const origSeg = document.getElementById('segmentSelect');
+    if (!origSeg) {
+      fabPartSect.style.display = 'none';
+      return;
+    }
+    fabPartSect.style.display = '';
+    fabPartSel.innerHTML = origSeg.innerHTML;
+    fabPartSel.value = origSeg.value;
+  }
+
+  _fabSyncHandBtns();
+  _fabSyncPart();
+
+  fabHandBtns.forEach(btn => {
+    btn.onclick = () => {
+      if (origHandSel) {
+        origHandSel.value = btn.dataset.clef;
+        origHandSel.dispatchEvent(new Event('change'));
+      }
+      _fabSyncHandBtns();
+    };
+  });
+
+  fabPartSel.onchange = function() {
+    const origSeg = document.getElementById('segmentSelect');
+    if (origSeg) {
+      origSeg.value = this.value;
+      origSeg.dispatchEvent(new Event('change'));
+    }
+  };
+
+  if (origHandSel) {
+    origHandSel.addEventListener('change', _fabSyncHandBtns);
+  }
+
+  // Re-sync part select when segmentsBar changes (song load builds/removes it)
+  const segmentsBarEl = document.getElementById('segmentsBar');
+  if (segmentsBarEl) {
+    new MutationObserver(_fabSyncPart).observe(segmentsBarEl, { childList: true, subtree: true });
+  }
+
+  fabToolsBtn.onclick = () => {
+    if (fabToolsPanel.classList.contains('fab-panel-open')) {
+      _fabCloseTools();
+    } else {
+      _fabSyncHandBtns();
+      _fabSyncPart();
+      _fabClosePanel();  // close song panel if open
+      fabToolsPanel.classList.add('fab-panel-open');
+      fabToolsPanel.setAttribute('aria-hidden', 'false');
+      fabToolsBtn.classList.add('fab-tools-open');
+    }
+  };
+
+  // Close tools panel on score or keyboard interaction
+  document.querySelector('.score-card')?.addEventListener('pointerdown', () => {
+    _fabClosePanel();
+    _fabCloseTools();
+  }, { passive: true });
+
+  // --- Keyboard height → --fab-kb-h (positions FAB bar above keyboard) ---
+  function _syncKbHeight() {
+    const kbEl = document.querySelector('.kb-wrap');
+    if (!kbEl) return;
+    document.documentElement.style.setProperty('--fab-kb-h', kbEl.offsetHeight + 'px');
+  }
+  _syncKbHeight();
+  window.addEventListener('resize', _syncKbHeight, { passive: true });
+  // Re-measure after song loads (keyboard range may change key count)
+  setTimeout(_syncKbHeight, 600);
+
+})();
+
+// -----------------------------------------------------------------------
+// Song library — fetch songs/index.json and populate dropdown
+// Adding a new song requires only: save song.json to songs/, then run
+// python tools/update_song_index.py (or edit songs/index.json directly).
+// -----------------------------------------------------------------------
+async function _initSongLibrary() {
+  try {
+    const res = await fetch('songs/index.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const index = await res.json();
+    const songs = Array.isArray(index.songs) ? index.songs : [];
+
+    songSelect.innerHTML = '';
+    if (!songs.length) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'No songs found — run: python tools/update_song_index.py';
+      songSelect.appendChild(opt);
+      document.getElementById('songTitle').textContent = 'No songs found';
+      return;
+    }
+
+    songs.forEach(song => {
+      const opt = document.createElement('option');
+      opt.value = song.src || '';
+      opt.textContent = song.label || song.src || '(no label)';
+      songSelect.appendChild(opt);
+    });
+
+    if (songSelect.value) songLoader.load(songSelect.value);
+  } catch (err) {
+    console.error('songs/index.json load failed:', err);
+    document.getElementById('songTitle').textContent = 'Failed to load song list';
+    document.getElementById('score').innerHTML =
+      '<div class="score-loading">Cannot load songs/index.json — ' +
+      'run: python tools/update_song_index.py</div>';
+  }
+}
+
+_initSongLibrary();
+
+</script>
+
+
+</body>
+</html>

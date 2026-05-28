@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Runtime + Renderer — Checkpoint 1</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; font-size: 13px; background: #0f0f0f; color: #d0d0d0; padding: 20px; }
+
+    h2 { color: #f0a500; margin-bottom: 4px; font-size: 16px; letter-spacing: 1px; }
+    .subtitle { color: #555; font-size: 11px; margin-bottom: 16px; }
+
+    .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+
+    button {
+      padding: 6px 16px; border: 1px solid #444; background: #1e1e1e;
+      color: #ccc; cursor: pointer; border-radius: 4px; font-family: monospace; font-size: 12px;
+    }
+    button:hover { background: #2a2a2a; border-color: #666; }
+    button.active { border-color: #f0a500; color: #f0a500; }
+    button:disabled { opacity: 0.35; cursor: default; }
+
+    select { background: #1e1e1e; color: #ccc; border: 1px solid #444;
+             padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+
+    .stat-bar {
+      display: flex; gap: 20px; padding: 8px 14px;
+      background: #161616; border: 1px solid #2a2a2a; border-radius: 4px; margin-bottom: 10px;
+    }
+    .stat { display: flex; flex-direction: column; gap: 2px; }
+    .stat-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { color: #e0e0e0; font-size: 13px; }
+    #statState { color: #f0a500; }
+
+    .progress-wrap {
+      height: 5px; background: #222; border-radius: 3px; margin-bottom: 12px;
+      cursor: pointer;
+    }
+    #progressBar { height: 100%; background: #f0a500; border-radius: 3px; width: 0%; }
+
+    #songInfo { font-size: 11px; color: #555; margin-bottom: 10px; min-height: 16px; }
+
+    /* Sync check panel */
+    .check-panel {
+      background: #161616; border: 1px solid #2a2a2a; border-radius: 4px;
+      padding: 8px 12px; margin-bottom: 12px;
+      font-size: 11px; color: #666;
+    }
+    .check-panel .label { color: #5588aa; margin-bottom: 4px; font-size: 10px;
+                          text-transform: uppercase; letter-spacing: 1px; }
+    #syncLog { display: flex; flex-direction: column; gap: 2px; max-height: 80px; overflow-y: auto; }
+    .sync-enter { color: #7ec87e; }
+    .sync-exit  { color: #555; }
+    .sync-end   { color: #f0a500; font-weight: bold; }
+    .sync-info  { color: #5588aa; }
+
+    /* Score area */
+    #score-wrap {
+      background: #fff;
+      border-radius: 6px;
+      padding: 12px;
+      overflow: auto;
+      min-height: 200px;
+      border: 1px solid #333;
+    }
+    #score-wrap svg { display: block; }
+
+    .sep { color: #333; }
+  </style>
+</head>
+<body>
+
+<h2>Runtime + Renderer — Checkpoint 1</h2>
+<div class="subtitle">Tests: highlight sync · seek visual · part scope · pause/resume · stop clearAll</div>
+
+<div id="songInfo">Loading…</div>
+
+<div class="stat-bar">
+  <div class="stat"><span class="stat-label">State</span><span class="stat-value" id="statState">idle</span></div>
+  <div class="stat"><span class="stat-label">Time</span><span class="stat-value" id="statTime">0 ms</span></div>
+  <div class="stat"><span class="stat-label">Duration</span><span class="stat-value" id="statDur">— ms</span></div>
+  <div class="stat"><span class="stat-label">Active</span><span class="stat-value" id="statActive">0</span></div>
+  <div class="stat"><span class="stat-label">Highlighted</span><span class="stat-value" id="statHL">0</span></div>
+  <div class="stat"><span class="stat-label">Tempo</span><span class="stat-value" id="statTempo">1.00×</span></div>
+</div>
+
+<div class="progress-wrap" id="progressWrap">
+  <div id="progressBar"></div>
+</div>
+
+<div class="row">
+  <button id="btnPlay">▶ Play</button>
+  <button id="btnPause">⏸ Pause</button>
+  <button id="btnStop">⏹ Stop</button>
+  <span class="sep">│</span>
+  <span style="color:#555">Scope:</span>
+  <select id="scopeSelect"><option value="">Full Song</option></select>
+  <span class="sep">│</span>
+  <span style="color:#555">Tempo:</span>
+  <button class="tempo-btn" data-scale="0.50">🐌 Easy</button>
+  <button class="tempo-btn" data-scale="0.63">🐢 Grave</button>
+  <button class="tempo-btn active" data-scale="1.00">🚶 Andante</button>
+  <button class="tempo-btn" data-scale="1.39">🚴 Moderato</button>
+</div>
+
+<div class="row">
+  <span style="color:#555">Song:</span>
+  <button class="song-btn" data-src="songs/simple_test.json">simple_test</button>
+  <button class="song-btn" data-src="songs/test_dotted_sharp.json">test_dotted_sharp</button>
+  <button class="song-btn" data-src="songs/test_pickup_bhand.json">test_pickup_bhand</button>
+</div>
+
+<div class="check-panel">
+  <div class="label">Sync Log — enter/exit callbacks from RuntimeEngine</div>
+  <div id="syncLog"></div>
+</div>
+
+<div id="score-wrap">
+  <div id="score"></div>
+</div>
+
+<!-- VexFlow UMD → Vex bridge → engines (load order matters) -->
+<script src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.js"></script>
+<script>window.Vex = { Flow: window.VexFlow };</script>
+<script src="src/runtime-engine.js"></script>
+<script src="src/notation-renderer.js"></script>
+<script>
+
+  // ---------------------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------------------
+  const runtime  = new RuntimeEngine();
+  const renderer = new NotationRenderer();
+
+  // ---------------------------------------------------------------------------
+  // DOM refs
+  // ---------------------------------------------------------------------------
+  const statState  = document.getElementById('statState');
+  const statTime   = document.getElementById('statTime');
+  const statDur    = document.getElementById('statDur');
+  const statActive = document.getElementById('statActive');
+  const statHL     = document.getElementById('statHL');
+  const statTempo  = document.getElementById('statTempo');
+  const progressBar  = document.getElementById('progressBar');
+  const progressWrap = document.getElementById('progressWrap');
+  const scopeSelect  = document.getElementById('scopeSelect');
+  const songInfo     = document.getElementById('songInfo');
+  const syncLog      = document.getElementById('syncLog');
+  const scoreEl      = document.getElementById('score');
+
+  let currentTempoScale = 1.0;
+
+  // ---------------------------------------------------------------------------
+  // Runtime → Renderer wiring (ui-shell pattern per runtime-contract.md §11)
+  // ---------------------------------------------------------------------------
+  runtime
+    .onEventEnter(ev => {
+      const hlStyle = ev.type === 'rest' ? 'active-rest' : 'active';
+      renderer.highlight(ev.id, hlStyle);
+      _logSync('enter', ev);
+      _updateHL();
+    })
+    .onEventExit(ev => {
+      renderer.clearHighlight(ev.id);
+      _logSync('exit', ev);
+      _updateHL();
+    })
+    .onTimelineUpdate(t => {
+      statTime.textContent  = Math.round(t) + ' ms';
+      statState.textContent = runtime.state;
+      statActive.textContent = runtime._activeEvents.size;
+      const range = runtime.scopeEnd - runtime.scopeStart;
+      const pct   = range > 0 ? ((t - runtime.scopeStart) / range) * 100 : 0;
+      progressBar.style.width = Math.min(100, Math.max(0, pct)).toFixed(2) + '%';
+    })
+    .onEnd(() => {
+      renderer.clearAll();          // clear any events still shown at scope end
+      statState.textContent = 'ended';
+      progressBar.style.width = '100%';
+      _updateHL();
+      _logSync('end', null);
+    });
+
+  // ---------------------------------------------------------------------------
+  // Load song
+  // ---------------------------------------------------------------------------
+  function loadSong(src) {
+    runtime.stop();
+    renderer.clearAll();
+    clearSyncLog();
+    songInfo.textContent = 'Loading ' + src + '…';
+
+    fetch(src)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        runtime.load(data);
+        renderer.render(data, scoreEl);
+
+        const m = data.meta;
+        songInfo.textContent =
+          `${m.title} · ${m.bpm} BPM · ${m.time_signature.join('/')} · ` +
+          `key ${m.key_signature} · ${m.hand_mode} · ${data.score.bars.length} bars`;
+
+        statDur.textContent   = runtime.duration + ' ms';
+        statState.textContent = 'idle';
+        statTime.textContent  = '0 ms';
+        progressBar.style.width = '0%';
+        _updateHL();
+
+        // Populate scope dropdown
+        while (scopeSelect.options.length > 1) scopeSelect.remove(1);
+        (data.parts || []).forEach(p => {
+          const label = `${p.part_id} (bars ${p.bars[0]}–${p.bars[p.bars.length - 1]})`;
+          scopeSelect.add(new Option(label, p.part_id));
+        });
+
+        _logSync('info', null, `Loaded: ${m.title} — ${runtime._events.length} events`);
+      })
+      .catch(err => {
+        songInfo.textContent = 'Error: ' + err.message;
+        _logSync('info', null, 'Load error: ' + err.message);
+      });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Controls
+  // ---------------------------------------------------------------------------
+  document.getElementById('btnPlay').onclick = () => {
+    const partId = scopeSelect.value || undefined;
+    runtime.play({ partId, tempoScale: currentTempoScale });
+    statState.textContent = 'playing';
+  };
+
+  document.getElementById('btnPause').onclick = () => {
+    runtime.pause();
+    statState.textContent = 'paused';
+  };
+
+  document.getElementById('btnStop').onclick = () => {
+    runtime.stop();
+    renderer.clearAll();    // stop() does not fire onEventExit — clear manually
+    statState.textContent = 'idle';
+    statTime.textContent  = '0 ms';
+    progressBar.style.width = '0%';
+    _updateHL();
+  };
+
+  document.querySelectorAll('.tempo-btn').forEach(btn => {
+    btn.onclick = () => {
+      currentTempoScale = parseFloat(btn.dataset.scale);
+      runtime.setTempo(currentTempoScale);
+      statTempo.textContent = currentTempoScale.toFixed(2) + '×';
+      document.querySelectorAll('.tempo-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+  });
+
+  document.querySelectorAll('.song-btn').forEach(btn => {
+    btn.onclick = () => loadSong(btn.dataset.src);
+  });
+
+  // Click progress bar to seek
+  progressWrap.onclick = e => {
+    if (runtime.state === 'idle') return;
+    const rect  = progressWrap.getBoundingClientRect();
+    const pct   = (e.clientX - rect.left) / rect.width;
+    const range = runtime.scopeEnd - runtime.scopeStart;
+    runtime.seek(runtime.scopeStart + pct * range);
+    // seek() fires onEventExit for active events before repositioning
+    // renderer.clearHighlight() will be called via the onEventExit callback
+  };
+
+  // ---------------------------------------------------------------------------
+  // Sync log helpers
+  // ---------------------------------------------------------------------------
+  function _logSync(type, ev, msg) {
+    const line = document.createElement('div');
+    line.className = type === 'enter' ? 'sync-enter'
+                   : type === 'exit'  ? 'sync-exit'
+                   : type === 'end'   ? 'sync-end'
+                   : 'sync-info';
+    const ts = Math.round(runtime.currentTime) + 'ms';
+    if (type === 'enter') {
+      const notes = ev.notes ? ev.notes.join(' ') : 'rest';
+      line.textContent = `→ ${ts} ENTER ${ev.id}  ${ev.clef}  ${notes}  [${ev.duration}]`;
+    } else if (type === 'exit') {
+      const notes = ev.notes ? ev.notes.join(' ') : 'rest';
+      line.textContent = `← ${ts} EXIT  ${ev.id}  ${ev.clef}  ${notes}`;
+    } else if (type === 'end') {
+      line.textContent = `━━ ${ts} END OF SCOPE ━━`;
+    } else {
+      line.textContent = `   ${ts} ${msg}`;
+    }
+    syncLog.appendChild(line);
+    syncLog.scrollTop = syncLog.scrollHeight;
+  }
+
+  function clearSyncLog() {
+    syncLog.innerHTML = '';
+  }
+
+  function _updateHL() {
+    statHL.textContent = document.querySelectorAll('.nk-active, .nk-explore, .nk-question').length;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Init — VexFlow is synchronously loaded above, call directly
+  // ---------------------------------------------------------------------------
+  loadSong('songs/simple_test.json');
+
+</script>
+</body>
+</html>

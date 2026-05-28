@@ -1,0 +1,314 @@
+/*
+   MyKey SightPlay — Theme: Aurora Piano (Wood-Ivory Edition)
+   Scope: Visual identity ONLY. Colors, gradients, shadows, glow, decorative effects.
+   Structure (layout, spacing, component geometry) lives in base-ui.css.
+
+   To create a new theme: copy this file, change the :root overrides and rules below.
+   Nothing in base-ui.css needs to change.
+*/
+
+/* ================================================================
+   Token overrides — theme identity
+   All neutral defaults are set in base-ui.css :root.
+   Only override what this theme changes.
+   ================================================================ */
+
+:root {
+  /* Core palette — warm wood + ivory */
+  --bg:            #2c2118;
+  --surface:       #3a2e24;
+  --surface2:      #4a3a2e;
+  --border:        #6b523f;
+  --border2:       #9c7a5c;
+  --text:          #f5e8d5;
+  --muted:         #c0a880;
+  --orange:        #d4a017;
+  --orange-hover:  #c49010;
+  --blue:          #a8c8e8;
+  --green:         #90c8a0;
+  --bass-color:    #d48c5c;
+
+  /* Surface tokens */
+  --header-bg:        #241c14;
+  --title-color:      #f0d89e;
+  --progress-track:   #4a3820;
+  --score-bg:         #fdf8f0;
+  --score-border:     #c8b890;
+  --toast-bg:         #3a2e24;
+  --kb-bg:            #2c2118;
+  --status-lbl-color: #7a6040;
+
+  /* Notation highlight colors */
+  --nk-active-color:     #d4a017;
+  --nk-explore-color:    #a8c8e8;
+  --nk-question-color:   #d07878;
+  --nk-loop-start-color: #90c8a0;
+  --nk-loop-end-color:   #d07878;
+
+  /* RH / LH semantic highlight colors */
+  --rh-color:     #a8c8e8;
+  --lh-color:     #d48c5c;
+  --rh-key-color: #a8c8e8;
+  --lh-key-color: #d48c5c;
+  --rh-glow:      rgba(168,200,232,0.55);
+  --lh-glow:      rgba(212,140,92,0.55);
+
+  /* Keyboard physical appearance */
+  --nk-white-key-bg:         #f5edd8;
+  --nk-white-key-border:     #c8b090;
+  --nk-white-key-c-border:   #a89070;
+  --nk-black-key-bg:         #1e1410;
+  --nk-middlec-color:        #a09070;
+  --nk-middlec-active-color: rgba(240,220,180,0.7);
+  --nk-label-color:          #c0a880;
+}
+
+/* ================================================================
+   Body & background — warm wood gradient
+   ================================================================ */
+
+body, .app-body {
+  background: linear-gradient(
+    135deg,
+    #2c2118 0%,
+    #34281f 50%,
+    #3f2c22 100%
+  ) !important;
+}
+
+/* ================================================================
+   Header
+   ================================================================ */
+
+header {
+  background: linear-gradient(90deg, #241c14, #34281f) !important;
+  border-bottom: 1px solid #8c6b52 !important;
+}
+
+.brand-name {
+  color: #e8c070;
+  text-shadow: 0 0 12px rgba(212, 160, 23, 0.4);
+}
+
+/* ================================================================
+   Song title — ivory gradient text
+   ================================================================ */
+
+#songTitle {
+  background: linear-gradient(90deg, #f5e8c7, #e8c070);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* ================================================================
+   Select dropdowns
+   ================================================================ */
+
+select {
+  background: #3a2e24;
+  border-color: #6b523f;
+  color: #f5e8d5;
+}
+select:focus { border-color: #d4a017; }
+
+/* ================================================================
+   Authoring link
+   ================================================================ */
+
+#authoringLink { border-color: #6b523f; }
+#authoringLink:hover { color: #a8c8e8; border-color: #a8c8e8; }
+
+/* ================================================================
+   Primary button — gold accent
+   ================================================================ */
+
+.btn-primary {
+  background: linear-gradient(135deg, #d4a017, #b88010) !important;
+  border-color: #d4a017 !important;
+  color: #1c1408 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(212, 160, 23, 0.35) !important;
+}
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e0b020, #c49010) !important;
+  box-shadow: 0 6px 20px rgba(212, 160, 23, 0.55) !important;
+  transform: translateY(-1px);
+}
+
+/* ================================================================
+   Progress bar
+   ================================================================ */
+
+#progressFill {
+  background: linear-gradient(90deg, #d4a017, #e8c070);
+}
+
+/* ================================================================
+   Control groups — remove focus outlines
+   ================================================================ */
+
+*, *::before, *::after,
+.control-group, .control-group *,
+button, select, .segment-btn, .learning-btn {
+  outline: none !important;
+}
+.control-group:focus,
+.control-group:focus-within,
+.control-group button:focus,
+.segment-btn:focus,
+select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Control group base — glass panel with amber glow */
+.control-group {
+  border-radius: 12px !important;
+  padding: 6px 12px !important;
+  box-shadow: 0 4px 16px -4px rgba(0,0,0,0.5),
+              inset 0 1px 0 rgba(255,220,140,0.08) !important;
+  border: 1px solid rgba(180,140,80,0.20) !important;
+  backdrop-filter: blur(8px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.control-group:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -4px rgba(0,0,0,0.6),
+              inset 0 1px 0 rgba(255,220,140,0.12) !important;
+}
+
+/* HAND group */
+.group-hand.control-group {
+  background: linear-gradient(135deg, rgba(168,200,232,0.12), rgba(120,160,200,0.06)) !important;
+  border-color: rgba(168,200,232,0.20) !important;
+}
+.group-label-hand {
+  background: linear-gradient(135deg, #5890b8, #3a6890) !important;
+  color: #d8eeff !important;
+}
+
+/* TEMPO group */
+.group-tempo.control-group {
+  background: linear-gradient(135deg, rgba(212,160,23,0.18), rgba(180,128,16,0.08)) !important;
+  border-color: rgba(212,160,23,0.25) !important;
+}
+.group-label-tempo {
+  background: linear-gradient(135deg, #b88a18, #906810) !important;
+  color: #ffe8a0 !important;
+}
+
+/* SONG PART / PRACTICE group */
+.segments-bar.control-group,
+.group-practice.control-group {
+  background: linear-gradient(135deg, rgba(212,160,23,0.18), rgba(180,128,16,0.08)) !important;
+  border-color: rgba(212,160,23,0.25) !important;
+}
+.group-label-practice,
+.segments-bar .segment-label-tag {
+  background: linear-gradient(135deg, #b88a18, #906810) !important;
+  color: #ffe8a0 !important;
+}
+
+/* Segment active state */
+.segment-btn.active {
+  background: rgba(212,160,23,0.18) !important;
+  color: #e8c070 !important;
+  border-color: #d4a017 !important;
+  box-shadow: none !important;
+}
+.segment-btn:hover {
+  border-color: #a8c8e8;
+  color: #f5e8d5;
+}
+
+/* ================================================================
+   Seg-mode badge
+   ================================================================ */
+
+.seg-mode-badge {
+  color: #a8c8e8;
+  background: rgba(168,200,232,0.12);
+  border-color: rgba(168,200,232,0.30);
+}
+
+/* ================================================================
+   Stage indicator
+   ================================================================ */
+
+.stage-dot { background: #d4a017; }
+.stage-name { color: #e8c070; }
+
+/* ================================================================
+   Score card
+   ================================================================ */
+
+.score-card {
+  background: #fdf8f0 !important;
+  border-color: #c8b890 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4),
+              inset 0 0 40px rgba(212,160,23,0.04);
+}
+
+/* ================================================================
+   Keyboard visualization container
+   ================================================================ */
+
+.kb-wrap {
+  background: linear-gradient(180deg, #2c2118, #241c14) !important;
+  border: 1px solid #6b523f !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.6),
+              inset 0 0 60px rgba(212,160,23,0.05) !important;
+}
+
+/* Active key glow — RH and LH use their own semantic glow variables */
+.nk-kb-white.nk-kb-active-rh,
+.nk-kb-black.nk-kb-active-rh {
+  box-shadow: 0 0 10px var(--rh-glow), 0 0 22px var(--rh-glow);
+}
+.nk-kb-white.nk-kb-active-lh,
+.nk-kb-black.nk-kb-active-lh {
+  box-shadow: 0 0 10px var(--lh-glow), 0 0 22px var(--lh-glow);
+}
+
+/* ================================================================
+   Status bar
+   ================================================================ */
+
+.status-bar {
+  background: rgba(58,46,36,0.7);
+  border-color: #6b523f;
+  backdrop-filter: blur(8px);
+}
+
+/* ================================================================
+   Toast
+   ================================================================ */
+
+.toast {
+  background: #3a2e24;
+  border-color: #9c7a5c;
+  color: #f5e8d5;
+}
+
+/* ================================================================
+   Loop controls
+   ================================================================ */
+
+.loop-controls {
+  border-left-color: #6b523f;
+}
+.loop-btn { border-color: #6b523f; }
+.loop-btn:hover:not(:disabled) { color: #a8c8e8; border-color: #a8c8e8; }
+
+/* ================================================================
+   Meta chips
+   ================================================================ */
+
+.meta-chip {
+  background: rgba(58,46,36,0.8);
+  border-color: #6b523f;
+  color: #c0a880;
+}
