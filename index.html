@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="styles/mobile-layout.css">
   <link rel="stylesheet" href="styles/float-controls.css">
   <link rel="stylesheet" href="styles/fab-overlay.css">
+  <link rel="stylesheet" href="styles/portrait-mode.css">
 </head>
 <body>
 
@@ -155,6 +156,21 @@
     <div id="keyboardEl"></div>
   </div>
 
+  <!-- Note guidance row — portrait reading mode only (keyboard suppressed).
+       Two halves: LH (bass, left) and RH (treble, right).
+       Driven by the onKeyHighlight feed via _ngrUpdate(). -->
+  <div id="noteGuidanceRow" class="note-guidance-row" aria-live="polite" aria-label="Current notes">
+    <div class="ngr-half ngr-lh">
+      <span class="ngr-clef-label">LH</span>
+      <span class="ngr-notes" id="ngrLH">—</span>
+    </div>
+    <div class="ngr-div"></div>
+    <div class="ngr-half ngr-rh">
+      <span class="ngr-notes" id="ngrRH">—</span>
+      <span class="ngr-clef-label">RH</span>
+    </div>
+  </div>
+
 </div>
 
 <!-- ============================================================ -->
@@ -246,6 +262,10 @@ if (FAB_CONTROLS) document.body.classList.add('nk-fab-mode');
 // Previous float-controls experiment (repositioned in flow) — disabled.
 const FLOAT_CONTROLS = false;
 if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
+
+// Note guidance row — portrait reading mode. Stub replaced by _initNoteGuidanceRow().
+// Rollback: set to () => {} and delete the IIFE + HTML element + portrait-mode.css.
+let _ngrUpdate = () => {};
 
 // -----------------------------------------------------------------------
 // Engine instances — created once (SPEC §3.3: one engine, one responsibility)
@@ -529,7 +549,7 @@ learningState.onChange(() => _syncLearningControls());
 
 // Keyboard highlight hook — forward typed events to KeyboardViz presentation layer.
 // kh = { type: 'enter'|'exit'|'clear', notes, clef, color?, eventId? }
-learningState.onKeyHighlight(kh => keyboardViz.onHighlight(kh));
+learningState.onKeyHighlight(kh => { keyboardViz.onHighlight(kh); _ngrUpdate(kh); });
 
 // Hand-filter dropdown — change event updates the clef filter.
 learningRow.addEventListener('change', e => {
@@ -1085,6 +1105,85 @@ if (_noteNameModeEl) {
     _applyNoteNameMode();
   });
 }
+
+// -----------------------------------------------------------------------
+// Note Guidance Row — portrait reading mode companion strip.
+// Mirrors the onKeyHighlight feed; shows active note names per clef.
+// Clef → side: bass (LH) = left half, treble (RH) = right half.
+// Notes sorted lowest → highest by MIDI pitch; dash-separated: Do-Mi-Sol.
+// -----------------------------------------------------------------------
+
+(function _initNoteGuidanceRow() {
+  const lhEl = document.getElementById('ngrLH');
+  const rhEl = document.getElementById('ngrRH');
+  if (!lhEl || !rhEl) return;  // HTML element absent — no-op
+
+  // Track active notes per clef: Map<eventId, string[]>
+  const _active = { treble: new Map(), bass: new Map() };
+
+  function _noteToMidi(name) {
+    const m = name.match(/^([A-G])(#{1,2}|b{1,2})?(-?\d+)/);
+    if (!m) return 0;
+    const steps = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+    let s = steps[m[1]] ?? 0;
+    if (m[2]) { if (m[2][0] === '#') s += m[2].length; else s -= m[2].length; }
+    return (parseInt(m[3]) + 1) * 12 + ((s % 12 + 12) % 12);
+  }
+
+  function _noteLabel(name) {
+    const semi = _noteToSemi(name);
+    if (semi < 0) return name;
+    if (_noteNameMode === 'solfege') return _SOLFEGE[semi];
+    if (_noteNameMode === 'number')  return _NUMBERS[semi];
+    // letter: strip octave number, keep pitch class + accidental
+    const m = name.match(/^([A-G](?:#{1,2}|b{1,2})?)/);
+    return m ? m[1] : name;
+  }
+
+  function _renderClef(clef) {
+    const el   = clef === 'treble' ? rhEl : lhEl;
+    const map  = _active[clef];
+    const all  = [];
+    map.forEach(notes => notes.forEach(n => all.push(n)));
+    // Deduplicate by MIDI pitch, sort lowest → highest
+    const seen = new Set();
+    const sorted = all.filter(n => {
+      const midi = _noteToMidi(n);
+      if (seen.has(midi)) return false;
+      seen.add(midi); return true;
+    }).sort((a, b) => _noteToMidi(a) - _noteToMidi(b));
+
+    if (!sorted.length) {
+      el.textContent = '—';
+      el.classList.remove('ngr-active');
+    } else {
+      el.textContent = sorted.map(_noteLabel).join('-');
+      el.classList.add('ngr-active');
+    }
+  }
+
+  _ngrUpdate = function(kh) {
+    if (!kh) return;
+    if (kh.type === 'clear') {
+      _active.treble.clear(); _active.bass.clear();
+      _renderClef('treble'); _renderClef('bass');
+      return;
+    }
+    const map = _active[kh.clef];
+    if (!map) return;
+    if (kh.type === 'enter') {
+      map.set(kh.eventId, kh.notes || []);
+    } else if (kh.type === 'exit') {
+      map.delete(kh.eventId);
+    }
+    _renderClef(kh.clef);
+  };
+
+  // Re-render when note name mode changes (letter / solfège / numbers)
+  document.getElementById('noteNameMode')?.addEventListener('change', () => {
+    _renderClef('treble'); _renderClef('bass');
+  });
+})();
 
 // -----------------------------------------------------------------------
 // Status bar — bar number updater (Task 6)

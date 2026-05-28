@@ -1,0 +1,104 @@
+/* ================================================================
+   portrait-mode.css — MyKey SightPlay
+   Portrait Reading Mode: keyboard suppression + note guidance strip
+
+   Activation:  automatic — @media (max-width:900px) and (orientation:portrait)
+   Rollback:    delete this file, its <link>, #noteGuidanceRow HTML,
+                _ngrUpdate stub + IIFE, and the _ngrUpdate call in onKeyHighlight.
+
+   Constraint:  all portrait-specific overrides are media-query gated.
+                Landscape, fullscreen, and FAB mode are untouched.
+   ================================================================ */
+
+/* ================================================================
+   Guidance row — hidden by default; portrait media query activates it.
+   Internal layout rules apply unconditionally (never shown outside portrait).
+   ================================================================ */
+
+.note-guidance-row {
+  display: none;
+}
+
+/* FAB mode: score fills viewport — guidance row stays hidden even in portrait */
+body.nk-fab-mode .note-guidance-row {
+  display: none !important;
+}
+
+/* ================================================================
+   Portrait phone + tablet (≤ 900px portrait)
+   — suppress piano keyboard
+   — show compact guidance strip
+   ================================================================ */
+
+@media (max-width: 900px) and (orientation: portrait) {
+
+  /* Piano keyboard: hidden — frees significant vertical space */
+  .kb-wrap { display: none; }
+
+  /* Note guidance row: revealed as thin passive strip */
+  .note-guidance-row {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    height: 36px;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    user-select: none;
+  }
+
+}
+
+/* ================================================================
+   Guidance strip internals
+   (defined at root — never rendered when note-guidance-row is hidden)
+   ================================================================ */
+
+.ngr-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  min-width: 0;
+}
+
+.ngr-lh { justify-content: flex-start; }
+.ngr-rh { justify-content: flex-end; }
+
+.ngr-clef-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  flex-shrink: 0;
+}
+
+.ngr-lh .ngr-clef-label { color: var(--lh-color, #ff80c8); }
+.ngr-rh .ngr-clef-label { color: var(--rh-color, #5bc8f5); }
+
+.ngr-notes {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.08s;
+}
+
+/* Active state — notes currently sounding */
+.ngr-lh .ngr-notes.ngr-active { color: var(--lh-color, #ff80c8); font-weight: 600; }
+.ngr-rh .ngr-notes.ngr-active { color: var(--rh-color, #5bc8f5); font-weight: 600; }
+
+.ngr-div {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+}
