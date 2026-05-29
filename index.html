@@ -156,20 +156,6 @@
     <div id="keyboardEl"></div>
   </div>
 
-  <!-- Note guidance row — portrait reading mode only (keyboard suppressed).
-       Two halves: LH (bass, left) and RH (treble, right).
-       Driven by the onKeyHighlight feed via _ngrUpdate(). -->
-  <div id="noteGuidanceRow" class="note-guidance-row" aria-live="polite" aria-label="Current notes">
-    <div class="ngr-half ngr-lh">
-      <span class="ngr-clef-label">LH</span>
-      <span class="ngr-notes" id="ngrLH">—</span>
-    </div>
-    <div class="ngr-div"></div>
-    <div class="ngr-half ngr-rh">
-      <span class="ngr-notes" id="ngrRH">—</span>
-      <span class="ngr-clef-label">RH</span>
-    </div>
-  </div>
 
 </div>
 
@@ -206,6 +192,21 @@
     <div class="fab-tools-section" id="fabPartSection" style="display:none">
       <span class="fab-tools-label">Part</span>
       <select id="fabPartSelect" class="fab-tools-select"></select>
+    </div>
+  </div>
+
+  <!-- Note guidance strip — portrait only, passive note awareness overlay.
+       Positioned at viewport bottom; FAB bar floats above via --fab-ngr-h.
+       LH (bass) on left, RH (treble) on right. Format: Do-Mi-Sol. -->
+  <div class="fab-ngr" id="fabNgr" aria-live="polite" aria-label="Current notes">
+    <div class="ngr-half ngr-lh">
+      <span class="ngr-clef-label">LH</span>
+      <span class="ngr-notes" id="ngrLH">—</span>
+    </div>
+    <div class="ngr-div"></div>
+    <div class="ngr-half ngr-rh">
+      <span class="ngr-notes" id="ngrRH">—</span>
+      <span class="ngr-clef-label">RH</span>
     </div>
   </div>
 
@@ -1449,14 +1450,12 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   }, { passive: true });
 
   // --- Keyboard height → --fab-kb-h (positions FAB bar above keyboard) ---
-  // In portrait, kb-wrap is hidden and the note guidance row takes its place.
-  // We sum both so the FAB bar floats above whichever element is visible.
+  // Portrait note guidance strip is an overlay (--fab-ngr-h CSS token, not JS).
+  // This only tracks the layout-flow keyboard for landscape mode.
   function _syncKbHeight() {
-    const kbEl  = document.querySelector('.kb-wrap');
-    const ngrEl = document.getElementById('noteGuidanceRow');
-    const kbH   = kbEl  ? kbEl.offsetHeight  : 0;
-    const ngrH  = ngrEl ? ngrEl.offsetHeight  : 0;
-    document.documentElement.style.setProperty('--fab-kb-h', (kbH + ngrH) + 'px');
+    const kbEl = document.querySelector('.kb-wrap');
+    const kbH  = kbEl ? kbEl.offsetHeight : 0;
+    document.documentElement.style.setProperty('--fab-kb-h', kbH + 'px');
   }
   _syncKbHeight();
   window.addEventListener('resize', _syncKbHeight, { passive: true });

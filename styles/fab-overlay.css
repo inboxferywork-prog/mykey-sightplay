@@ -17,16 +17,26 @@
    Geometry tokens
    --fab-kb-h  : keyboard wrap height — set by JS after layout
    --fab-bar-h : FAB pill bar height
+   --fab-ngr-h : note guidance strip height (portrait only, 0 elsewhere)
    ================================================================ */
 
 :root {
   --fab-kb-h:  170px;   /* fallback; _syncKbHeight() overrides live */
   --fab-bar-h:  48px;
+  --fab-ngr-h:   0px;   /* overridden to 40px in portrait media query */
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
   :root {
     --fab-bar-h: 40px;
+  }
+}
+
+/* Portrait: activate note guidance strip height token */
+@media (max-width: 900px) and (orientation: portrait) {
+  :root {
+    --fab-bar-h:  56px;
+    --fab-ngr-h:  40px;
   }
 }
 
@@ -113,7 +123,7 @@ body.nk-fab-mode .fab-overlay {
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: calc(var(--fab-kb-h) + var(--fab-bar-h) + 10px);
+  bottom: calc(var(--fab-kb-h) + var(--fab-ngr-h) + var(--fab-bar-h) + 10px);
   max-height: 38vh;
   display: none;
   flex-direction: column;
@@ -175,12 +185,12 @@ body.nk-fab-mode .fab-overlay {
 }
 
 /* ================================================================
-   FAB controls bar — compact pill floating above keyboard
+   FAB controls bar — compact pill floating above keyboard/guidance
    ================================================================ */
 
 .fab-bar {
   position: absolute;
-  bottom: calc(var(--fab-kb-h) + 8px);
+  bottom: calc(var(--fab-kb-h) + var(--fab-ngr-h) + 8px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -279,11 +289,37 @@ body.nk-fab-mode .fab-overlay {
 }
 
 /* ================================================================
-   Portrait phone (≤ 600px) — tighten bar
+   Portrait phone (≤ 900px portrait) — larger touch targets
    ================================================================ */
 
-@media (max-width: 600px) {
-  .fab-bar { padding: 0 10px; gap: 2px; }
+@media (max-width: 900px) and (orientation: portrait) {
+  .fab-bar {
+    gap: 2px;
+    padding: 0 10px;
+  }
+
+  .fab-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+
+  .fab-main-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 19px;
+  }
+
+  .fab-tempo-select {
+    font-size: 13px;
+    max-width: 72px;
+    padding: 0 2px;
+  }
+
+  .fab-tools-hand-btn {
+    padding: 7px 14px;
+    font-size: 14px;
+  }
 }
 
 /* ================================================================
@@ -294,7 +330,7 @@ body.nk-fab-mode .fab-overlay {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--fab-kb-h) + var(--fab-bar-h) + 10px);
+  bottom: calc(var(--fab-kb-h) + var(--fab-ngr-h) + var(--fab-bar-h) + 10px);
   min-width: 220px;
   max-width: calc(100vw - 32px);
   display: none;
@@ -393,38 +429,82 @@ body.nk-fab-mode .fab-overlay {
 .fab-tools-btn.fab-tools-open { color: var(--orange); }
 
 /* ================================================================
-   Portrait phone (≤ 900px portrait) — larger touch targets
+   Note guidance strip — passive display of current notes.
+   Lives inside .fab-overlay; portrait mode only (--fab-ngr-h = 40px).
+   Zero layout footprint — purely a fixed overlay layer.
    ================================================================ */
 
+.fab-ngr {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 40px;
+  display: none;          /* hidden by default; portrait media query reveals */
+  align-items: center;
+  pointer-events: none;   /* passive — score touches pass through */
+  background: var(--header-bg);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  user-select: none;
+}
+
 @media (max-width: 900px) and (orientation: portrait) {
-  :root {
-    --fab-bar-h: 54px;
-  }
+  body.nk-fab-mode .fab-ngr { display: flex; }
+}
 
-  .fab-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 17px;
-  }
+/* Two-halves layout: LH (bass) left, RH (treble) right */
+.ngr-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  min-width: 0;
+}
 
-  .fab-main-btn {
-    width: 42px;
-    height: 42px;
-    font-size: 18px;
-  }
+.ngr-lh { justify-content: flex-start; }
+.ngr-rh { justify-content: flex-end; }
 
-  /* Tempo select: slightly larger tap area */
-  .fab-tempo-select {
-    font-size: 13px;
-    max-width: 84px;
-    padding: 2px 4px;
-  }
+.ngr-clef-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  flex-shrink: 0;
+}
 
-  /* Tools panel hand buttons: taller tap area */
-  .fab-tools-hand-btn {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
+.ngr-lh .ngr-clef-label { color: var(--lh-color, #ff80c8); }
+.ngr-rh .ngr-clef-label { color: var(--rh-color, #5bc8f5); }
+
+.ngr-notes {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.08s;
+}
+
+/* Active state — notes currently sounding */
+.ngr-lh .ngr-notes.ngr-active { color: var(--lh-color, #ff80c8); font-weight: 600; }
+.ngr-rh .ngr-notes.ngr-active { color: var(--rh-color, #5bc8f5); font-weight: 600; }
+
+.ngr-div {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   Portrait phone (≤ 600px) — tighten bar
+   ================================================================ */
+
+@media (max-width: 600px) {
+  .fab-bar { padding: 0 8px; gap: 1px; }
 }
 
 /* ================================================================

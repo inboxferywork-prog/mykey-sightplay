@@ -1,51 +1,21 @@
 /* ================================================================
    portrait-mode.css — MyKey SightPlay
-   Portrait Reading Mode: keyboard suppression + note guidance strip
+   Portrait Reading Mode: keyboard suppression + notation breathing room
 
    Activation:  automatic — @media (max-width:900px) and (orientation:portrait)
-   Rollback:    delete this file, its <link>, #noteGuidanceRow HTML,
-                _ngrUpdate stub + IIFE, and the _ngrUpdate call in onKeyHighlight.
+   Rollback:    delete this file and its <link> tag.
 
-   Constraint:  all portrait-specific overrides are media-query gated.
-                Landscape and fullscreen are untouched.
+   Note guidance strip lives in fab-overlay.css (.fab-ngr / .ngr-*).
    ================================================================ */
-
-/* ================================================================
-   Guidance row — hidden by default everywhere.
-   Portrait media query reveals it.
-   Internal layout rules are at root (harmless when row is hidden).
-   ================================================================ */
-
-.note-guidance-row {
-  display: none;
-}
 
 /* ================================================================
    Portrait phone + tablet (≤ 900px portrait)
-   — suppress piano keyboard
-   — show compact guidance strip
-   — add side breathing to notation viewport
    ================================================================ */
 
 @media (max-width: 900px) and (orientation: portrait) {
 
   /* Piano keyboard: hidden — frees significant vertical space */
   .kb-wrap { display: none; }
-
-  /* Note guidance row: revealed as thin passive strip */
-  .note-guidance-row {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    height: 36px;
-    margin-top: 8px;
-    margin-bottom: 4px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    user-select: none;
-  }
 
   /* Notation viewport: 10px side breathing room.
      ViewportManager._usableWidth() subtracts this padding,
@@ -55,53 +25,4 @@
     padding-right: 10px;
   }
 
-}
-
-/* ================================================================
-   Guidance strip internals
-   ================================================================ */
-
-.ngr-half {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px;
-  min-width: 0;
-}
-
-.ngr-lh { justify-content: flex-start; }
-.ngr-rh { justify-content: flex-end; }
-
-.ngr-clef-label {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  flex-shrink: 0;
-}
-
-.ngr-lh .ngr-clef-label { color: var(--lh-color, #ff80c8); }
-.ngr-rh .ngr-clef-label { color: var(--rh-color, #5bc8f5); }
-
-.ngr-notes {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--muted);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  transition: color 0.08s;
-}
-
-.ngr-lh .ngr-notes.ngr-active { color: var(--lh-color, #ff80c8); font-weight: 600; }
-.ngr-rh .ngr-notes.ngr-active { color: var(--rh-color, #5bc8f5); font-weight: 600; }
-
-.ngr-div {
-  width: 1px;
-  height: 16px;
-  background: var(--border);
-  flex-shrink: 0;
 }
