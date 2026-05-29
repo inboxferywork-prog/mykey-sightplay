@@ -47,12 +47,12 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
    become one unified visual object: a card floating on the dark
    page background (app-body).
 
-   Layout math — notation scale is preserved:
-     usable = score-card content width = S − margin×2 − border×2 − padding×2
-            = S − 12px − 2px − 24px = S − 38px
-     (margin 6px + padding 12px = 18px each side; border 1px each side)
-   Swapping outer margin for inner padding keeps usable width constant.
-   fitWidth() receives the same clientWidth; scale is unchanged.
+   Layout math — notation scale identical in both portrait modes:
+     FAB:     viewport.clientWidth = S − 22px (margin 10px×2 + border 1px×2)
+              _usableWidth() = (S − 22px) − 8px − 8px = S − 38px
+     Non-FAB: viewport.clientWidth = S − 18px (border 1px×2 + score-card pad 8px×2)
+              _usableWidth() = (S − 18px) − 10px − 10px = S − 38px  ✓
+   Same usable width → same scale → consistent notation size across modes.
 
    Rollback: delete this section.
    ================================================================ */
@@ -67,8 +67,8 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 
 body.nk-portrait.nk-fab-mode .fab-ngr {
   top:           19px;              /* float card 16px below 3px progress strip */
-  left:          6px;               /* inset to match card body */
-  right:         6px;
+  left:          10px;              /* inset to match card body */
+  right:         10px;
   background:    var(--mykey-purple);
   border-bottom: none;
   border-radius: 16px 16px 0 0;    /* rounded top — card starts here */
@@ -106,22 +106,29 @@ body.nk-portrait.nk-fab-mode .ngr-mode-select {
 
 /* ── Card body: notation area, rounded bottom ───────────────── */
 
-/* Remove side viewport padding — replaced by card side margin.
-   Net usable notation width is unchanged (see layout math above). */
+/* Side viewport padding: 8px buffers VexFlow's SVG boundary rendering.
+   The bracket (StaveConnector) extends left of MARGIN_X=10 toward SVG x=0.
+   Intermediate system right barlines render at exactly x=CANVAS_W=960 (SVG edge).
+   8px padding places the camera content away from the viewport clip boundaries.
+
+   Usable width identity — both portrait modes resolve to S − 38px:
+     Non-FAB: viewport pad 10px, score-card pad 8px (base-ui), border 1px, no margin
+              usable = (S − 18px) − 20px = S − 38px
+     FAB:     viewport pad 8px, score-card pad 0 (has-viewport), border 1px, margin 10px
+              usable = (S − 22px) − 16px = S − 38px  ✓
+   Same scale in both modes; notation size is consistent. */
 body.nk-portrait.nk-fab-mode #notation-viewport {
-  padding-left:  0;
-  padding-right: 0;
+  padding-left:  8px;
+  padding-right: 8px;
 }
 
-/* 6px outer margin + shadow = card visually floats off the dark background.
-   12px inner padding = comfortable breathing room between card edge and staves.
-   24px padding-top = generous gap between guidance strip and first staff line.
-   All corners rounded (16px) so dark bg shows correctly at header/body joint.
-   Shadow lifts the card off the page background. */
+/* 10px outer margin + shadow = card visually floats off the dark background.
+   padding-top: 24px = gap between guidance strip and first staff line.
+   No side padding — has-viewport provides padding:0; breathing room comes
+   from the viewport's 8px side padding (see rule above).
+   All corners rounded (16px) so dark bg shows correctly at header/body joint. */
 body.nk-portrait.nk-fab-mode .score-card {
-  margin:         0 6px;
-  padding-left:   12px;
-  padding-right:  12px;
+  margin:         0 10px;
   padding-top:    24px;
   border-radius:  16px;
   box-shadow:     0 8px 32px rgba(0, 0, 0, 0.35);
