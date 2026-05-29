@@ -290,6 +290,12 @@ window.addEventListener('orientationchange', () => setTimeout(_syncPortrait, 80)
 // Rollback: set to () => {} and delete the IIFE + HTML element + portrait-mode.css.
 let _ngrUpdate = () => {};
 
+// --- DIAG: NGR strip diagnostics — remove when root cause identified ---
+let   _diagTime           = 0;         // ms — updated every timeline tick
+const _diagRendererActive = new Map(); // id → { notes, clef } — mirrors renderer highlights
+const _diagEnterTime      = new Map(); // id → t_ms — playback time when event entered renderer
+// --- /DIAG ---
+
 // -----------------------------------------------------------------------
 // Engine instances — created once (SPEC §3.3: one engine, one responsibility)
 // -----------------------------------------------------------------------
@@ -511,6 +517,10 @@ runtime
     //    renderer.render() always shows all notes regardless of this filter.
     if (learningState.isClefActive(ev.clef)) {
       renderer.highlight(ev.id, learningState.getHighlightStyle(ev));
+      // --- DIAG ---
+      _diagRendererActive.set(ev.id, { notes: ev.notes || [], clef: ev.clef });
+      _diagEnterTime.set(ev.id, _diagTime);
+      // --- /DIAG ---
     }
 
     // 3. Audio — learning state decides (rest / tie_stop / filtered clef → silent).
@@ -522,14 +532,35 @@ runtime
     // 4. Keyboard highlight state — hook for future visual piano keyboard.
     //    learningState updates _keyboardState and fires onKeyHighlight callback.
     learningState.notifyEventEnter(ev);
+    // --- DIAG ---
+    console.log(
+      `[NGR ENTER] t=${Math.round(_diagTime)}ms` +
+      `  id=${ev.id}  clef=${ev.clef}  notes=[${(ev.notes||[]).join(',')}]` +
+      `  tie_stop=${!!ev.tie_stop}  dur=${ev.duration_ms}ms` +
+      `  rendered=${_diagRendererActive.has(ev.id)}`
+    );
+    // --- /DIAG ---
   })
   .onEventExit(ev => {
     // clearHighlight is always called; no-op if event was never highlighted.
     renderer.clearHighlight(ev.id);
+    // --- DIAG ---
+    _diagRendererActive.delete(ev.id);
+    const _diagTEnter = _diagEnterTime.get(ev.id) ?? '?';
+    _diagEnterTime.delete(ev.id);
+    // --- /DIAG ---
     // Sync keyboard state for future keyboard component.
     learningState.notifyEventExit(ev);
+    // --- DIAG ---
+    console.log(
+      `[NGR EXIT]  t=${Math.round(_diagTime)}ms` +
+      `  id=${ev.id}  clef=${ev.clef}  notes=[${(ev.notes||[]).join(',')}]` +
+      `  entered@${Math.round(_diagTEnter)}ms`
+    );
+    // --- /DIAG ---
   })
   .onTimelineUpdate(t => {
+    _diagTime = t; // DIAG
     _updateProgress(t);
     _updateTime(t);
   })
@@ -1185,9 +1216,31 @@ if (_noteNameModeEl) {
     }
   }
 
+  // --- DIAG: compare strip active map against renderer active map ---
+  function _diagCheckMismatch(clef) {
+    const stripMap = _active[clef];
+    const staleIds = [];
+    stripMap.forEach((notes, id) => {
+      if (!_diagRendererActive.has(id)) staleIds.push({ id, notes });
+    });
+    if (staleIds.length) {
+      staleIds.forEach(({ id, notes }) => {
+        console.warn(
+          `[NGR ⚠ STALE] clef=${clef}  eventId=${id}` +
+          `  notes=[${notes.join(',')}]` +
+          `  → IN strip active map but NOT in renderer active set`
+        );
+      });
+    }
+  }
+  // --- /DIAG ---
+
   _ngrUpdate = function(kh) {
     if (!kh) return;
     if (kh.type === 'clear') {
+      // --- DIAG ---
+      console.log(`[NGR CLEAR] t=${Math.round(_diagTime)}ms`);
+      // --- /DIAG ---
       _active.treble.clear(); _active.bass.clear();
       _renderClef('treble'); _renderClef('bass');
       return;
@@ -1199,6 +1252,18 @@ if (_noteNameModeEl) {
     } else if (kh.type === 'exit') {
       map.delete(kh.eventId);
     }
+
+    // --- DIAG ---
+    const _tStr = [..._active.treble.entries()].map(([id, ns]) => `${id}:[${ns.join(',')}]`).join(' | ') || '∅';
+    const _bStr = [..._active.bass.entries()].map(([id, ns]) => `${id}:[${ns.join(',')}]`).join(' | ') || '∅';
+    console.log(
+      `[NGR ${kh.type.toUpperCase().padEnd(5)}] t=${Math.round(_diagTime)}ms` +
+      `  id=${kh.eventId}  clef=${kh.clef}  notes=[${(kh.notes||[]).join(',')}]`
+    );
+    console.log(`[NGR STATE] treble={${_tStr}}  bass={${_bStr}}`);
+    _diagCheckMismatch(kh.clef);
+    // --- /DIAG ---
+
     _renderClef(kh.clef);
   };
 
