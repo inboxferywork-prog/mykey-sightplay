@@ -36,3 +36,65 @@ body.nk-portrait #notation-viewport {
 body.nk-portrait.nk-fab-mode #notation-viewport {
   padding-top: 63px;
 }
+
+/* ================================================================
+   Portrait reading card — MyKey identity header
+   Transforms the note guidance strip into a branded purple header
+   band with rounded bottom corners, sitting above the white
+   notation card.
+
+   Pure visual framing — no renderer, viewport, or layout changes.
+   Rollback: delete this section.
+   ================================================================ */
+
+/* Brand tokens */
+:root {
+  --mykey-purple:      #6B47D6;
+  --mykey-purple-glow: rgba(107, 71, 214, 0.28);
+}
+
+/* ── Purple header band ─────────────────────────────────────── */
+
+body.nk-portrait.nk-fab-mode .fab-ngr {
+  background:    var(--mykey-purple);
+  border-bottom: none;
+  border-radius: 0 0 14px 14px;   /* rounded bottom corners only */
+  box-shadow:    0 4px 22px var(--mykey-purple-glow);
+}
+
+/* Dividers: faint white lines on purple */
+body.nk-portrait.nk-fab-mode .ngr-div {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Inactive note text: off-white, readable on purple */
+body.nk-portrait.nk-fab-mode .ngr-notes {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+/* Active notes on purple: white text + hand-color glow */
+body.nk-portrait.nk-fab-mode .ngr-lh .ngr-notes.ngr-active {
+  color:       #ffffff;
+  background:  rgba(255, 255, 255, 0.14);
+  text-shadow: 0 0 12px rgba(255, 128, 200, 0.80);
+}
+body.nk-portrait.nk-fab-mode .ngr-rh .ngr-notes.ngr-active {
+  color:       #ffffff;
+  background:  rgba(255, 255, 255, 0.14);
+  text-shadow: 0 0 12px rgba(91, 200, 245, 0.80);
+}
+
+/* Mode selector: light style on purple */
+body.nk-portrait.nk-fab-mode .ngr-mode-select {
+  border-color: rgba(255, 255, 255, 0.30);
+  color:        rgba(255, 255, 255, 0.88);
+  background:   rgba(255, 255, 255, 0.10);
+}
+
+/* ── Notation card ──────────────────────────────────────────── */
+
+/* Faint inset shadow at the top of the score card where it begins
+   below the purple header — reinforces the header-to-card boundary. */
+body.nk-portrait.nk-fab-mode .score-card {
+  box-shadow: inset 0 4px 14px rgba(0, 0, 0, 0.07);
+}
