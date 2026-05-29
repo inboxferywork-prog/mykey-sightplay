@@ -378,6 +378,26 @@ const learningRow   = document.getElementById('learningRow');
 // -----------------------------------------------------------------------
 // Song loader — fetch, engine init, meta display, parts bar
 // -----------------------------------------------------------------------
+// --- DIAG: NGR lifecycle log — remove when root cause confirmed ---
+function _diagNgrLog(label) {
+  if (!window._ngrDiag) return;
+  const s = window._ngrDiag.snapshot();
+  console.log(
+    `[NGR ${label}]` +
+    `  treble=${s.treble}` +
+    `  bass=${s.bass}` +
+    `  enter/exit=${s.enterCount}/${s.exitCount}  imbalance=${s.imbalance}`
+  );
+  if (s.trebleSize > 0 || s.bassSize > 0) {
+    console.warn(
+      `[NGR ⚠ LEAK @ ${label}]` +
+      `  ${s.trebleSize} treble + ${s.bassSize} bass events still in active map` +
+      `  — these will pollute the next song`
+    );
+  }
+}
+// --- /DIAG ---
+
 const songLoader = new SongLoader({
   runtime, renderer, learningState, keyboardViz,
   elements: {
@@ -390,6 +410,7 @@ const songLoader = new SongLoader({
     metaLevel:   document.getElementById('metaLevel'),
   },
   onBeforeLoad() {
+    _diagNgrLog('BEFORE-LOAD'); // DIAG — snapshot BEFORE runtime.stop() clears engine
     _setUIState('idle');
     actionNote.textContent = '';
     lastBar = -1;
@@ -400,6 +421,8 @@ const songLoader = new SongLoader({
     _syncDevLoopPanel();
   },
   onSuccess(data) {
+    _diagNgrLog('AFTER-LOAD'); // DIAG — snapshot AFTER new song loaded; should show ∅ if clean
+    if (window._ngrDiag) { window._ngrDiag.enterCount = 0; window._ngrDiag.exitCount = 0; } // DIAG reset
     currentSong = data;
     _syncLearningControls();
     _updateProgress(0);
@@ -567,6 +590,7 @@ runtime
   .onEnd(() => {
     renderer.clearAll();  // scope ended — clear all remaining highlights
     keyboardViz.clear();
+    _diagNgrLog('PLAYBACK-END'); // DIAG — imbalance here = events that never got an exit
     // Auto-repeat: loop scope restarts after a brief pause so the boundary is perceptible.
     // Does NOT affect learning_segments — repeat_enabled is loop-scoped state only.
     if (practiceLoop.active && practiceLoop.repeat_enabled) {
@@ -940,6 +964,7 @@ function _setUIState(state) {
 btnMain.onclick = () => {
   _audioResume();  // browser autoplay policy: resume AudioContext on user gesture
   if (uiState === 'idle') {
+    _diagNgrLog('PLAY-START'); // DIAG — active map should be ∅ at play start
     lastBar = -1;
     // Loop scope overrides segment scope — authored learning_segments are NOT modified.
     if (practiceLoop.active) {
@@ -992,6 +1017,7 @@ btnMain.onclick = () => {
 
 // Reset — always goes back to idle
 btnReset.onclick = () => {
+  _diagNgrLog('RESET-STOP'); // DIAG — imbalance here = events mid-flight at stop
   runtime.stop();
   renderer.clearAll();  // stop() does not fire exits
   keyboardViz.clear();
@@ -1175,6 +1201,26 @@ if (_noteNameModeEl) {
   // Track active notes per clef: Map<eventId, string[]>
   const _active = { treble: new Map(), bass: new Map() };
 
+  // --- DIAG: expose snapshot accessor for lifecycle logging ---
+  window._ngrDiag = Object.assign(window._ngrDiag || {}, {
+    enterCount: 0,
+    exitCount:  0,
+    snapshot() {
+      const tArr = [..._active.treble.entries()].map(([id, ns]) => `${id}:[${ns.join(',')}]`);
+      const bArr = [..._active.bass.entries()].map(([id, ns]) => `${id}:[${ns.join(',')}]`);
+      return {
+        treble:     tArr.join(' | ') || '∅',
+        bass:       bArr.join(' | ') || '∅',
+        trebleSize: _active.treble.size,
+        bassSize:   _active.bass.size,
+        enterCount: this.enterCount,
+        exitCount:  this.exitCount,
+        imbalance:  this.enterCount - this.exitCount,
+      };
+    },
+  });
+  // --- /DIAG ---
+
   function _noteToMidi(name) {
     const m = name.match(/^([A-G])(#{1,2}|b{1,2})?(-?\d+)/);
     if (!m) return 0;
@@ -1249,8 +1295,10 @@ if (_noteNameModeEl) {
     if (!map) return;
     if (kh.type === 'enter') {
       map.set(kh.eventId, kh.notes || []);
+      window._ngrDiag.enterCount++; // DIAG
     } else if (kh.type === 'exit') {
       map.delete(kh.eventId);
+      window._ngrDiag.exitCount++; // DIAG
     }
 
     // --- DIAG ---
