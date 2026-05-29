@@ -147,7 +147,7 @@ class NotationRenderer {
     // Layout constants
     const CANVAS_W     = 960;
     const BARS_PER_ROW = 4;
-    const MARGIN_X     = 10;
+    const MARGIN_X     = 20;   // 20px left margin — brace extends ~16px left of stave x; 10px was insufficient
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
     const BASS_Y_OFF   = showBoth ? 110 : 20;       // bass at y+110 (grand staff) OR y+20 (solo)
     const ROW_H        = showBoth ? 210 : 100;      // single-clef rows are half height
@@ -221,6 +221,17 @@ class NotationRenderer {
 
         staveInfos.push({ treble, bass, barData, barW });
         x += barW;
+      }
+
+      // System-end connector: single barline spanning treble-to-bass at row right edge.
+      // Non-final rows only — final row uses setEndBarType() double barline instead.
+      if (showBoth && row < numRows - 1) {
+        const last = staveInfos[staveInfos.length - 1];
+        if (last.treble && last.bass) {
+          new VF.StaveConnector(last.treble, last.bass)
+            .setType(VF.StaveConnector.type.SINGLE_RIGHT)
+            .setContext(ctx).draw();
+        }
       }
 
       // Pass 2 — draw notes into staves
@@ -843,7 +854,8 @@ function _computeRowWidths(rowBars, meta, CANVAS_W, MARGIN_X, barsPerRow, global
   const smoothed    = rawWidths.map(w => w * WIDTH_BLEND + blendTarget * (1 - WIDTH_BLEND));
 
   const total     = smoothed.reduce((a, b) => a + b, 0);
-  const available = CANVAS_W - MARGIN_X;
+  const MARGIN_R  = 8;   // right margin — system barlines at CANVAS_W boundary were invisible
+  const available = CANVAS_W - MARGIN_X - MARGIN_R;
 
   if (rowBars.length < barsPerRow) {
     // Partial row: proportional fill keeps per-bar width in line with full rows.
