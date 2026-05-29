@@ -31,10 +31,14 @@ body.nk-portrait #notation-viewport {
   padding-right: 10px;
 }
 
-/* FAB mode in portrait: push notation below the top guidance strip.
-   3px progress strip + 60px NGR strip = 63px total. */
+/* FAB mode in portrait: push notation below the fixed guidance strip.
+   score-card starts at 19px (app-body padding-top).
+   notation-viewport starts at 16px inside score-card (score-card padding).
+   fab-ngr occupies 19–79px of the viewport (60px header).
+   To keep the same 16px gap below the header as before:
+     padding = 79 − (19+16) + 16 = 60px                               */
 body.nk-portrait.nk-fab-mode #notation-viewport {
-  padding-top: 63px;
+  padding-top: 60px;
 }
 
 /* ================================================================
@@ -63,6 +67,7 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 /* ── Card header: purple band, rounded top ──────────────────── */
 
 body.nk-portrait.nk-fab-mode .fab-ngr {
+  top:           19px;              /* float card 16px below 3px progress strip */
   left:          10px;              /* inset to match card body */
   right:         10px;
   background:    var(--mykey-purple);
@@ -110,10 +115,19 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 }
 
 /* 10px side margin = dark page background visible on each side.
-   Rounded bottom corners complete the card shape.
+   All corners rounded (16px) so dark bg shows correctly at header/body joint.
    Shadow lifts the card off the page background. */
 body.nk-portrait.nk-fab-mode .score-card {
   margin:        0 10px;
-  border-radius: 0 0 16px 16px;
+  border-radius: 16px;
   box-shadow:    0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* Dark page background breathing room above and below the card.
+   padding-top: 19px → score-card top aligns with header top.
+   padding-bottom: 90px → 16px dark gap between card bottom and FAB bar top
+     (FAB bar top ≈ viewport_h − 74px; card bottom ≈ viewport_h − 90px). */
+body.nk-portrait.nk-fab-mode .app-body {
+  padding-top:    19px;
+  padding-bottom: 90px;
 }
