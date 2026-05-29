@@ -196,13 +196,19 @@
   </div>
 
   <!-- Note guidance strip — portrait only, passive note awareness overlay.
-       Positioned at viewport bottom; FAB bar floats above via --fab-ngr-h.
-       LH (bass) on left, RH (treble) on right. Format: Do-Mi-Sol. -->
+       Pinned to top (below 3px progress strip). LH left, RH right.
+       Center holds the note-name mode selector (interactive). -->
   <div class="fab-ngr" id="fabNgr" aria-live="polite" aria-label="Current notes">
     <div class="ngr-half ngr-lh">
       <span class="ngr-clef-label">LH</span>
       <span class="ngr-notes" id="ngrLH">—</span>
     </div>
+    <div class="ngr-div"></div>
+    <select id="fabNgrMode" class="ngr-mode-select" title="Note name format">
+      <option value="letter">ABC</option>
+      <option value="solfege">Do Re Mi</option>
+      <option value="number">1 2 3</option>
+    </select>
     <div class="ngr-div"></div>
     <div class="ngr-half ngr-rh">
       <span class="ngr-notes" id="ngrRH">—</span>
@@ -212,6 +218,7 @@
 
   <!-- Compact floating controls pill above keyboard -->
   <div class="fab-bar" id="fabBar">
+    <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
     <button class="fab-btn fab-song-btn" id="fabSongBtn" title="Select Song">♪</button>
     <div class="fab-sep"></div>
     <button class="fab-btn fab-main-btn" id="fabBtnMain" title="Play / Pause">▶</button>
@@ -267,15 +274,13 @@ if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
 // -----------------------------------------------------------------------
 // Portrait mode detection — JS-driven, more reliable than CSS orientation query.
 // Adds body.nk-portrait when height > width. CSS rules key off this class.
-// Sets --fab-ngr-h CSS token (note guidance strip height: 40px portrait / 0px landscape).
 // Rollback: delete this block + portrait-mode.css rules that use body.nk-portrait.
 // -----------------------------------------------------------------------
 function _syncPortrait() {
   const isPortrait = window.innerHeight > window.innerWidth;
   document.body.classList.toggle('nk-portrait', isPortrait);
   const root = document.documentElement;
-  root.style.setProperty('--fab-ngr-h', isPortrait ? '40px' : '0px');
-  root.style.setProperty('--fab-bar-h', isPortrait ? '56px' : '');  // '' reverts to CSS default
+  root.style.setProperty('--fab-bar-h', isPortrait ? '66px' : '');  // '' reverts to CSS default
 }
 _syncPortrait();
 window.addEventListener('resize',            _syncPortrait, { passive: true });
@@ -1197,10 +1202,88 @@ if (_noteNameModeEl) {
     _renderClef(kh.clef);
   };
 
-  // Re-render when note name mode changes (letter / solfège / numbers)
+  // Re-render when main note name selector changes; also keep strip selector in sync
   document.getElementById('noteNameMode')?.addEventListener('change', () => {
     _renderClef('treble'); _renderClef('bass');
+    const fabNgrModeEl = document.getElementById('fabNgrMode');
+    if (fabNgrModeEl) fabNgrModeEl.value = _noteNameMode;
   });
+
+  // Strip note-name selector — bidirectional sync with main #noteNameMode
+  const fabNgrModeEl = document.getElementById('fabNgrMode');
+  if (fabNgrModeEl) {
+    fabNgrModeEl.value = _noteNameMode;  // initialize to current state
+    fabNgrModeEl.addEventListener('change', e => {
+      _noteNameMode = e.target.value;
+      const mainSel = document.getElementById('noteNameMode');
+      if (mainSel) mainSel.value = _noteNameMode;
+      _applyNoteNameMode();
+      _renderClef('treble'); _renderClef('bass');
+    });
+  }
+})();
+
+// -----------------------------------------------------------------------
+// FAB bar drag — optional vertical repositioning by user.
+// Only the drag handle (⠿) is draggable; rest of bar remains tap-only.
+// Position resets on resize/orientationchange (safe bounds change).
+// -----------------------------------------------------------------------
+(function _initFabDrag() {
+  const fabBar     = document.getElementById('fabBar');
+  const dragHandle = document.getElementById('fabDragHandle');
+  if (!fabBar || !dragHandle) return;
+
+  let dragging    = false;
+  let startY      = 0;
+  let startBottom = 0;
+
+  function _getKbH() {
+    return parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--fab-kb-h')
+    ) || 0;
+  }
+
+  function _clampBottom(val) {
+    const kbH    = _getKbH();
+    const barH   = fabBar.offsetHeight;
+    const isPort = document.body.classList.contains('nk-portrait');
+    // In portrait: strip (63px) is at top — keep bar from overlapping it
+    const maxBot = window.innerHeight - barH - (isPort ? 63 : 0) - 10;
+    const minBot = kbH + 6;
+    return Math.max(minBot, Math.min(maxBot, val));
+  }
+
+  dragHandle.addEventListener('pointerdown', e => {
+    dragging    = true;
+    startY      = e.clientY;
+    const rect  = fabBar.getBoundingClientRect();
+    startBottom = window.innerHeight - rect.bottom;
+    dragHandle.setPointerCapture(e.pointerId);
+    fabBar.style.transition = 'none';
+    e.preventDefault();
+  });
+
+  dragHandle.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dy        = e.clientY - startY;       // positive = moved finger down
+    const newBottom = _clampBottom(startBottom - dy);
+    fabBar.style.bottom = newBottom + 'px';
+  });
+
+  dragHandle.addEventListener('pointerup', () => {
+    dragging = false;
+    fabBar.style.transition = '';
+  });
+
+  dragHandle.addEventListener('pointercancel', () => {
+    dragging = false;
+    fabBar.style.transition = '';
+  });
+
+  // Reset to CSS-computed default whenever screen geometry changes
+  function _resetPos() { fabBar.style.bottom = ''; }
+  window.addEventListener('resize',            _resetPos, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(_resetPos, 120), { passive: true });
 })();
 
 // -----------------------------------------------------------------------
@@ -1467,8 +1550,7 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   }, { passive: true });
 
   // --- Keyboard height → --fab-kb-h (positions FAB bar above keyboard) ---
-  // Portrait note guidance strip is an overlay (--fab-ngr-h CSS token, not JS).
-  // This only tracks the layout-flow keyboard for landscape mode.
+  // Portrait guidance strip is at top — no bottom offset needed from it.
   function _syncKbHeight() {
     const kbEl = document.querySelector('.kb-wrap');
     const kbH  = kbEl ? kbEl.offsetHeight : 0;

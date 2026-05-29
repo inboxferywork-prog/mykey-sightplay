@@ -17,13 +17,11 @@
    Geometry tokens
    --fab-kb-h  : keyboard wrap height — set by JS after layout
    --fab-bar-h : FAB pill bar height
-   --fab-ngr-h : note guidance strip height (portrait only, 0 elsewhere)
    ================================================================ */
 
 :root {
   --fab-kb-h:  170px;   /* fallback; _syncKbHeight() overrides live */
-  --fab-bar-h:   48px;  /* overridden to 56px in portrait by _syncPortrait() */
-  --fab-ngr-h:    0px;  /* overridden to 40px in portrait by _syncPortrait() */
+  --fab-bar-h:   48px;  /* overridden to 66px in portrait by _syncPortrait() */
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
@@ -113,7 +111,7 @@ body.nk-fab-mode .fab-overlay {
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: calc(var(--fab-kb-h) + var(--fab-ngr-h) + var(--fab-bar-h) + 10px);
+  bottom: calc(var(--fab-kb-h) + var(--fab-bar-h) + 10px);
   max-height: 38vh;
   display: none;
   flex-direction: column;
@@ -180,7 +178,7 @@ body.nk-fab-mode .fab-overlay {
 
 .fab-bar {
   position: absolute;
-  bottom: calc(var(--fab-kb-h) + var(--fab-ngr-h) + 8px);
+  bottom: calc(var(--fab-kb-h) + 8px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -208,9 +206,9 @@ body.nk-fab-mode .fab-overlay {
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 16px;
-  width: 38px;
-  height: 38px;
+  font-size: 17px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
@@ -227,12 +225,12 @@ body.nk-fab-mode .fab-overlay {
 
 /* Primary play/pause — filled orange circle */
 .fab-main-btn {
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   background: var(--orange);
   color: #000;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 19px;
 }
 
 .fab-main-btn:hover:not(:disabled) { background: var(--orange-hover); color: #000; }
@@ -284,20 +282,21 @@ body.nk-fab-mode .fab-overlay {
    ================================================================ */
 
 body.nk-portrait .fab-bar {
-  gap: 2px;
-  padding: 0 10px;
+  gap: 4px;
+  padding: 0 12px;
+  height: 66px;
 }
 
 body.nk-portrait .fab-btn {
-  width: 44px;
-  height: 44px;
-  font-size: 19px;
+  width: 50px;
+  height: 50px;
+  font-size: 21px;
 }
 
 body.nk-portrait .fab-main-btn {
-  width: 46px;
-  height: 46px;
-  font-size: 20px;
+  width: 54px;
+  height: 54px;
+  font-size: 23px;
 }
 
 body.nk-portrait .fab-tempo-select {
@@ -319,7 +318,7 @@ body.nk-portrait .fab-tools-hand-btn {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--fab-kb-h) + var(--fab-ngr-h) + var(--fab-bar-h) + 10px);
+  bottom: calc(var(--fab-kb-h) + var(--fab-bar-h) + 10px);
   min-width: 220px;
   max-width: calc(100vw - 32px);
   display: none;
@@ -419,19 +418,20 @@ body.nk-portrait .fab-tools-hand-btn {
 
 /* ================================================================
    Note guidance strip — passive display of current notes.
-   Lives inside .fab-overlay; portrait mode only (--fab-ngr-h = 40px).
-   Zero layout footprint — purely a fixed overlay layer.
+   Lives inside .fab-overlay; portrait mode only.
+   Pinned to viewport top (below the 3px progress strip).
+   Note-name mode selector is interactive (pointer-events: auto).
    ================================================================ */
 
 .fab-ngr {
   position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 40px;
+  left: 0; right: 0; top: 3px;   /* sits below the 3px progress strip */
+  height: 60px;
   display: none;
   align-items: center;
   pointer-events: none;   /* passive — score touches pass through */
   background: var(--header-bg);
-  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   user-select: none;
@@ -454,7 +454,7 @@ body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
 .ngr-rh { justify-content: flex-end; }
 
 .ngr-clef-label {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -465,8 +465,8 @@ body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
 .ngr-rh .ngr-clef-label { color: var(--rh-color, #5bc8f5); }
 
 .ngr-notes {
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 500;
   color: var(--muted);
   min-width: 0;
   overflow: hidden;
@@ -477,15 +477,47 @@ body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
 }
 
 /* Active state — notes currently sounding */
-.ngr-lh .ngr-notes.ngr-active { color: var(--lh-color, #ff80c8); font-weight: 600; }
-.ngr-rh .ngr-notes.ngr-active { color: var(--rh-color, #5bc8f5); font-weight: 600; }
+.ngr-lh .ngr-notes.ngr-active { color: var(--lh-color, #ff80c8); font-weight: 700; }
+.ngr-rh .ngr-notes.ngr-active { color: var(--rh-color, #5bc8f5); font-weight: 700; }
 
 .ngr-div {
   width: 1px;
-  height: 18px;
+  height: 22px;
   background: var(--border);
   flex-shrink: 0;
 }
+
+/* Note-name mode selector inside the guidance strip */
+.ngr-mode-select {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  font-size: 11px;
+  font-family: inherit;
+  border-radius: 5px;
+  padding: 3px 6px;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  pointer-events: auto;  /* interactive inside the passive strip */
+  -webkit-tap-highlight-color: transparent;
+  max-width: 82px;
+}
+
+/* Drag handle — subtle grab target at the edge of the FAB bar */
+.fab-drag-handle {
+  font-size: 14px;
+  color: var(--muted);
+  opacity: 0.45;
+  cursor: grab;
+  padding: 0 5px;
+  flex-shrink: 0;
+  touch-action: none;
+  user-select: none;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.fab-drag-handle:active { cursor: grabbing; opacity: 0.9; }
 
 /* ================================================================
    Fullscreen — fixed elements stay in the normal stacking context

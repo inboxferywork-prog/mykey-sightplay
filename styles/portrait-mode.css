@@ -30,3 +30,9 @@ body.nk-portrait #notation-viewport {
   padding-left:  10px;
   padding-right: 10px;
 }
+
+/* FAB mode in portrait: push notation below the top guidance strip.
+   3px progress strip + 60px NGR strip = 63px total. */
+body.nk-portrait.nk-fab-mode #notation-viewport {
+  padding-top: 63px;
+}
