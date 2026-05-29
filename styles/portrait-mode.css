@@ -38,41 +38,50 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 }
 
 /* ================================================================
-   Portrait reading card — MyKey identity header
-   Transforms the note guidance strip into a branded purple header
-   band with rounded bottom corners, sitting above the white
-   notation card.
+   Portrait floating reading card — MyKey identity
+   The guidance strip (fab-ngr) and the notation area (score-card)
+   become one unified visual object: a card floating on the dark
+   page background (app-body).
 
-   Pure visual framing — no renderer, viewport, or layout changes.
+   Layout math — notation width is preserved exactly:
+     Without FAB: viewport padding 10px each side
+                  → usable = screen − 20px
+     With FAB card: card margin 10px each side, viewport padding 0
+                  → usable = (screen − 20px) − 0 = screen − 20px  ✓
+   fitWidth() receives the same clientWidth and calculates the same
+   scale as before. The renderer is untouched.
+
    Rollback: delete this section.
    ================================================================ */
 
-/* Brand tokens */
+/* Brand token */
 :root {
   --mykey-purple:      #6B47D6;
-  --mykey-purple-glow: rgba(107, 71, 214, 0.28);
+  --mykey-purple-glow: rgba(107, 71, 214, 0.26);
 }
 
-/* ── Purple header band ─────────────────────────────────────── */
+/* ── Card header: purple band, rounded top ──────────────────── */
 
 body.nk-portrait.nk-fab-mode .fab-ngr {
+  left:          10px;              /* inset to match card body */
+  right:         10px;
   background:    var(--mykey-purple);
   border-bottom: none;
-  border-radius: 0 0 14px 14px;   /* rounded bottom corners only */
-  box-shadow:    0 4px 22px var(--mykey-purple-glow);
+  border-radius: 16px 16px 0 0;    /* rounded top — card starts here */
+  box-shadow:    0 0 28px var(--mykey-purple-glow);
 }
 
-/* Dividers: faint white lines on purple */
+/* Dividers: faint white separator lines on purple */
 body.nk-portrait.nk-fab-mode .ngr-div {
   background: rgba(255, 255, 255, 0.22);
 }
 
-/* Inactive note text: off-white, readable on purple */
+/* Inactive note text: legible off-white on purple */
 body.nk-portrait.nk-fab-mode .ngr-notes {
   color: rgba(255, 255, 255, 0.52);
 }
 
-/* Active notes on purple: white text + hand-color glow */
+/* Active notes: white + hand-color glow */
 body.nk-portrait.nk-fab-mode .ngr-lh .ngr-notes.ngr-active {
   color:       #ffffff;
   background:  rgba(255, 255, 255, 0.14);
@@ -84,17 +93,27 @@ body.nk-portrait.nk-fab-mode .ngr-rh .ngr-notes.ngr-active {
   text-shadow: 0 0 12px rgba(91, 200, 245, 0.80);
 }
 
-/* Mode selector: light style on purple */
+/* Mode selector: light treatment on purple */
 body.nk-portrait.nk-fab-mode .ngr-mode-select {
   border-color: rgba(255, 255, 255, 0.30);
   color:        rgba(255, 255, 255, 0.88);
   background:   rgba(255, 255, 255, 0.10);
 }
 
-/* ── Notation card ──────────────────────────────────────────── */
+/* ── Card body: notation area, rounded bottom ───────────────── */
 
-/* Faint inset shadow at the top of the score card where it begins
-   below the purple header — reinforces the header-to-card boundary. */
+/* Remove side viewport padding — replaced by card side margin.
+   Net usable notation width is unchanged (see layout math above). */
+body.nk-portrait.nk-fab-mode #notation-viewport {
+  padding-left:  0;
+  padding-right: 0;
+}
+
+/* 10px side margin = dark page background visible on each side.
+   Rounded bottom corners complete the card shape.
+   Shadow lifts the card off the page background. */
 body.nk-portrait.nk-fab-mode .score-card {
-  box-shadow: inset 0 4px 14px rgba(0, 0, 0, 0.07);
+  margin:        0 10px;
+  border-radius: 0 0 16px 16px;
+  box-shadow:    0 8px 32px rgba(0, 0, 0, 0.35);
 }
