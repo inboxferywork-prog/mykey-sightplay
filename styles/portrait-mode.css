@@ -1,28 +1,32 @@
 /* ================================================================
    portrait-mode.css — MyKey SightPlay
-   Portrait Reading Mode: keyboard suppression + notation breathing room
+   Portrait Reading Mode
 
-   Activation:  automatic — @media (max-width:900px) and (orientation:portrait)
-   Rollback:    delete this file and its <link> tag.
+   Activation:  JS sets body.nk-portrait when innerHeight > innerWidth.
+                _syncPortrait() in index.html — runs on load + resize + orientationchange.
+   Rollback:    delete this file, its <link>, and the _syncPortrait() block in index.html.
 
-   Note guidance strip lives in fab-overlay.css (.fab-ngr / .ngr-*).
+   No CSS media queries — class-based rules are reliable across all browsers
+   and test environments (desktop resize, DevTools emulation, real devices).
    ================================================================ */
 
 /* ================================================================
-   Portrait phone + tablet (≤ 900px portrait)
+   Keyboard suppression
+   Hides the piano keyboard in portrait; frees significant vertical space.
+   Landscape: keyboard remains visible (body.nk-portrait absent).
    ================================================================ */
 
-@media (max-width: 900px) and (orientation: portrait) {
+body.nk-portrait .kb-wrap {
+  display: none;
+}
 
-  /* Piano keyboard: hidden — frees significant vertical space */
-  .kb-wrap { display: none; }
+/* ================================================================
+   Notation viewport — side breathing room
+   ViewportManager._usableWidth() subtracts horizontal padding,
+   so fitWidth() scales to fit within the breathing room automatically.
+   ================================================================ */
 
-  /* Notation viewport: 10px side breathing room.
-     ViewportManager._usableWidth() subtracts this padding,
-     so fitWidth() scales to fit inside the padded area automatically. */
-  #notation-viewport {
-    padding-left:  10px;
-    padding-right: 10px;
-  }
-
+body.nk-portrait #notation-viewport {
+  padding-left:  10px;
+  padding-right: 10px;
 }

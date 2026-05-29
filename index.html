@@ -264,6 +264,23 @@ if (FAB_CONTROLS) document.body.classList.add('nk-fab-mode');
 const FLOAT_CONTROLS = false;
 if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
 
+// -----------------------------------------------------------------------
+// Portrait mode detection — JS-driven, more reliable than CSS orientation query.
+// Adds body.nk-portrait when height > width. CSS rules key off this class.
+// Sets --fab-ngr-h CSS token (note guidance strip height: 40px portrait / 0px landscape).
+// Rollback: delete this block + portrait-mode.css rules that use body.nk-portrait.
+// -----------------------------------------------------------------------
+function _syncPortrait() {
+  const isPortrait = window.innerHeight > window.innerWidth;
+  document.body.classList.toggle('nk-portrait', isPortrait);
+  const root = document.documentElement;
+  root.style.setProperty('--fab-ngr-h', isPortrait ? '40px' : '0px');
+  root.style.setProperty('--fab-bar-h', isPortrait ? '56px' : '');  // '' reverts to CSS default
+}
+_syncPortrait();
+window.addEventListener('resize',            _syncPortrait, { passive: true });
+window.addEventListener('orientationchange', () => setTimeout(_syncPortrait, 80), { passive: true });
+
 // Note guidance row — portrait reading mode. Stub replaced by _initNoteGuidanceRow().
 // Rollback: set to () => {} and delete the IIFE + HTML element + portrait-mode.css.
 let _ngrUpdate = () => {};

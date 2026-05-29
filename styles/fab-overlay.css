@@ -22,22 +22,12 @@
 
 :root {
   --fab-kb-h:  170px;   /* fallback; _syncKbHeight() overrides live */
-  --fab-bar-h:  48px;
-  --fab-ngr-h:   0px;   /* overridden to 40px in portrait media query */
+  --fab-bar-h:   48px;  /* overridden to 56px in portrait by _syncPortrait() */
+  --fab-ngr-h:    0px;  /* overridden to 40px in portrait by _syncPortrait() */
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
-  :root {
-    --fab-bar-h: 40px;
-  }
-}
-
-/* Portrait: activate note guidance strip height token */
-@media (max-width: 900px) and (orientation: portrait) {
-  :root {
-    --fab-bar-h:  56px;
-    --fab-ngr-h:  40px;
-  }
+  :root { --fab-bar-h: 40px; }
 }
 
 /* ================================================================
@@ -218,9 +208,9 @@ body.nk-fab-mode .fab-overlay {
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 14px;
-  width: 32px;
-  height: 32px;
+  font-size: 16px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
@@ -237,12 +227,12 @@ body.nk-fab-mode .fab-overlay {
 
 /* Primary play/pause — filled orange circle */
 .fab-main-btn {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   background: var(--orange);
   color: #000;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .fab-main-btn:hover:not(:disabled) { background: var(--orange-hover); color: #000; }
@@ -289,37 +279,36 @@ body.nk-fab-mode .fab-overlay {
 }
 
 /* ================================================================
-   Portrait phone (≤ 900px portrait) — larger touch targets
+   Portrait mode — larger touch targets and tighter bar layout.
+   body.nk-portrait set by JS (_syncPortrait) when innerHeight > innerWidth.
    ================================================================ */
 
-@media (max-width: 900px) and (orientation: portrait) {
-  .fab-bar {
-    gap: 2px;
-    padding: 0 10px;
-  }
+body.nk-portrait .fab-bar {
+  gap: 2px;
+  padding: 0 10px;
+}
 
-  .fab-btn {
-    width: 42px;
-    height: 42px;
-    font-size: 18px;
-  }
+body.nk-portrait .fab-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 19px;
+}
 
-  .fab-main-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 19px;
-  }
+body.nk-portrait .fab-main-btn {
+  width: 46px;
+  height: 46px;
+  font-size: 20px;
+}
 
-  .fab-tempo-select {
-    font-size: 13px;
-    max-width: 72px;
-    padding: 0 2px;
-  }
+body.nk-portrait .fab-tempo-select {
+  font-size: 13px;
+  max-width: 70px;
+  padding: 0 2px;
+}
 
-  .fab-tools-hand-btn {
-    padding: 7px 14px;
-    font-size: 14px;
-  }
+body.nk-portrait .fab-tools-hand-btn {
+  padding: 7px 14px;
+  font-size: 14px;
 }
 
 /* ================================================================
@@ -438,7 +427,7 @@ body.nk-fab-mode .fab-overlay {
   position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 40px;
-  display: none;          /* hidden by default; portrait media query reveals */
+  display: none;
   align-items: center;
   pointer-events: none;   /* passive — score touches pass through */
   background: var(--header-bg);
@@ -448,9 +437,8 @@ body.nk-fab-mode .fab-overlay {
   user-select: none;
 }
 
-@media (max-width: 900px) and (orientation: portrait) {
-  body.nk-fab-mode .fab-ngr { display: flex; }
-}
+/* Revealed only in portrait FAB mode — body.nk-portrait set by JS */
+body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
 
 /* Two-halves layout: LH (bass) left, RH (treble) right */
 .ngr-half {
@@ -497,14 +485,6 @@ body.nk-fab-mode .fab-overlay {
   height: 18px;
   background: var(--border);
   flex-shrink: 0;
-}
-
-/* ================================================================
-   Portrait phone (≤ 600px) — tighten bar
-   ================================================================ */
-
-@media (max-width: 600px) {
-  .fab-bar { padding: 0 8px; gap: 1px; }
 }
 
 /* ================================================================
