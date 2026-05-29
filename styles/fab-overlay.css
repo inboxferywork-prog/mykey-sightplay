@@ -440,7 +440,9 @@ body.nk-portrait .fab-tools-hand-btn {
 /* Revealed only in portrait FAB mode — body.nk-portrait set by JS */
 body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
 
-/* Two-halves layout: LH (bass) left, RH (treble) right */
+/* Two-halves layout: LH (bass) left, RH (treble) right.
+   justify-content brings each cluster toward the center selector
+   rather than pinning them to the screen edges. */
 .ngr-half {
   flex: 1;
   display: flex;
@@ -450,15 +452,16 @@ body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
   min-width: 0;
 }
 
-.ngr-lh { justify-content: flex-start; }
-.ngr-rh { justify-content: flex-end; }
+.ngr-lh { justify-content: flex-end; }   /* cluster right → near selector */
+.ngr-rh { justify-content: flex-start; } /* cluster left  → near selector */
 
 .ngr-clef-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .ngr-lh .ngr-clef-label { color: var(--lh-color, #ff80c8); }
@@ -473,12 +476,27 @@ body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
   text-overflow: ellipsis;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  transition: color 0.08s;
+  letter-spacing: 0;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: transparent;
+  transition: color 0.08s, background 0.12s, text-shadow 0.12s;
 }
 
 /* Active state — notes currently sounding */
-.ngr-lh .ngr-notes.ngr-active { color: var(--lh-color, #ff80c8); font-weight: 700; }
-.ngr-rh .ngr-notes.ngr-active { color: var(--rh-color, #5bc8f5); font-weight: 700; }
+.ngr-lh .ngr-notes.ngr-active {
+  color: var(--lh-color, #ff80c8);
+  font-weight: 700;
+  background: rgba(255, 128, 200, 0.10);
+  text-shadow: 0 0 10px rgba(255, 128, 200, 0.55);
+}
+.ngr-rh .ngr-notes.ngr-active {
+  color: var(--rh-color, #5bc8f5);
+  font-weight: 700;
+  background: rgba(91, 200, 245, 0.10);
+  text-shadow: 0 0 10px rgba(91, 200, 245, 0.55);
+}
 
 .ngr-div {
   width: 1px;
@@ -487,21 +505,30 @@ body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
   flex-shrink: 0;
 }
 
-/* Note-name mode selector inside the guidance strip */
+/* Note-name mode selector inside the guidance strip.
+   appearance: none normalizes Android Chrome vs iOS Safari rendering.
+   text-align-last centers the selected option text cross-platform. */
 .ngr-mode-select {
+  -webkit-appearance: none;
+  appearance: none;
   background: transparent;
   border: 1px solid var(--border2);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
-  border-radius: 5px;
-  padding: 3px 6px;
+  border-radius: 6px;
+  padding: 4px 10px;
   cursor: pointer;
   outline: none;
   flex-shrink: 0;
   pointer-events: auto;  /* interactive inside the passive strip */
   -webkit-tap-highlight-color: transparent;
-  max-width: 82px;
+  max-width: 90px;
+  min-height: 28px;
+  box-sizing: border-box;
+  text-align: center;
+  text-align-last: center;
+  line-height: 1.2;
 }
 
 /* Drag handle — subtle grab target at the edge of the FAB bar */
