@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Manager — MyKey Music Labs</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border: #2a2a2a;
+      --border2: #444;
+      --text: #d0d0d0;
+      --muted: #666;
+      --orange: #f0a500;
+      --blue: #4a9eff;
+      --green: #7ec87e;
+      --red: #e05050;
+      --yellow: #d4a838;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+    }
+    .header-title { font-size: 15px; font-weight: 600; }
+    .header-sub { font-size: 12px; color: var(--muted); }
+    .header-sep { flex: 1; }
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      font-size: 11px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .folder-indicator {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(74,158,255,0.08);
+      border: 1px solid rgba(74,158,255,0.25);
+      color: var(--blue);
+      font-size: 12px;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: var(--green); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn:hover { background: #252525; }
+    .btn-primary { background: var(--orange); border-color: var(--orange); color: #000; font-weight: 600; }
+    .btn-primary:hover { background: #d99200; border-color: #d99200; }
+    .btn-danger { border-color: var(--red); color: var(--red); background: transparent; }
+    .btn-danger:hover { background: rgba(224,80,80,0.08); }
+    .btn-sm { padding: 3px 8px; font-size: 12px; }
+    .btn-icon { padding: 4px 8px; font-size: 14px; line-height: 1; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-wrap: wrap;
+    }
+    .toolbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+    .search-wrap { position: relative; margin-left: auto; }
+    .search-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 14px;
+      pointer-events: none;
+      line-height: 1;
+    }
+    .search-input {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 5px 10px 5px 28px;
+      width: 220px;
+      font-family: inherit;
+    }
+    .search-input:focus { outline: none; border-color: var(--orange); }
+    .search-input::placeholder { color: var(--muted); }
+
+    /* Warning bar */
+    .warning-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(212,168,56,0.06);
+      border-bottom: 1px solid rgba(212,168,56,0.15);
+      font-size: 12px;
+      color: var(--yellow);
+    }
+
+    /* Main */
+    .main { padding: 20px; }
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:not(.editing):hover td { background: var(--surface2); }
+    tr.editing td { background: rgba(240,165,0,0.03); }
+    .td-num { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px; text-align: right; }
+    .td-label { font-weight: 500; min-width: 180px; }
+    .td-src { color: var(--muted); font-family: 'Consolas', monospace; font-size: 12px; min-width: 200px; }
+    .td-level { color: var(--muted); font-size: 12px; width: 120px; }
+    .td-actions { width: 80px; text-align: right; white-space: nowrap; }
+    .td-edit-cell { min-width: 380px; }
+
+    /* Edit inputs */
+    .edit-row { display: flex; gap: 8px; align-items: center; }
+    .edit-input {
+      background: var(--bg);
+      border: 1px solid var(--orange);
+      border-radius: 3px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 4px 8px;
+      font-family: inherit;
+      flex: 1;
+    }
+    .edit-input.mono { font-family: 'Consolas', monospace; font-size: 12px; }
+    .edit-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(240,165,0,0.2); }
+    .edit-actions { display: flex; gap: 4px; }
+
+    /* Empty state */
+    .empty-state {
+      padding: 56px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+    .empty-sub { font-size: 12px; margin-top: 6px; color: var(--muted); }
+
+    /* Status bar */
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 36px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      z-index: 100;
+    }
+    .status-dirty { color: var(--orange); display: none; }
+    .status-sep { width: 1px; height: 16px; background: var(--border); }
+    .status-right { margin-left: auto; color: var(--muted); }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 24px;
+      width: 420px;
+      max-width: 92vw;
+    }
+    .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+    .modal-body { color: var(--muted); font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
+    .modal-body code {
+      background: var(--surface2);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 48px;
+      right: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 8px 14px;
+      font-size: 13px;
+      z-index: 300;
+      opacity: 1;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.success { border-color: var(--green); color: var(--green); }
+    .toast.error { border-color: var(--red); color: var(--red); }
+    .toast.fade { opacity: 0; }
+
+    input[type=file] { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- Hidden file inputs -->
+<input type="file" id="input-index" accept=".json">
+<input type="file" id="input-songs" accept=".json" multiple>
+
+<!-- Header -->
+<header class="header">
+  <div>
+    <div class="header-title">Song Manager</div>
+    <div class="header-sub">MyKey Music Labs</div>
+  </div>
+  <div class="header-sep"></div>
+  <span id="song-count" class="count-badge">0 songs</span>
+  <span id="folder-indicator" class="folder-indicator">
+    <span class="dot dot-green"></span>
+    <span id="folder-name">Folder Mode</span>
+  </span>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="btn" id="btn-load-index">📂 Load index.json</button>
+  <button class="btn btn-primary" id="btn-import">＋ Import Songs</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn" id="btn-open-folder">🗂 Open Folder</button>
+  <button class="btn" id="btn-save">💾 Save index.json</button>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" class="search-input" id="search" placeholder="Filter by label or filename…">
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">Registry</span>
+      <span id="filter-note" style="font-size:11px;color:var(--muted);display:none"></span>
+    </div>
+    <div class="warning-bar" id="no-fsapi-warning">
+      ⚠ File System Access API not available in this browser. Folder mode is disabled — use Load index.json and Download instead.
+    </div>
+    <div class="table-wrap">
+      <table id="registry-table">
+        <thead>
+          <tr>
+            <th class="td-num">#</th>
+            <th>Label</th>
+            <th>Source File</th>
+            <th>Level</th>
+            <th class="td-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="registry-body"></tbody>
+      </table>
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">🎵</div>
+        <div class="empty-text">No songs loaded</div>
+        <div class="empty-sub">Load songs/index.json or open the songs folder to begin.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <span id="status-count">No registry loaded</span>
+  <div class="status-sep" id="sep-folder" style="display:none"></div>
+  <span id="status-folder" style="display:none"></span>
+  <div class="status-sep" id="sep-dirty" style="display:none"></div>
+  <span class="status-dirty" id="status-dirty">● Unsaved changes</span>
+  <span class="status-right">Song Manager v1.0</span>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast fade" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────
+let registry    = [];   // [{src, label, _level}]
+let dirty       = false;
+let folderHandle = null;                // FileSystemDirectoryHandle
+let fileHandles  = new Map();           // basename → FileSystemFileHandle
+let editingIndex = -1;
+let filterText   = '';
+const hasFSAPI   = typeof window.showDirectoryPicker === 'function';
+
+// ─────────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!hasFSAPI) document.getElementById('no-fsapi-warning').style.display = 'flex';
+
+  document.getElementById('btn-load-index').addEventListener('click', () => {
+    document.getElementById('input-index').click();
+  });
+  document.getElementById('input-index').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) loadIndexFromFile(f);
+    e.target.value = '';
+  });
+
+  document.getElementById('btn-import').addEventListener('click', () => {
+    document.getElementById('input-songs').click();
+  });
+  document.getElementById('input-songs').addEventListener('change', e => {
+    if (e.target.files.length) importSongFiles(Array.from(e.target.files));
+    e.target.value = '';
+  });
+
+  document.getElementById('btn-open-folder').addEventListener('click', openFolder);
+  document.getElementById('btn-save').addEventListener('click', saveRegistry);
+
+  document.getElementById('search').addEventListener('input', e => {
+    filterText = e.target.value.toLowerCase();
+    renderTable();
+  });
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('modal').style.display !== 'none') closeModal();
+      else if (editingIndex !== -1) cancelEdit();
+    }
+  });
+
+  renderTable();
+});
+
+// ─────────────────────────────────────────────
+// Load index.json (file input)
+// ─────────────────────────────────────────────
+async function loadIndexFromFile(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (!Array.isArray(data.songs)) throw new Error('Missing "songs" array');
+    registry = data.songs.map(e => ({ src: e.src || '', label: e.label || '', _level: '' }));
+    editingIndex = -1;
+    setDirty(false);
+    showToast(`Loaded ${registry.length} songs`, 'success');
+    renderTable();
+    updateStatus();
+  } catch (err) {
+    showToast('Failed to load: ' + err.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Folder Mode
+// ─────────────────────────────────────────────
+async function openFolder() {
+  if (!hasFSAPI) { showToast('File System Access API not available', 'error'); return; }
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    folderHandle = handle;
+    fileHandles.clear();
+
+    for await (const [name, fh] of handle.entries()) {
+      if (fh.kind === 'file' && name.endsWith('.json')) fileHandles.set(name, fh);
+    }
+
+    if (fileHandles.has('index.json')) {
+      const file = await fileHandles.get('index.json').getFile();
+      await loadIndexFromFile(file);
+    } else {
+      showToast(`Folder opened: ${handle.name}. No index.json found — import songs to create one.`, 'success');
+    }
+
+    updateFolderUI();
+    renderTable();
+    updateStatus();
+  } catch (err) {
+    if (err.name !== 'AbortError') showToast('Could not open folder: ' + err.message, 'error');
+  }
+}
+
+function updateFolderUI() {
+  const indicator = document.getElementById('folder-indicator');
+  const sfEl      = document.getElementById('status-folder');
+  const sfSep     = document.getElementById('sep-folder');
+
+  if (folderHandle) {
+    indicator.style.display = 'inline-flex';
+    document.getElementById('folder-name').textContent = folderHandle.name;
+    sfEl.textContent = 'Folder: ' + folderHandle.name;
+    sfEl.style.display = '';
+    sfSep.style.display = '';
+  } else {
+    indicator.style.display = 'none';
+    sfEl.style.display = 'none';
+    sfSep.style.display = 'none';
+  }
+}
+
+// ─────────────────────────────────────────────
+// Import song.json files
+// ─────────────────────────────────────────────
+async function importSongFiles(files) {
+  let added = 0, dupes = 0, errors = 0;
+
+  for (const file of files) {
+    let text, data;
+    try {
+      text = await file.text();
+      data = JSON.parse(text);
+    } catch (err) {
+      showToast(`Cannot parse ${file.name}: ${err.message}`, 'error');
+      errors++;
+      continue;
+    }
+
+    const meta     = data.meta || {};
+    const basename = file.name.endsWith('.json') ? file.name : file.name + '.json';
+    const src      = 'songs/' + basename;
+
+    if (registry.some(r => r.src === src)) { dupes++; continue; }
+
+    const label  = meta.title || basename.replace(/\.json$/, '');
+    const _level = meta.level || '';
+
+    if (folderHandle) {
+      try {
+        const fh       = await folderHandle.getFileHandle(basename, { create: true });
+        const writable = await fh.createWritable();
+        await writable.write(text);
+        await writable.close();
+        fileHandles.set(basename, fh);
+      } catch (writeErr) {
+        showToast(`Could not write ${basename}: ${writeErr.message}`, 'error');
+        errors++;
+        continue;
+      }
+    }
+
+    registry.push({ src, label, _level });
+    added++;
+  }
+
+  if (added > 0) {
+    setDirty(true);
+    renderTable();
+    updateStatus();
+  }
+
+  const parts = [];
+  if (added)   parts.push(`${added} added`);
+  if (dupes)   parts.push(`${dupes} duplicate${dupes !== 1 ? 's' : ''} skipped`);
+  if (errors)  parts.push(`${errors} error${errors !== 1 ? 's' : ''}`);
+  if (parts.length) showToast(parts.join(', '), added > 0 ? 'success' : 'error');
+}
+
+// ─────────────────────────────────────────────
+// Render Table
+// ─────────────────────────────────────────────
+function renderTable() {
+  const tbody      = document.getElementById('registry-body');
+  const empty      = document.getElementById('empty-state');
+  const countBadge = document.getElementById('song-count');
+  const filterNote = document.getElementById('filter-note');
+
+  countBadge.textContent = `${registry.length} song${registry.length !== 1 ? 's' : ''}`;
+
+  if (registry.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    filterNote.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  const visible = filterText
+    ? registry.filter(r =>
+        r.label.toLowerCase().includes(filterText) ||
+        r.src.toLowerCase().includes(filterText) ||
+        r._level.toLowerCase().includes(filterText)
+      )
+    : registry;
+
+  if (filterText && visible.length < registry.length) {
+    filterNote.textContent = `Showing ${visible.length} of ${registry.length}`;
+    filterNote.style.display = '';
+  } else {
+    filterNote.style.display = 'none';
+  }
+
+  tbody.innerHTML = '';
+  visible.forEach(entry => {
+    const i        = registry.indexOf(entry);
+    const basename = entry.src.split('/').pop();
+    const isEdit   = i === editingIndex;
+    const tr       = document.createElement('tr');
+    if (isEdit) tr.classList.add('editing');
+
+    if (isEdit) {
+      tr.innerHTML = `
+        <td class="td-num">${i + 1}</td>
+        <td class="td-edit-cell" colspan="2">
+          <div class="edit-row">
+            <input class="edit-input" id="edit-label"    value="${h(entry.label)}"    placeholder="Label" onkeydown="editKey(event,${i})">
+            <input class="edit-input mono" id="edit-file" value="${h(basename)}" placeholder="filename.json" onkeydown="editKey(event,${i})">
+          </div>
+        </td>
+        <td class="td-level">${h(entry._level || '—')}</td>
+        <td>
+          <div class="edit-actions">
+            <button class="btn btn-primary btn-sm" onclick="saveEdit(${i})">Save</button>
+            <button class="btn btn-sm" onclick="cancelEdit()">Cancel</button>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+      setTimeout(() => document.getElementById('edit-label')?.focus(), 0);
+    } else {
+      tr.innerHTML = `
+        <td class="td-num">${i + 1}</td>
+        <td class="td-label">${h(entry.label)}</td>
+        <td class="td-src">${h(entry.src)}</td>
+        <td class="td-level">${h(entry._level || '—')}</td>
+        <td class="td-actions">
+          <button class="btn btn-icon btn-sm" title="Edit"   onclick="startEdit(${i})">✎</button>
+          <button class="btn btn-icon btn-sm btn-danger" title="Remove" onclick="confirmRemove(${i})">✕</button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// Edit
+// ─────────────────────────────────────────────
+function startEdit(i) {
+  editingIndex = i;
+  renderTable();
+}
+
+function editKey(e, i) {
+  if (e.key === 'Enter')  { e.preventDefault(); saveEdit(i); }
+  if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
+}
+
+function saveEdit(i) {
+  const newLabel = (document.getElementById('edit-label')?.value || '').trim();
+  let   newFile  = (document.getElementById('edit-file')?.value  || '').trim();
+
+  if (!newLabel) { showToast('Label cannot be empty', 'error'); return; }
+  if (!newFile)  { showToast('Filename cannot be empty', 'error'); return; }
+  if (!newFile.endsWith('.json')) newFile += '.json';
+
+  const newSrc = 'songs/' + newFile;
+  if (registry.some((r, idx) => idx !== i && r.src === newSrc)) {
+    showToast('Another entry already uses that filename', 'error');
+    return;
+  }
+
+  registry[i].label = newLabel;
+  registry[i].src   = newSrc;
+  editingIndex = -1;
+  setDirty(true);
+  renderTable();
+  updateStatus();
+  showToast('Entry updated', 'success');
+}
+
+function cancelEdit() {
+  editingIndex = -1;
+  renderTable();
+}
+
+// ─────────────────────────────────────────────
+// Remove
+// ─────────────────────────────────────────────
+function confirmRemove(i) {
+  const entry    = registry[i];
+  const basename = entry.src.split('/').pop();
+  const canDel   = folderHandle && fileHandles.has(basename);
+
+  showModal(
+    `Remove "${entry.label}"`,
+    canDel
+      ? `Remove from registry?<br><br>File: <code>${h(entry.src)}</code><br><br>Do you also want to delete the physical file from the folder?`
+      : `Remove <code>${h(entry.src)}</code> from the registry?<br><br>The file will not be deleted.`,
+    canDel
+      ? [
+          { label: 'Remove + Delete File', cls: 'btn btn-danger', fn: () => doRemove(i, true) },
+          { label: 'Remove Only',          cls: 'btn',            fn: () => doRemove(i, false) },
+          { label: 'Cancel',               cls: 'btn',            fn: closeModal },
+        ]
+      : [
+          { label: 'Remove', cls: 'btn btn-danger', fn: () => doRemove(i, false) },
+          { label: 'Cancel', cls: 'btn',            fn: closeModal },
+        ]
+  );
+}
+
+async function doRemove(i, deleteFile) {
+  const basename = registry[i].src.split('/').pop();
+  if (deleteFile && folderHandle) {
+    try {
+      await folderHandle.removeEntry(basename);
+      fileHandles.delete(basename);
+    } catch (err) {
+      showToast('Could not delete file: ' + err.message, 'error');
+    }
+  }
+  registry.splice(i, 1);
+  if      (editingIndex === i) editingIndex = -1;
+  else if (editingIndex >  i) editingIndex--;
+  closeModal();
+  setDirty(true);
+  renderTable();
+  updateStatus();
+  showToast(deleteFile ? 'Entry removed and file deleted' : 'Entry removed', 'success');
+}
+
+// ─────────────────────────────────────────────
+// Save Registry
+// ─────────────────────────────────────────────
+async function saveRegistry() {
+  if (registry.length === 0) { showToast('Nothing to save', 'error'); return; }
+
+  const json = JSON.stringify({ songs: registry.map(r => ({ src: r.src, label: r.label })) }, null, 2);
+
+  if (folderHandle) {
+    try {
+      const fh       = await folderHandle.getFileHandle('index.json', { create: true });
+      const writable = await fh.createWritable();
+      await writable.write(json);
+      await writable.close();
+      setDirty(false);
+      updateStatus();
+      showToast('index.json saved to folder', 'success');
+    } catch (err) {
+      showToast('Save failed: ' + err.message, 'error');
+    }
+  } else {
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a   = Object.assign(document.createElement('a'), { href: url, download: 'index.json' });
+    a.click();
+    URL.revokeObjectURL(url);
+    setDirty(false);
+    updateStatus();
+    showToast('index.json downloaded', 'success');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+function h(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setDirty(val) {
+  dirty = val;
+  document.getElementById('status-dirty').style.display = val ? '' : 'none';
+  document.getElementById('sep-dirty').style.display    = val ? '' : 'none';
+}
+
+function updateStatus() {
+  const el = document.getElementById('status-count');
+  el.textContent = registry.length === 0
+    ? 'No registry loaded'
+    : `${registry.length} song${registry.length !== 1 ? 's' : ''} in registry`;
+}
+
+// ─────────────────────────────────────────────
+// Modal
+// ─────────────────────────────────────────────
+function showModal(title, body, buttons) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML    = body;
+  const act = document.getElementById('modal-actions');
+  act.innerHTML = '';
+  buttons.forEach(({ label, cls, fn }) => {
+    const btn = document.createElement('button');
+    btn.className   = cls;
+    btn.textContent = label;
+    btn.addEventListener('click', fn);
+    act.appendChild(btn);
+  });
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+
+// ─────────────────────────────────────────────
+// Toast
+// ─────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = `toast ${type}`;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('fade'), 2800);
+}
+</script>
+</body>
+</html>

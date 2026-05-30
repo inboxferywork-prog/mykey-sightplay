@@ -44,7 +44,9 @@ Students learn to play by playing. The platform is not a lecture tool. Every int
 
 ### Engagement without exhaustion
 
-Learning should feel engaging and achievable without becoming mentally draining. The goal is strong learning outcomes delivered through an experience that students want to return to.
+Learning should feel active and productive without feeling heavy. The learner should be engaged in meaningful activity while experiencing the process as approachable, rewarding, and sustainable.
+
+MyKey intentionally uses lightweight interactions, progressive challenges, and guided experiences to reduce perceived learning burden without reducing educational value. The aim is not to make learning easier — it is to make learning feel achievable so that students continue.
 
 ### Rhythm before speed
 
@@ -54,13 +56,21 @@ This is a reading trainer, not a performance simulator. A stable, slow tempo tha
 
 Students learn from what they see. Incorrect notation teaches incorrect habits. The visual representation of music should follow standard notation conventions, because the product is teaching music — not approximating it.
 
+### Notation as foundation, not destination
+
+The platform teaches sight reading and notation because they are foundational components of piano musicianship — not because notation reading is the goal in itself. A learner who can read music independently can approach new repertoire without guidance, continue developing at their own pace, and understand what they are playing rather than only how to play it.
+
+The long-term educational aim is to help learners become more capable musicians. Sight reading is a means to that end.
+
 ---
 
 ## 4. Learning States
 
 Learning States are a **core pillar of the product**. They are not interface modes; they are the teaching method itself.
 
-Each Learning State represents a distinct stage of the learning process, mirroring how an experienced piano teacher introduces new material:
+The product is explicitly modeled after the way experienced piano teachers introduce and reinforce new material. An effective teacher does not hand a student a piece of music and expect immediate performance. They demonstrate first, then guide note identification without time pressure, then introduce tempo gradually. Learning States, segment-based progression, guided practice, and incrementally increasing challenge are all derived from this teaching logic — not from software conventions.
+
+Each Learning State represents a distinct stage of this process:
 
 **Explore** — The student watches and listens. The platform plays the music, highlighting notes in real time. No performance is required. The goal is familiarity before attempt.
 
@@ -68,11 +78,23 @@ Each Learning State represents a distinct stage of the learning process, mirrori
 
 **Sight Play** — The student plays in time with a moving timeline. The student follows the music; the music does not wait. The goal is reading notation while playing at tempo.
 
-These three states are not interchangeable or skippable without reason. The sequence reflects a genuine learning arc: hear it, find it, play it in time.
+These three states are not interchangeable or skippable without reason. The sequence reflects a genuine learning arc: hear it, find it, play it in time. This is the arc a good teacher follows — and the arc the product is built around.
 
 ---
 
-## 5. Game Systems
+## 5. Segment-Based Learning
+
+Songs are not treated as single monolithic units. A learner is not expected to confront an entire piece of music from the start and master it in one attempt.
+
+Instead, songs are divided into smaller sections — typically a few bars each. Learners progress through these sections one at a time, developing competence at each step before advancing. Difficult passages can be isolated into shorter segments so a struggling learner does not lose confidence over a single hard measure. Progression gates ensure that a learner has genuinely understood a section before moving to the next.
+
+This approach is not a content organization technique. It is a pedagogical position: that **competence is built incrementally**, that **shorter feedback loops produce faster progress**, and that **a learner who feels successful at small steps will persist through harder ones**.
+
+Segment-based learning means the product is always teaching at the learner's current edge — not overwhelming, not trivial.
+
+---
+
+## 6. Game Systems
 
 Game systems are **not a replacement for learning**. They exist to:
 - validate what has been learned
@@ -86,7 +108,7 @@ Game systems should always serve the learning outcome. A game mechanic that make
 
 ---
 
-## 6. Reading Experience and Orientation
+## 7. Reading Experience and Orientation
 
 MyKey supports two orientations with distinct purposes:
 
@@ -98,7 +120,7 @@ Future game modes may use either orientation depending on their gameplay needs. 
 
 ---
 
-## 7. What Makes MyKey Different
+## 8. What Makes MyKey Different
 
 Most music applications for learners fall into one of two categories: they teach notation abstractly, or they bypass notation entirely (falling notes, colored keys). Neither teaches sight reading.
 
@@ -116,7 +138,7 @@ Together, these elements produce an experience that is genuinely different from 
 
 ---
 
-## 8. Long-Term Direction
+## 9. Long-Term Direction
 
 MyKey's long-term goal is to support learners across the full arc of piano development — from a child's first encounter with the instrument to advanced repertoire.
 
@@ -133,7 +155,7 @@ These directions are already embedded in the technical architecture. The platfor
 
 ---
 
-## 9. What This Document Is Not
+## 10. What This Document Is Not
 
 This document does not define feature requirements, technical constraints, or implementation decisions. It defines the product's identity and the reasoning behind its educational approach.
 
