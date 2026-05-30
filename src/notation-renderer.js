@@ -149,8 +149,8 @@ class NotationRenderer {
     const BARS_PER_ROW = 4;
     const MARGIN_X     = 20;   // 20px left margin — brace extends ~16px left of stave x; 10px was insufficient
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
-    const BASS_Y_OFF   = showBoth ? 125 : 20;       // bass at y+125 (grand staff) OR y+20 (solo)
-    const ROW_H        = showBoth ? 260 : 120;      // single-clef rows are half height
+    const BASS_Y_OFF   = showBoth ? 135 : 20;       // bass at y+135 (grand staff) OR y+20 (solo)
+    const ROW_H        = showBoth ? 280 : 120;      // single-clef rows are half height
 
     const rowLayout        = _computeRowLayout(bars, BARS_PER_ROW);  // filtered bars
     const numRows          = rowLayout.length;
@@ -457,7 +457,7 @@ class NotationRenderer {
   // ---------------------------------------------------------------------------
 
   _drawTies(ctx, VF) {
-    const ROW_H = 260;  // must match _drawScore layout constant
+    const ROW_H = 280;  // must match _drawScore layout constant
     const visibleBarsSet = this._renderOpts?.visibleBars?.length
       ? new Set(this._renderOpts.visibleBars)
       : null;
@@ -531,7 +531,7 @@ class NotationRenderer {
   // ---------------------------------------------------------------------------
 
   _drawSlurs(ctx, VF) {  // VF accepted for API consistency; not currently used
-    const ROW_H    = 260;   // must match _drawScore layout constant
+    const ROW_H    = 280;   // must match _drawScore layout constant
     const ANCHOR_Y = 3;     // px offset toward the curve from notehead center
     const visibleBarsSet = this._renderOpts?.visibleBars?.length
       ? new Set(this._renderOpts.visibleBars)
@@ -1006,7 +1006,7 @@ function _noteHeadProxy(realNote, headIndex) {
  * Handles same-row (single arc) and cross-row (end half-tie + start half-tie) cases.
  * Per-pitch index matching supports chord ties where only some tones are tied.
  *
- * ROW_H (260) is the score row height used to detect same-row vs cross-row.
+ * ROW_H (280) is the score row height used to detect same-row vs cross-row.
  *
  * VexFlow 5.0.0 compiled bundle: constructor keys are camelCase.
  *   firstNote / lastNote / firstIndices / lastIndices
