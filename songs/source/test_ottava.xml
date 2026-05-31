@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN"
+    "http://www.musicxml.org/dtds/partwise.dtd">
+<!--
+  test_ottava.xml — Ottava import feasibility fixture
+  Designed for music21 inspection, not MuseScore authoring.
+
+  Case A: 8va within a single bar       → Part 1, Bar 1 (beats 1-4)
+  Case B: 8vb within a single bar       → Part 2, Bar 2 (beats 1-4)
+  Case C: 8va crossing a bar boundary   → Part 1, Bar 2 beat 3 → Bar 3 beat 2
+  Case D: 8vb crossing a bar boundary   → Part 2, Bar 3 beat 3 → Bar 4 beat 2
+
+  Written pitches are at notated position (not sounding).
+  Under 8va: written C5 sounds as C6.
+  Under 8vb: written C3 sounds as C2.
+-->
+<score-partwise version="3.1">
+  <part-list>
+    <score-part id="P1">
+      <part-name>Treble</part-name>
+    </score-part>
+    <score-part id="P2">
+      <part-name>Bass</part-name>
+    </score-part>
+  </part-list>
+
+  <!-- =====================================================================
+       PART 1 — TREBLE, 8va
+       ===================================================================== -->
+  <part id="P1">
+
+    <!-- Bar 1: Case A — 8va over entire bar (beats 1-4) -->
+    <measure number="1">
+      <attributes>
+        <divisions>4</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <!-- 8va bracket start -->
+      <direction placement="above">
+        <direction-type>
+          <octave-shift type="up" size="8" number="1"/>
+        </direction-type>
+      </direction>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>D</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>E</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>F</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <!-- 8va bracket stop at end of bar 1 -->
+      <direction placement="above">
+        <direction-type>
+          <octave-shift type="stop" size="8" number="1"/>
+        </direction-type>
+      </direction>
+    </measure>
+
+    <!-- Bar 2: normal beats 1-2, then Case C 8va starts at beat 3 -->
+    <measure number="2">
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>A</step><octave>4</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <!-- Case C: 8va starts at beat 3 of bar 2 — will cross into bar 3 -->
+      <direction placement="above">
+        <direction-type>
+          <octave-shift type="up" size="8" number="1"/>
+        </direction-type>
+      </direction>
+      <note><pitch><step>B</step><octave>4</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+    </measure>
+
+    <!-- Bar 3: Case C continues to beat 2, then stops -->
+    <measure number="3">
+      <note><pitch><step>D</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>E</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <!-- Case C: 8va bracket stop at beat 2 end of bar 3 -->
+      <direction placement="above">
+        <direction-type>
+          <octave-shift type="stop" size="8" number="1"/>
+        </direction-type>
+      </direction>
+      <note><pitch><step>F</step><octave>5</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>4</duration><type>quarter</type></note>
+    </measure>
+
+    <!-- Bar 4: no ottava (reference / cleanup) -->
+    <measure number="4">
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>16</duration><type>whole</type></note>
+    </measure>
+
+  </part>
+
+  <!-- =====================================================================
+       PART 2 — BASS, 8vb
+       ===================================================================== -->
+  <part id="P2">
+
+    <!-- Bar 1: no ottava (reference) -->
+    <measure number="1">
+      <attributes>
+        <divisions>4</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>F</sign><line>4</line></clef>
+      </attributes>
+      <note><pitch><step>C</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>D</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>E</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>F</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+    </measure>
+
+    <!-- Bar 2: Case B — 8vb over entire bar (beats 1-4) -->
+    <measure number="2">
+      <!-- 8vb bracket start -->
+      <direction placement="below">
+        <direction-type>
+          <octave-shift type="down" size="8" number="1"/>
+        </direction-type>
+      </direction>
+      <note><pitch><step>G</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>A</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>B</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>C</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <!-- 8vb bracket stop at end of bar 2 -->
+      <direction placement="below">
+        <direction-type>
+          <octave-shift type="stop" size="8" number="1"/>
+        </direction-type>
+      </direction>
+    </measure>
+
+    <!-- Bar 3: normal beats 1-2, then Case D 8vb starts at beat 3 -->
+    <measure number="3">
+      <note><pitch><step>D</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>E</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <!-- Case D: 8vb starts at beat 3 of bar 3 — will cross into bar 4 -->
+      <direction placement="below">
+        <direction-type>
+          <octave-shift type="down" size="8" number="1"/>
+        </direction-type>
+      </direction>
+      <note><pitch><step>F</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>G</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+    </measure>
+
+    <!-- Bar 4: Case D continues to beat 2, then stops -->
+    <measure number="4">
+      <note><pitch><step>A</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>B</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <!-- Case D: 8vb bracket stop at beat 2 end of bar 4 -->
+      <direction placement="below">
+        <direction-type>
+          <octave-shift type="stop" size="8" number="1"/>
+        </direction-type>
+      </direction>
+      <note><pitch><step>C</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+      <note><pitch><step>D</step><octave>3</octave></pitch><duration>4</duration><type>quarter</type></note>
+    </measure>
+
+  </part>
+
+</score-partwise>

@@ -146,3 +146,38 @@ The current objective is:
 - Preserve stabilization phase discipline
 
 Stay focused on creating the remaining Tier 1, 2, and 3 engraving audit song files and validating them visually in the app.
+
+---
+
+## 8. Approved Product Decisions — Repeat and Navigation Architecture
+
+**Date approved:** 2026-05-31  
+**Reference:** [`docs/import/linear_learning_path_generator.md`](../import/linear_learning_path_generator.md)
+
+### Runtime is strictly linear
+
+The RuntimeEngine will never execute:
+
+- Repeat jumps
+- D.C. (Da Capo) jumps
+- D.S. (Dal Segno) jumps
+- Coda routing
+- Fine termination logic
+
+Students always experience a simple, linear sequence of segments. No navigation processing occurs at runtime.
+
+### Repeat symbols are Learning Aids
+
+Repeat barlines and volta brackets are displayed by the renderer for musical literacy. They are visual notation objects only. They have no effect on playback order.
+
+### Navigation symbols are Learning Aids
+
+Segno, Coda, Fine, D.C., D.S., D.C. al Fine, D.S. al Coda are displayed by the renderer for musical literacy. They are literacy objects only. They do not control playback.
+
+### Expansion occurs during import
+
+All repeat and navigation structures are resolved at import time by the Linear Learning Path Generator. The generator produces a flat, ordered `learning_path.bars` sequence in `song.json`. The runtime reads this sequence directly.
+
+### Exam mode
+
+Many students practice for graded examinations where written repeats are not performed. The default expansion policy (`"full"`) expands all repeats for practice. A future `"none"` policy (no expansion, straight-through) is architecturally reserved. See the design document for details.

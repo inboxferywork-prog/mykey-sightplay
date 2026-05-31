@@ -7,6 +7,10 @@ Offline tool only. Run once per song before adding to the app.
 Engine JS tidak tahu Python — hanya membaca song.json.
 Tidak ada koneksi ke browser atau runtime engine.
 
+Sprint 4A: after building score.bars the tool automatically invokes
+linear_learning_path_generator to produce learning_path and lp_bar-based parts[].
+score.bars is never modified.
+
 Usage:
     python tools/mxl_to_song.py input.mxl songs/output.json
     python tools/mxl_to_song.py input.mxl songs/output.json \\
@@ -22,13 +26,19 @@ import re
 import sys
 from pathlib import Path
 
+# Learning path generator — sibling module in the same tools/ directory.
+sys.path.insert(0, str(Path(__file__).parent))
+from linear_learning_path_generator import generate_learning_path  # noqa: E402
+
 # music21 — pip install music21
 from music21 import (
     articulations as m21_articulations,
+    bar as m21_bar,
     chord as m21_chord,
     clef as m21_clef,
     converter,
     note as m21_note,
+    repeat as m21_repeat,
     spanner as m21_spanner,
 )
 
@@ -376,7 +386,7 @@ def get_beat(el):
 # Part parsing (SPEC Bagian 11.4 Steps 1–4)
 # ---------------------------------------------------------------------------
 
-def parse_part(part, clef_name, tempo_map, ev_counter_start):
+def parse_part(part, clef_name, tempo_map, ev_counter_start, ottava_notes=None):
     """
     Parse all notes/chords/rests from a single music21 Part into event dicts.
 
@@ -500,6 +510,14 @@ def parse_part(part, clef_name, tempo_map, ev_counter_start):
                     ev["slur_start"] = True
                 if slur_stop_flag:
                     ev["slur_stop"] = True
+                _ott = ottava_notes.get(id(el)) if ottava_notes else None
+                if _ott:
+                    ev["written_notes"] = ev["notes"][:]
+                    ev["notes"] = [pitch_to_str(n.pitch.transpose(_ott["semitones"])) for n in el.notes]
+                    if _ott["is_first"]:
+                        ev["octave_mark_start"] = _ott["type"]
+                    if _ott["is_last"]:
+                        ev["octave_mark_stop"] = True
 
             elif isinstance(el, m21_note.Note):
                 tie_start, tie_stop = get_tie_flags(el)
@@ -526,6 +544,14 @@ def parse_part(part, clef_name, tempo_map, ev_counter_start):
                     ev["slur_start"] = True
                 if slur_stop_flag:
                     ev["slur_stop"] = True
+                _ott = ottava_notes.get(id(el)) if ottava_notes else None
+                if _ott:
+                    ev["written_notes"] = ev["notes"][:]
+                    ev["notes"] = [pitch_to_str(el.pitch.transpose(_ott["semitones"]))]
+                    if _ott["is_first"]:
+                        ev["octave_mark_start"] = _ott["type"]
+                    if _ott["is_last"]:
+                        ev["octave_mark_stop"] = True
 
             else:
                 continue  # unrecognized element type
@@ -574,19 +600,150 @@ def pair_simultaneous(events):
 # Build song.json structures (SPEC Bagian 11.4 Step 8)
 # ---------------------------------------------------------------------------
 
-def build_bars_structure(events):
+def build_repeat_map(score):
+    """
+    Scan part 0 measures for repeat barlines and volta brackets.
+
+    Returns dict: {bar_n: {"repeat_start": bool, "repeat_end": bool, "volta": int}}
+    Only keys that are True/non-None are included in each entry.
+
+    Sources:
+      repeat_start — measure.leftBarline is a Repeat with direction='start'
+      repeat_end   — measure.rightBarline is a Repeat with direction='end'
+      volta        — RepeatBracket spanner whose first measure is this one
+    """
+    repeat_map = {}
+    if not score.parts:
+        return repeat_map
+
+    measures = list(score.parts[0].getElementsByClass("Measure"))
+
+    for bar_idx, measure in enumerate(measures):
+        bar_n = bar_idx + 1
+        entry = {}
+
+        # repeat_start: forward repeat at left barline
+        lb = measure.leftBarline
+        if lb is not None and isinstance(lb, m21_bar.Repeat):
+            if getattr(lb, "direction", None) == "start":
+                entry["repeat_start"] = True
+
+        # repeat_end: backward repeat at right barline
+        rb = measure.rightBarline
+        if rb is not None and isinstance(rb, m21_bar.Repeat):
+            if getattr(rb, "direction", None) == "end":
+                entry["repeat_end"] = True
+
+        # volta: RepeatBracket spanner that begins on this measure
+        try:
+            for sp in measure.getSpannerSites():
+                if sp.__class__.__name__ == "RepeatBracket" and sp.isFirst(measure):
+                    num = getattr(sp, "number", None)
+                    if num is not None:
+                        try:
+                            entry["volta"] = int(num)
+                        except (ValueError, TypeError):
+                            pass
+        except Exception:
+            pass
+
+        if entry:
+            repeat_map[bar_n] = entry
+
+    return repeat_map
+
+
+# Maps music21 class name → navigation string used in song.json.
+# Fine is a RepeatExpressionMarker but maps to the navigation field (not a bool),
+# because it is a textual command at a specific bar, not a score-position symbol.
+_NAV_COMMAND_STR = {
+    "Fine":           "Fine",
+    "DaCapo":         "D.C.",
+    "DalSegno":       "D.S.",
+    "DaCapoAlFine":   "D.C. al Fine",
+    "DalSegnoAlCoda": "D.S. al Coda",
+    "DalSegnoAlFine": "D.S. al Fine",
+}
+
+
+def build_nav_map(score):
+    """
+    Scan part 0 measures for navigation symbols (Segno, Coda, Fine, D.C., D.S.,
+    D.C. al Fine, D.S. al Coda).
+
+    Returns dict: {bar_n: {"segno": bool, "coda": bool, "navigation": str}}
+    Only keys present in a bar are included in each entry.
+
+    Sources (music21.repeat classes, resolved from MusicXML <sound> attributes):
+      Segno            → segno: true
+      Coda             → coda: true
+      Fine             → navigation: "Fine"
+      DaCapo           → navigation: "D.C."
+      DalSegno         → navigation: "D.S."
+      DaCapoAlFine     → navigation: "D.C. al Fine"
+      DalSegnoAlCoda   → navigation: "D.S. al Coda"
+    """
+    nav_map = {}
+    if not score.parts:
+        return nav_map
+
+    measures = list(score.parts[0].getElementsByClass("Measure"))
+
+    for bar_idx, measure in enumerate(measures):
+        bar_n = bar_idx + 1
+        entry = {}
+
+        try:
+            for el in measure.recurse().getElementsByClass("RepeatExpression"):
+                cls_name = type(el).__name__
+                if cls_name == "Segno":
+                    entry["segno"] = True
+                elif cls_name == "Coda":
+                    entry["coda"] = True
+                elif cls_name in _NAV_COMMAND_STR:
+                    entry["navigation"] = _NAV_COMMAND_STR[cls_name]
+        except Exception:
+            pass
+
+        if entry:
+            nav_map[bar_n] = entry
+
+    return nav_map
+
+
+def build_bars_structure(events, repeat_map=None, nav_map=None):
     """
     Group events into score.bars[] structure per SPEC Bagian 4.1.
     Events are sorted by t_ms within each bar (preserved from merge_and_sort).
+    repeat_map injected when present: repeat_start / repeat_end / volta appear
+    before 'beats' in each bar object.
     """
     bars_dict = {}
     for ev in events:
         bars_dict.setdefault(ev["bar"], []).append(ev)
 
-    return [
-        {"bar": bar_n, "beats": bars_dict[bar_n]}
-        for bar_n in sorted(bars_dict)
-    ]
+    result = []
+    for bar_n in sorted(bars_dict):
+        bar_obj = {"bar": bar_n}
+        if repeat_map:
+            r = repeat_map.get(bar_n, {})
+            if r.get("repeat_start"):
+                bar_obj["repeat_start"] = True
+            if r.get("repeat_end"):
+                bar_obj["repeat_end"] = True
+            if r.get("volta") is not None:
+                bar_obj["volta"] = r["volta"]
+        if nav_map:
+            n = nav_map.get(bar_n, {})
+            if n.get("segno"):
+                bar_obj["segno"] = True
+            if n.get("coda"):
+                bar_obj["coda"] = True
+            if n.get("navigation"):
+                bar_obj["navigation"] = n["navigation"]
+        bar_obj["beats"] = bars_dict[bar_n]
+        result.append(bar_obj)
+    return result
 
 
 def build_parts_list(events, part_size, has_pickup):
@@ -618,7 +775,7 @@ def build_parts_list(events, part_size, has_pickup):
     return parts
 
 
-def build_song_json(score, events, args, has_pickup, initial_bpm):
+def build_song_json(score, events, args, has_pickup, initial_bpm, repeat_map=None, nav_map=None):
     """
     Assemble final song.json dict per SPEC Bagian 4.1 data contract.
     Audio fields (background_music, example_audio) are null — filled manually
@@ -665,7 +822,7 @@ def build_song_json(score, events, args, has_pickup, initial_bpm):
         },
         "parts": build_parts_list(events, args.part_size, has_pickup),
         "score": {
-            "bars": build_bars_structure(events),
+            "bars": build_bars_structure(events, repeat_map, nav_map),
         },
         "scoring": DEFAULT_SCORING_CONFIG,
     }
@@ -760,11 +917,37 @@ After generating:
     bass_events = []
     ev_counter = 1
 
+    # ------------------------------------------------------------------
+    # Sprint 8A: Pre-parse Ottava spanners
+    # ------------------------------------------------------------------
+    ottava_notes = {}
+    _ottava_span_count = 0
+    for sp in score.spannerBundle:
+        if not isinstance(sp, m21_spanner.Ottava):
+            continue
+        if sp.type not in ('8va', '8vb'):
+            all_warnings.append(f"Ottava type {sp.type!r} not supported — skipped.")
+            continue
+        els = list(sp.getSpannedElements())
+        if not els:
+            continue
+        semitones = 12 if sp.type == '8va' else -12
+        for i, n in enumerate(els):
+            ottava_notes[id(n)] = {
+                'type': sp.type,
+                'semitones': semitones,
+                'is_first': i == 0,
+                'is_last': i == len(els) - 1,
+            }
+        _ottava_span_count += 1
+    if _ottava_span_count:
+        print(f"Ottava spans: {_ottava_span_count} ({len(ottava_notes)} notes affected)")
+
     # Part 0 — typically treble for piano
     clef0 = detect_clef(score.parts[0])
     print(f"\nPart 0 ({clef0}): parsing...")
     treble_events, ev_counter, warns = parse_part(
-        score.parts[0], clef0, tempo_map, ev_counter
+        score.parts[0], clef0, tempo_map, ev_counter, ottava_notes
     )
     all_warnings.extend(warns)
     print(f"  {len(treble_events)} events")
@@ -774,7 +957,7 @@ After generating:
         clef1 = detect_clef(score.parts[1])
         print(f"Part 1 ({clef1}): parsing...")
         bass_events, ev_counter, warns = parse_part(
-            score.parts[1], clef1, tempo_map, ev_counter
+            score.parts[1], clef1, tempo_map, ev_counter, ottava_notes
         )
         all_warnings.extend(warns)
         print(f"  {len(bass_events)} events")
@@ -799,9 +982,24 @@ After generating:
     print(f"\nTotal events: {len(all_events)}")
 
     # ------------------------------------------------------------------
-    # Steps 7–8: Detect pickup + build song.json
+    # Steps 7–8: Detect pickup, scan repeats/voltas, build song.json
     # ------------------------------------------------------------------
-    song_data = build_song_json(score, all_events, args, has_pickup, initial_bpm)
+    repeat_map = build_repeat_map(score)
+    if repeat_map:
+        repeat_bars = sorted(repeat_map)
+        print(f"\nRepeat/volta markings found in bars: {repeat_bars}")
+
+    nav_map = build_nav_map(score)
+    if nav_map:
+        nav_bars = sorted(nav_map)
+        print(f"Navigation symbols found in bars:    {nav_bars}")
+
+    song_data = build_song_json(score, all_events, args, has_pickup, initial_bpm, repeat_map, nav_map)
+
+    # ------------------------------------------------------------------
+    # Sprint 4A: Generate learning path + lp_bar-based segments
+    # ------------------------------------------------------------------
+    song_data = generate_learning_path(song_data)
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(song_data, f, indent=2, ensure_ascii=False)
@@ -809,17 +1007,41 @@ After generating:
     # ------------------------------------------------------------------
     # Summary
     # ------------------------------------------------------------------
-    bars = song_data["score"]["bars"]
-    parts = song_data["parts"]
+    bars    = song_data["score"]["bars"]
+    parts   = song_data["parts"]
+    lp      = song_data.get("learning_path", {})
+    lp_bars = lp.get("bars", [])
 
     print(f"\nOutput written: {output_path}")
     print(f"  Song ID    : {song_data['meta']['id']}")
     print(f"  Title      : {song_data['meta']['title']}")
     print(f"  Composer   : {song_data['meta']['composer']}")
     print(f"  Hand mode  : {song_data['meta']['hand_mode']}")
-    print(f"  Bars       : {len(bars)}")
-    print(f"  Parts      : {len(parts)} (part_size={args.part_size} bars each)")
+    print(f"  Bars       : {len(bars)} original")
+    if lp_bars:
+        ratio = len(lp_bars) / len(bars) if bars else 0
+        print(f"  LP bars    : {len(lp_bars)} ({ratio:.2f}x expansion)")
+    print(f"  Segments   : {len(parts)} (lp_bar references)")
     print(f"  Events     : {len(all_events)}")
+    repeat_bars_with_fields = [
+        b["bar"] for b in bars
+        if b.get("repeat_start") or b.get("repeat_end") or b.get("volta") is not None
+    ]
+    ottava_marked = [e for b in bars for e in b['beats'] if 'octave_mark_start' in e]
+    if ottava_marked:
+        types_seen = sorted({e['octave_mark_start'] for e in ottava_marked})
+        print(f"  Ottava     : {len(ottava_marked)} span-start notes ({', '.join(types_seen)})")
+    if repeat_bars_with_fields:
+        print(f"  Repeats    : bars {repeat_bars_with_fields} have repeat/volta fields")
+    nav_bars_with_fields = [
+        b["bar"] for b in bars
+        if b.get("segno") or b.get("coda") or b.get("navigation")
+    ]
+    if nav_bars_with_fields:
+        detail = {b["bar"]: {k: v for k, v in b.items()
+                             if k in ("segno", "coda", "navigation")}
+                  for b in bars if b["bar"] in nav_bars_with_fields}
+        print(f"  Navigation : bars {nav_bars_with_fields} — {detail}")
     print()
     print("  [!] background_music and example_audio are null.")
     print("      Fill these manually after producing MP3s from MuseScore.")

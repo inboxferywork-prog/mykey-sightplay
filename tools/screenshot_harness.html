@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bravura Screenshot Harness</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #ffffff; }
+    #score { padding: 12px; background: #ffffff; }
+  </style>
+</head>
+<body>
+  <div id="score"></div>
+  <script src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.js"></script>
+  <script>
+    window.Vex = { Flow: window.VexFlow };
+    window.VexFlow.setMusicFont('Bravura', 'Gonville');
+  </script>
+  <script src="/src/notation-renderer.js"></script>
+  <script>
+    const _renderer = new NotationRenderer();
+    const _scoreEl  = document.getElementById('score');
+
+    window.renderSong = function(url, opts) {
+      return fetch(url)
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status + ' — ' + url); return r.json(); })
+        .then(data => { _renderer.render(data, _scoreEl, opts || undefined); });
+    };
+  </script>
+</body>
+</html>

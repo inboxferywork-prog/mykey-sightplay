@@ -151,6 +151,7 @@ class NotationRenderer {
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
     const BASS_Y_OFF   = showBoth ? 135 : 20;       // bass at y+135 (grand staff) OR y+20 (solo)
     const ROW_H        = showBoth ? 280 : 120;      // single-clef rows are half height
+    this._rowH = ROW_H;  // expose to _drawSlurs — single-clef uses 120, grand staff uses 280
 
     const rowLayout        = _computeRowLayout(bars, BARS_PER_ROW);  // filtered bars
     const numRows          = rowLayout.length;
@@ -163,6 +164,8 @@ class NotationRenderer {
     const ctx = vfRenderer.getContext();
 
     let barGlobalIdx = 0;
+    this._rowBounds     = new Map();  // row index → { leftNoteX, rightX } — used by _drawSlurs
+    this._rowFirstStave = new Map();  // row index → { treble, bass }  — used by _drawOttava
 
     for (let row = 0; row < numRows; row++) {
       const rowBars = rowLayout[row];
@@ -190,8 +193,27 @@ class NotationRenderer {
             treble.addClef('treble').addKeySignature(meta.key_signature)
                   .addTimeSignature(`${numBeats}/${beatValue}`);
           }
-          if (isLastBar) treble.setEndBarType(endType);
+          if (barData.repeat_end && VF.Barline && VF.Barline.type) {
+            treble.setEndBarType(VF.Barline.type.REPEAT_END);
+          } else if (isLastBar) {
+            treble.setEndBarType(endType);
+          }
+          if (barData.repeat_start && VF.Barline && VF.Barline.type) {
+            treble.setBegBarType(VF.Barline.type.REPEAT_BEGIN);
+          }
+          if (barData.volta != null && VF.Volta) {
+            const voltaType  = _getVoltaType(rowBars, i, VF);
+            const voltaLabel = String(Array.isArray(barData.volta) ? barData.volta[0] : barData.volta) + '.';
+            treble.addModifier(new VF.Volta(voltaType, voltaLabel, x, 0));
+          }
+          // Navigation symbols: modifiers must be added before draw().
+          // Segno is excluded here — it is drawn post-stave via _drawSegno().
+          _addNavModifiers(treble, barData, VF);
           treble.setContext(ctx).draw();
+          // Segno drawn post-draw: VF.Repetition.SEGNO_LEFT uses ctx.fillText() with a
+          // PUA codepoint that requires @font-face, which VexFlow SVG backend does not
+          // inject. Use VF.Glyph path rendering instead.
+          if (barData.segno) _drawSegno(ctx, treble, VF);
         }
 
         if (showBass) {
@@ -201,13 +223,24 @@ class NotationRenderer {
             bass.addClef('bass').addKeySignature(meta.key_signature)
                 .addTimeSignature(`${numBeats}/${beatValue}`);
           }
-          if (isLastBar) bass.setEndBarType(endType);
+          if (barData.repeat_end && VF.Barline && VF.Barline.type) {
+            bass.setEndBarType(VF.Barline.type.REPEAT_END);
+          } else if (isLastBar) {
+            bass.setEndBarType(endType);
+          }
+          if (barData.repeat_start && VF.Barline && VF.Barline.type) {
+            bass.setBegBarType(VF.Barline.type.REPEAT_BEGIN);
+          }
           bass.setContext(ctx).draw();
         }
 
-        // TODO(Layer3-dynamics): dynamic markings (p/mf/f/ff, hairpins) are placed
-        // below each stave. A separate pass over barData dynamics metadata goes here,
-        // after stave.draw() so stave geometry is available. See semantics §10.4.
+        // Layer3-dynamics: static markings rendered after stave.draw().
+        // Grand-staff: placed in the gap between treble and bass staves.
+        // Bass-only fallback: placed below the bass stave (treble is null).
+        // Hairpins (crescendo/decrescendo) deferred — see semantics §10.4.
+        if (showBass && bass && barData.dynamics) {
+          _drawDynamic(ctx, barData.dynamics, bass, treble);
+        }
 
         // Grand-staff connectors at leftmost bar of each row — only when both clefs shown
         if (isFirstBar && showBoth) {
@@ -221,6 +254,16 @@ class NotationRenderer {
 
         staveInfos.push({ treble, bass, barData, barW });
         x += barW;
+      }
+
+      // Record row boundary coordinates for cross-row slur / ottava rendering.
+      if (staveInfos.length > 0) {
+        const firstStave = staveInfos[0].treble || staveInfos[0].bass;
+        this._rowBounds.set(row, {
+          leftNoteX: firstStave ? firstStave.getNoteStartX() : MARGIN_X,
+          rightX: x,
+        });
+        this._rowFirstStave.set(row, { treble: staveInfos[0].treble, bass: staveInfos[0].bass });
       }
 
       // System-end connector: single barline spanning treble-to-bass at row right edge.
@@ -248,6 +291,7 @@ class NotationRenderer {
     // Slur infrastructure is entirely separate from ties — see Semantic Invariant I11.
     this._drawTies(ctx, VF);
     this._drawSlurs(ctx, VF);
+    this._drawOttava(ctx, VF);
   }
 
   _drawBarNotes(ctx, VF, { treble, bass, barData, barW }, numBeats, beatValue, bpm) {
@@ -385,13 +429,16 @@ class NotationRenderer {
 
     return events.map(ev => {
       const { base, dots } = _parseDur(ev.duration);
+      // written_notes: staff placement pitch (what's written). Falls back to notes (sounding) for
+      // non-ottava events so existing songs without written_notes are unchanged.
+      const displayNotes = ev.type !== 'rest' ? (ev.written_notes || ev.notes || []) : [];
 
       let keys, duration;
       if (ev.type === 'rest') {
         keys     = [clef === 'treble' ? 'b/4' : 'd/3'];
         duration = base + 'r';
       } else {
-        keys     = (ev.notes || []).map(_toVFKey);
+        keys     = displayNotes.map(_toVFKey);
         if (!keys.length) keys = [clef === 'treble' ? 'b/4' : 'd/3'];
         duration = base;
       }
@@ -399,7 +446,7 @@ class NotationRenderer {
       // Standard stem direction: below middle line → up (1), on/above → down (-1).
       // For chords: the note most removed from the middle line determines direction (Gould §4).
       // step stored on the item so beam groups can compute a unified direction.
-      const step    = ev.type !== 'rest' && ev.notes?.length ? _furthestStepFrom(ev.notes, middle) : middle;
+      const step    = ev.type !== 'rest' && displayNotes.length ? _furthestStepFrom(displayNotes, middle) : middle;
       const stemDir = step < middle ? 1 : -1;
       const note    = new VF.StaveNote({ clef, keys, duration, dots, stem_direction: stemDir });
 
@@ -414,8 +461,8 @@ class NotationRenderer {
       // Accidental carry rules (§2.10 in engraving-standards.md):
       // Key-signature default → suppressed. Repeated same state → suppressed.
       // Deviation from current state → show accidental. Return to natural → 'n'.
-      if (ev.type !== 'rest' && ev.notes) {
-        ev.notes.forEach((n, idx) => {
+      if (ev.type !== 'rest' && displayNotes.length) {
+        displayNotes.forEach((n, idx) => {
           const acc = _resolveAccidental(n, accState);
           if (acc !== null) note.addModifier(new VF.Accidental(acc), idx);
           _updateAccState(accState, n);
@@ -531,7 +578,7 @@ class NotationRenderer {
   // ---------------------------------------------------------------------------
 
   _drawSlurs(ctx, VF) {  // VF accepted for API consistency; not currently used
-    const ROW_H    = 280;   // must match _drawScore layout constant
+    const ROW_H    = this._rowH ?? 280;  // 280 grand staff, 120 single-clef
     const ANCHOR_Y = 3;     // px offset toward the curve from notehead center
     const visibleBarsSet = this._renderOpts?.visibleBars?.length
       ? new Set(this._renderOpts.visibleBars)
@@ -541,7 +588,8 @@ class NotationRenderer {
       : this._song.score.bars;
 
     // Walk events in bar order, pairing slur_start → slur_stop within each clef.
-    // Restriction: same-system (same stave row) only — cross-row deferred.
+    // Single row break (dstRow === srcRow + 1): two half-arcs at the row boundary.
+    // Multi-row slurs (dstRow > srcRow + 1): silently discarded.
     // Overlapping starts: last slur_start wins.
     // Orphaned starts (no matching stop): silently discarded.
     const pending = new Map();  // clef → { note, stave }
@@ -560,19 +608,27 @@ class NotationRenderer {
             if (dst) {
               const srcRow = Math.floor(src.stave.getY() / ROW_H);
               const dstRow = Math.floor(dst.stave.getY() / ROW_H);
-              if (srcRow === dstRow) {
-                const sNote = src.note;
-                const dNote = dst.note;
-                // dir +1 = below noteheads (stem-up); -1 = above (stem-down).
-                const dir   = sNote.getStemDirection() === 1 ? 1 : -1;
-                const sYs   = sNote.getYs();
-                const dYs   = dNote.getYs();
-                if (sYs?.length && dYs?.length) {
+              const sNote  = src.note;
+              const dNote  = dst.note;
+              // dir +1 = arc bows below noteheads (stem-up); -1 = above (stem-down).
+              const dir    = sNote.getStemDirection() === 1 ? 1 : -1;
+              const sYs    = sNote.getYs();
+              const dYs    = dNote.getYs();
+              if (sYs?.length && dYs?.length) {
+                if (srcRow === dstRow) {
                   _drawSlurPath(ctx,
                     sNote.getTieRightX(), sYs[0] + dir * ANCHOR_Y,
                     dNote.getTieLeftX(),  dYs[0] + dir * ANCHOR_Y,
                     dir
                   );
+                } else if (dstRow === srcRow + 1 && this._rowBounds) {
+                  // Single row break: tail arc on source row, head arc on dest row.
+                  const srcBounds = this._rowBounds.get(srcRow);
+                  const dstBounds = this._rowBounds.get(dstRow);
+                  const sY = sYs[0] + dir * ANCHOR_Y;
+                  const dY = dYs[0] + dir * ANCHOR_Y;
+                  if (srcBounds) _drawSlurPath(ctx, sNote.getTieRightX(), sY, srcBounds.rightX, sY, dir);
+                  if (dstBounds) _drawSlurPath(ctx, dstBounds.leftNoteX,  dY, dNote.getTieLeftX(), dY, dir);
                 }
               }
             }
@@ -586,6 +642,93 @@ class NotationRenderer {
       }
     }
     // Remaining pending = orphaned slur_starts (no matching stop). Silently discard.
+  }
+
+  // ---------------------------------------------------------------------------
+  // Ottava bracket rendering
+  // ---------------------------------------------------------------------------
+
+  _drawOttava(ctx, VF) {
+    if (!VF.TextBracket) return;
+    const ROW_H = this._rowH ?? 280;
+    const visibleBarsSet = this._renderOpts?.visibleBars?.length
+      ? new Set(this._renderOpts.visibleBars)
+      : null;
+    const bars = visibleBarsSet
+      ? this._song.score.bars.filter(b => visibleBarsSet.has(b.bar))
+      : this._song.score.bars;
+
+    // Walk events to collect complete ottava spans.
+    // octave_mark_stop processed before octave_mark_start so a note can end one span
+    // and immediately start another without losing either.
+    const pending = new Map();  // clef → { startId, type }
+    const spans   = [];
+
+    for (const bar of bars) {
+      for (const ev of (bar.beats || [])) {
+        if (!ev.clef) continue;
+        if (ev.octave_mark_stop) {
+          const src = pending.get(ev.clef);
+          if (src) {
+            spans.push({ startId: src.startId, stopId: ev.id, type: src.type, clef: ev.clef });
+            pending.delete(ev.clef);
+          }
+        }
+        if (ev.octave_mark_start) {
+          pending.set(ev.clef, { startId: ev.id, type: ev.octave_mark_start });
+        }
+      }
+    }
+    // Remaining pending = ottava started but no stop in visible bars — silently discard.
+
+    // TextBracket.draw() does not call applyStyle() internally, so the context color
+    // from the preceding operation (ties, slurs) bleeds in. Wrap each bracket draw
+    // with explicit applyStyle to guarantee black rendering regardless of prior state.
+    const _drawBracket = (opts, noHook = false) => {
+      try {
+        const b = new VF.TextBracket(opts).setContext(ctx);
+        if (noHook) b.renderOptions.showBracket = false;
+        if (typeof b.applyStyle === 'function') b.applyStyle(ctx);
+        b.draw();
+      } catch (_) {}
+    };
+
+    for (const { startId, stopId, type, clef } of spans) {
+      const srcObj = this._noteObjMap.get(startId);
+      const dstObj = this._noteObjMap.get(stopId);
+      if (!srcObj || !dstObj) continue;
+
+      const srcStave = srcObj.stave;
+      const dstStave = dstObj.stave;
+      const srcRow   = Math.floor(srcStave.getY() / ROW_H);
+      const dstRow   = Math.floor(dstStave.getY() / ROW_H);
+      const position = type === '8va'
+        ? VF.TextBracket.Position.TOP
+        : VF.TextBracket.Position.BOTTOM;
+
+      if (srcRow === dstRow) {
+        _drawBracket({ start: srcObj.note, stop: dstObj.note, text: type, superscript: '', position });
+      } else if (dstRow === srcRow + 1 && this._rowBounds && this._rowFirstStave) {
+        // Single row break: tail segment on source row, head segment on dest row.
+        const srcBounds     = this._rowBounds.get(srcRow);
+        const dstBounds     = this._rowBounds.get(dstRow);
+        const dstRowStaves  = this._rowFirstStave.get(dstRow);
+        const dstFirstStave = dstRowStaves
+          ? (clef === 'treble' ? dstRowStaves.treble : dstRowStaves.bass) ?? dstRowStaves.treble ?? dstRowStaves.bass
+          : null;
+
+        if (srcBounds) {
+          _drawBracket(
+            { start: srcObj.note, stop: _makeProxyNote(srcBounds.rightX - 8, 8, srcStave), text: type, superscript: '', position },
+            true /* noHook */
+          );
+        }
+        if (dstBounds && dstFirstStave) {
+          _drawBracket({ start: _makeProxyNote(dstBounds.leftNoteX, 0, dstFirstStave), stop: dstObj.note, text: '', superscript: '', position });
+        }
+      }
+      // dstRow > srcRow + 1: multi-row span not implemented — silently skip.
+    }
   }
 }
 
@@ -1118,6 +1261,154 @@ function _drawSlurPath(ctx, x1, y1, x2, y2, dir) {
   ctx.closePath();
   ctx.fill();
   ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// Ottava rendering helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Proxy note for cross-row TextBracket segments.
+ * VF.TextBracket.draw() calls getAbsoluteX(), getGlyphWidth(), and checkStave() on
+ * start/stop. For row-boundary anchors we supply synthetic x values and a real stave
+ * for the y calculation (getYForTopText / getYForBottomText).
+ */
+function _makeProxyNote(absX, glyphWidth, stave) {
+  return {
+    getAbsoluteX:  () => absX,
+    getGlyphWidth: () => glyphWidth,
+    checkStave:    () => stave,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Navigation symbol rendering helper
+// ---------------------------------------------------------------------------
+
+function _getVoltaType(bars, barIdx, VF) {
+  const T = VF.Volta.type;
+  const raw      = b => (b == null ? null : (Array.isArray(b.volta) ? b.volta[0] : b.volta));
+  const voltaNum = raw(bars[barIdx]);
+  const prevNum  = barIdx > 0               ? raw(bars[barIdx - 1]) : null;
+  const nextNum  = barIdx < bars.length - 1 ? raw(bars[barIdx + 1]) : null;
+  const prevSame = prevNum === voltaNum;
+  const nextSame = nextNum === voltaNum;
+  if (!prevSame && !nextSame) return T.BEGIN_END;
+  if (!prevSame && nextSame)  return T.BEGIN;
+  if (prevSame  && nextSame)  return T.MIDDLE;
+  return T.END;
+}
+
+/**
+ * Attach VF.Repetition modifiers to a treble stave for Coda and text-family
+ * navigation symbols. Must be called before stave.draw().
+ *
+ * Segno is NOT handled here — it is rendered post-stave by _drawSegno() because
+ * VF.Repetition.SEGNO_LEFT uses ctx.fillText() with a PUA glyph codepoint that
+ * requires @font-face. VexFlow's SVG backend renders glyphs as paths and does
+ * not inject @font-face, so fillText produces an invisible result.
+ *
+ * Text-family types (Fine, D.C., D.S., D.C. al Fine, D.S. al Coda) receive
+ * stave.getX() as the x argument. VexFlow's drawSymbolText computes:
+ *   textX ≈ this.x − stave.getNoteStartX() + stave.getWidth()
+ * With this.x = 0 (old code), getNoteStartX() is an absolute canvas coordinate
+ * (e.g. 458 px for a second-column bar) and textX goes deeply negative — off
+ * canvas. With this.x = stave.getX() the calculation anchors to the bar's left
+ * edge and textX lands near the bar's right edge as intended.
+ *
+ * CODA_LEFT uses a hardcoded small x internally (stave.getVerticalBarWidth()),
+ * ignoring this.x — so x=0 is correct and unchanged.
+ */
+function _addNavModifiers(stave, barData, VF) {
+  if (!VF.Repetition) return;
+  const T = VF.Repetition.type;
+
+  if (barData.coda) {
+    stave.addModifier(new VF.Repetition(T.CODA_LEFT, 0, 0));
+  }
+  if (barData.navigation) {
+    const NAV_TYPE = {
+      'Fine':         T.FINE,
+      'D.C.':         T.DC,
+      'D.S.':         T.DS,
+      'D.C. al Fine': T.DC_AL_FINE,
+      'D.S. al Coda': T.DS_AL_CODA,
+    };
+    const t = NAV_TYPE[barData.navigation];
+    if (t !== undefined) stave.addModifier(new VF.Repetition(t, stave.getX(), 0));
+  }
+}
+
+/**
+ * Render the Segno glyph (𝄋) above the left edge of a stave after stave.draw().
+ *
+ * VF.Repetition.SEGNO_LEFT fails silently because its internal drawSegnoFixed()
+ * calls ctx.fillText() with a Bravura PUA codepoint. VexFlow's SVG backend uses
+ * path-based glyph rendering and does not inject Bravura as @font-face, so the
+ * browser cannot display the character. This function uses VF.Glyph.renderGlyph()
+ * (path-based, font-independent) with an SVG text fallback.
+ */
+function _drawSegno(ctx, stave, VF) {
+  // Position: just after the left barline, slightly above the top stave line.
+  const x = stave.getX() + 8;
+  const y = stave.getY() + 14;
+
+  // Primary: VF.Glyph path rendering — works regardless of browser font availability.
+  // 'segnoSerpent1' is the SMuFL name (U+E047) used by VexFlow's Bravura tables.
+  try {
+    if (VF.Glyph && typeof VF.Glyph.renderGlyph === 'function') {
+      VF.Glyph.renderGlyph(ctx, x, y, 30, 'segnoSerpent1');
+      return;
+    }
+  } catch (_) {}
+
+  // Fallback: SVG text with Bravura font. Visible if Bravura is available as a
+  // browser font (e.g. loaded externally). U+E047 is the SMuFL segno codepoint.
+  const svgEl = ctx.svg;
+  if (!svgEl) return;
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  el.setAttribute('x', String(x));
+  el.setAttribute('y', String(y));
+  el.setAttribute('font-family', 'Bravura, Gonville, serif');
+  el.setAttribute('font-size', '28');
+  el.setAttribute('fill', '#000000');
+  el.textContent = '';
+  svgEl.appendChild(el);
+}
+
+// ---------------------------------------------------------------------------
+// Dynamics rendering helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Draw a static dynamic marking (pp/p/mp/mf/f/ff) as an SVG text element.
+ * Grand-staff: positioned in the vertical gap between treble and bass staves
+ * (trebleStave provided). Bass-only fallback: below the bass stave.
+ * Called after stave.draw() so geometry methods return committed values.
+ * Uses direct SVG DOM insertion for reliable italic serif rendering.
+ */
+function _drawDynamic(ctx, dynamic, stave, trebleStave) {
+  const VALID = new Set(['pp', 'p', 'mp', 'mf', 'f', 'ff']);
+  if (!VALID.has(dynamic)) return;
+  const svgEl = ctx.svg;
+  if (!svgEl) return;
+  const x = stave.getNoteStartX();
+  // Grand-staff: SVG text baseline at vertical midpoint of gap + half cap-height (≈5px).
+  // Bass-only fallback: original offset below bass stave bottom.
+  const y = trebleStave
+    ? Math.round((trebleStave.getBottomY() + stave.getY()) / 2) + 5
+    : stave.getBottomY() + 18;
+  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  text.setAttribute('x', String(x));
+  text.setAttribute('y', String(y));
+  text.setAttribute('font-family', 'Times New Roman, Georgia, serif');
+  text.setAttribute('font-size', '13');
+  text.setAttribute('font-style', 'italic');
+  text.setAttribute('font-weight', 'bold');
+  text.setAttribute('fill', '#000000');
+  text.setAttribute('class', 'nk-dynamic');
+  text.textContent = dynamic;
+  svgEl.appendChild(text);
 }
 
 // ---------------------------------------------------------------------------

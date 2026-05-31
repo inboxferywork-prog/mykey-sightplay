@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "id": "test_import_verification",
+    "title": "Test — Import Verification",
+    "composer": "MyKey Test Suite",
+    "level": "test",
+    "bpm": 120,
+    "time_signature": [4, 4],
+    "key_signature": "C",
+    "hand_mode": "rh_only",
+    "active_clefs": ["treble"],
+    "freq_split_hz": 261.63,
+    "part_size_bars": 4,
+    "background_music": null,
+    "example_audio": null,
+    "hint_config": null
+  },
+  "score": {
+    "bars": [
+      {
+        "bar": 1,
+        "beats": [
+          {
+            "id": "ev_000001",
+            "bar": 1, "beat": 1, "clef": "treble",
+            "type": "note", "notes": ["C4"],
+            "duration": "w", "duration_ms": 2000, "t_ms": 0,
+            "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 2,
+        "beats": [
+          {
+            "id": "ev_000002",
+            "bar": 2, "beat": 1, "clef": "treble",
+            "type": "note", "notes": ["D4"],
+            "duration": "w", "duration_ms": 2000, "t_ms": 2000,
+            "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 3,
+        "beats": [
+          {
+            "id": "ev_000003",
+            "bar": 3, "beat": 1, "clef": "treble",
+            "type": "note", "notes": ["E4"],
+            "duration": "w", "duration_ms": 2000, "t_ms": 4000,
+            "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 4,
+        "beats": [
+          {
+            "id": "ev_000004",
+            "bar": 4, "beat": 1, "clef": "treble",
+            "type": "note", "notes": ["F4"],
+            "duration": "w", "duration_ms": 2000, "t_ms": 6000,
+            "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50
+          }
+        ]
+      }
+    ]
+  },
+  "parts": [
+    {
+      "part_id": "part_1",
+      "label": "Bars 1–4",
+      "bars": [1, 2, 3, 4],
+      "has_pickup": false,
+      "example_audio": null
+    }
+  ],
+  "learning_path": {
+    "expansion_policy": "full",
+    "bars": [
+      {"lp_bar": 1, "original_bar": 1, "pass": 1, "section": "main"},
+      {"lp_bar": 2, "original_bar": 2, "pass": 1, "section": "main"},
+      {"lp_bar": 3, "original_bar": 3, "pass": 1, "section": "main"},
+      {"lp_bar": 4, "original_bar": 4, "pass": 1, "section": "main"}
+    ],
+    "original_bar_index": {
+      "1": [1],
+      "2": [2],
+      "3": [3],
+      "4": [4]
+    }
+  },
+  "scoring": {
+    "perfect_window_ms": 150,
+    "good_window_ms": 400,
+    "points_per_note": {"perfect": 10, "good": 6, "late": 3, "miss": 0},
+    "timing_bonus": true,
+    "streak_bonus": {"every": 5, "bonus": 10}
+  }
+}
