@@ -1,108 +1,65 @@
 {
+  "version": 2,
   "songs": [
     {
       "src": "songs/0101 Roti Panas-Piano.json",
-      "label": "Roti Panas"
+      "label": "Roti — 2/4 · 72 BPM · 8 bars · segments",
+      "title": "Roti",
+      "composer": "Composer / arranger",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": false,
+      "tags": []
     },
     {
-      "src": "songs/simple_test.json",
-      "label": "Burung Kuku"
+      "src": "songs/0102 Lihat Pelangi.json",
+      "label": "Pelangi — 4/4 · 72 BPM · 8 bars · segments",
+      "title": "Pelangi",
+      "composer": "Composer / arranger",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": false,
+      "tags": []
     },
     {
-      "src": "songs/test_accidentals.json",
-      "label": "Test Accidental"
+      "src": "songs/0103 Pembuat Sepatu.json",
+      "label": "Sepatu — 2/2 · 72 BPM · 8 bars · segments",
+      "title": "Sepatu",
+      "composer": "Composer / arranger",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": false,
+      "tags": []
     },
     {
-      "src": "songs/test_dotted_notes.json",
-      "label": "Test Dotted Note"
+      "src": "songs/0105 Sampai Jumpa Lagi.json",
+      "label": "See U — 4/4 · 72 BPM · 8 bars · segments",
+      "title": "See U",
+      "composer": "Composer / arranger",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": false,
+      "tags": []
     },
     {
-      "src": "songs/test_dotted_sharp.json",
-      "label": "London Bridge"
+      "src": "songs/0106 Woodpecker.json",
+      "label": "Woodpecker — 4/4 · 72 BPM · 8 bars · segments",
+      "title": "Woodpecker",
+      "composer": "Composer / arranger",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": false,
+      "tags": []
     },
     {
-      "src": "songs/test_key_signatures.json",
-      "label": "Test Key Signature"
-    },
-    {
-      "src": "songs/test_pickup_bhand.json",
-      "label": "Si Kecil Sepatu Merah"
-    },
-    {
-      "src": "songs/test_staccato_slur.json",
-      "label": "A Cuckoo"
-    },
-    {
-      "src": "songs/test_stem_direction.json",
-      "label": "Test Stem Direction"
-    },
-    {
-      "src": "songs/test_ties.json",
-      "label": "Test Tie"
-    },
-    {
-      "src": "songs/test_articulations.json",
-      "label": "Articulation Rendering Audit — Staccato, Accent, Tenuto, Fermata"
-    },
-    {
-      "src": "songs/test_beaming.json",
-      "label": "Beam Grouping Audit — 8th, 16th, Mixed, Both Clefs"
-    },
-    {
-      "src": "songs/test_dynamics.json",
-      "label": "Dynamic Marking Audit — pp through ff, Spacing Interaction"
-    },
-    {
-      "src": "songs/test_endings.json",
-      "label": "Endings and Repeat Sign Audit — 1st/2nd Endings, Barline Repeats"
-    },
-    {
-      "src": "songs/test_key_sig_bb.json",
-      "label": "Key Signature Audit — Bb Major (2 flats: Bb, Eb)"
-    },
-    {
-      "src": "songs/test_key_sig_c.json",
-      "label": "Key Signature Audit — C Major (no accidentals)"
-    },
-    {
-      "src": "songs/test_key_sig_d.json",
-      "label": "Key Signature Audit — D Major (2 sharps: F#, C#)"
-    },
-    {
-      "src": "songs/test_key_sig_f.json",
-      "label": "Key Signature Audit — F Major (1 flat: Bb)"
-    },
-    {
-      "src": "songs/test_key_sig_g.json",
-      "label": "Key Signature Audit — G Major (1 sharp: F#)"
-    },
-    {
-      "src": "songs/test_navigation_symbols.json",
-      "label": "Navigation Symbol Audit — D.C., D.S., Fine, Segno, Coda"
-    },
-    {
-      "src": "songs/test_octave_marks.json",
-      "label": "Octave Mark Rendering Audit — 8va, 8vb, Long-span Lines"
-    },
-    {
-      "src": "songs/test_pedal_markings.json",
-      "label": "Pedal Marking Audit — Ped Down, Release, Multiple Sections"
-    },
-    {
-      "src": "songs/test_rests.json",
-      "label": "Rest Rendering Audit — All Durations, Both Clefs"
-    },
-    {
-      "src": "songs/test_tempo_markings.json",
-      "label": "Tempo Marking Audit — Allegro, Moderato, Andante, Largo, Metronome"
-    },
-    {
-      "src": "songs/test_ties_slurs.json",
-      "label": "Tie and Slur Rendering Audit — Both Clefs"
-    },
-    {
-      "src": "songs/test_tuplets.json",
-      "label": "Tuplet Rendering Audit — Triplets, 8th-note Triplets, Quarter-note Triplets"
+      "src": "songs/0107 Jam Kuku.json",
+      "label": "Jam Ku-ku — 3/4 · 72 BPM · 8 bars · segments",
+      "title": "Jam Ku-ku",
+      "composer": "Composer / arranger",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": false,
+      "tags": []
     }
   ]
 }

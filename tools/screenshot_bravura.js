@@ -45,6 +45,7 @@ const SONGS = [
   { file: 'test_cross_system_slur_single_clef.json', label: 'cross_row_slur_treble_only',  desc: 'Cross-row slur — treble only (ROW_H check)', opts: { visibleClefs: ['treble'] } },
   { file: 'test_cross_system_slur_single_clef.json', label: 'cross_row_slur_bass_only',    desc: 'Cross-row slur — bass only (ROW_H check)',   opts: { visibleClefs: ['bass']   } },
   { file: 'test_octave_marks.json',                  label: 'octave_marks',                desc: '8va / 8vb bracket rendering audit' },
+  { file: 'test_tuplets_source.json',               label: 'tuplets_source',              desc: 'Tuplet rendering — 8th triplet, quarter triplet, 16th quintuplet (importer-generated)' },
 ];
 
 (async () => {

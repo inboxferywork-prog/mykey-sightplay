@@ -31,6 +31,11 @@ VALID_LEVELS   = {"early_beginner", "beginner", "intermediate", "advanced"}
 VALID_MODES    = {"rh_only", "lh_only", "both"}
 VALID_DURATIONS = {"w", "h.", "h", "q.", "q", "8.", "8", "16.", "16", "32"}
 
+# Placeholder values from MuseScore defaults and mxl_to_song.py fallbacks.
+# A song carrying one of these in meta.title or meta.composer is not publish-ready.
+_PLACEHOLDER_TITLES    = {"untitled", "untitled score", "untitled_score"}
+_PLACEHOLDER_COMPOSERS = {"unknown", "composer / arranger", "composer/arranger"}
+
 # ev_000001 … ev_999999
 EVENT_ID_RE = re.compile(r"^ev_\d{6}$")
 
@@ -112,6 +117,14 @@ def check_meta(meta: dict, result: Result) -> None:
             result.error(f"meta.{field}: missing required field")
         elif not isinstance(val, str) or not val.strip():
             result.error(f"meta.{field}: must be a non-empty string")
+
+    # Placeholder detection — warns but does not block (publish-readiness signal)
+    _t = (meta.get("title") or "").strip().lower()
+    if _t in _PLACEHOLDER_TITLES:
+        result.warn(f"meta.title: '{meta.get('title')}' appears to be a placeholder — set the real title before publishing")
+    _c = (meta.get("composer") or "").strip().lower()
+    if _c in _PLACEHOLDER_COMPOSERS:
+        result.warn(f"meta.composer: '{meta.get('composer')}' appears to be a placeholder — set the real name or leave empty in MuseScore")
 
     # level
     level = meta.get("level")

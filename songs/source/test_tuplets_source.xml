@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN"
+  "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="3.1">
+  <work><work-title>Test Tuplets Source</work-title></work>
+  <identification>
+    <creator type="composer">MyKey Engraving Audit</creator>
+    <encoding>
+      <software>MyKey Test Suite</software>
+    </encoding>
+  </identification>
+  <part-list>
+    <score-part id="P1"><part-name>Piano Right</part-name></score-part>
+    <score-part id="P2"><part-name>Piano Left</part-name></score-part>
+  </part-list>
+
+  <!-- ========== TREBLE ========== -->
+  <part id="P1">
+
+    <!-- Bar 1: 8th-note triplet (C4 E4 G4) + 3 quarter notes -->
+    <!-- divisions=60 per quarter; triplet 8th = 20 divisions each -->
+    <measure number="1">
+      <attributes>
+        <divisions>60</divisions>
+        <key><fifths>0</fifths><mode>major</mode></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <direction placement="above">
+        <direction-type>
+          <metronome parentheses="no">
+            <beat-unit>quarter</beat-unit>
+            <per-minute>60</per-minute>
+          </metronome>
+        </direction-type>
+        <sound tempo="60"/>
+      </direction>
+
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>20</duration>
+        <type>eighth</type>
+        <time-modification>
+          <actual-notes>3</actual-notes>
+          <normal-notes>2</normal-notes>
+          <normal-type>eighth</normal-type>
+        </time-modification>
+        <notations><tuplet type="start" bracket="yes" number="1"/></notations>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>20</duration>
+        <type>eighth</type>
+        <time-modification>
+          <actual-notes>3</actual-notes>
+          <normal-notes>2</normal-notes>
+          <normal-type>eighth</normal-type>
+        </time-modification>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>20</duration>
+        <type>eighth</type>
+        <time-modification>
+          <actual-notes>3</actual-notes>
+          <normal-notes>2</normal-notes>
+          <normal-type>eighth</normal-type>
+        </time-modification>
+        <notations><tuplet type="stop" number="1"/></notations>
+      </note>
+
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>60</duration><type>quarter</type></note>
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>60</duration><type>quarter</type></note>
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>60</duration><type>quarter</type></note>
+    </measure>
+
+    <!-- Bar 2: quarter-note triplet (C4 E4 G4) + half note C4 -->
+    <!-- triplet quarter = 40 divisions each; 3×40=120 + half 120 = 240 -->
+    <measure number="2">
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>40</duration>
+        <type>quarter</type>
+        <time-modification>
+          <actual-notes>3</actual-notes>
+          <normal-notes>2</normal-notes>
+          <normal-type>quarter</normal-type>
+        </time-modification>
+        <notations><tuplet type="start" bracket="yes" number="1"/></notations>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>40</duration>
+        <type>quarter</type>
+        <time-modification>
+          <actual-notes>3</actual-notes>
+          <normal-notes>2</normal-notes>
+          <normal-type>quarter</normal-type>
+        </time-modification>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>40</duration>
+        <type>quarter</type>
+        <time-modification>
+          <actual-notes>3</actual-notes>
+          <normal-notes>2</normal-notes>
+          <normal-type>quarter</normal-type>
+        </time-modification>
+        <notations><tuplet type="stop" number="1"/></notations>
+      </note>
+
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>120</duration><type>half</type></note>
+    </measure>
+
+    <!-- Bar 3: 16th quintuplet C D E F G4 + quarter E4 + half C4 -->
+    <!-- quintuplet 16th = 12 divisions each; 5×12=60 + quarter 60 + half 120 = 240 -->
+    <measure number="3">
+      <note>
+        <pitch><step>C</step><octave>4</octave></pitch>
+        <duration>12</duration>
+        <type>16th</type>
+        <time-modification>
+          <actual-notes>5</actual-notes>
+          <normal-notes>4</normal-notes>
+          <normal-type>16th</normal-type>
+        </time-modification>
+        <notations><tuplet type="start" bracket="yes" number="1"/></notations>
+      </note>
+      <note>
+        <pitch><step>D</step><octave>4</octave></pitch>
+        <duration>12</duration>
+        <type>16th</type>
+        <time-modification>
+          <actual-notes>5</actual-notes>
+          <normal-notes>4</normal-notes>
+          <normal-type>16th</normal-type>
+        </time-modification>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>12</duration>
+        <type>16th</type>
+        <time-modification>
+          <actual-notes>5</actual-notes>
+          <normal-notes>4</normal-notes>
+          <normal-type>16th</normal-type>
+        </time-modification>
+      </note>
+      <note>
+        <pitch><step>F</step><octave>4</octave></pitch>
+        <duration>12</duration>
+        <type>16th</type>
+        <time-modification>
+          <actual-notes>5</actual-notes>
+          <normal-notes>4</normal-notes>
+          <normal-type>16th</normal-type>
+        </time-modification>
+      </note>
+      <note>
+        <pitch><step>G</step><octave>4</octave></pitch>
+        <duration>12</duration>
+        <type>16th</type>
+        <time-modification>
+          <actual-notes>5</actual-notes>
+          <normal-notes>4</normal-notes>
+          <normal-type>16th</normal-type>
+        </time-modification>
+        <notations><tuplet type="stop" number="1"/></notations>
+      </note>
+
+      <note><pitch><step>E</step><octave>4</octave></pitch><duration>60</duration><type>quarter</type></note>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>120</duration><type>half</type></note>
+    </measure>
+
+    <!-- Bar 4: whole note finale -->
+    <measure number="4">
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>240</duration><type>whole</type></note>
+      <barline location="right"><bar-style>light-heavy</bar-style></barline>
+    </measure>
+
+  </part>
+
+  <!-- ========== BASS ========== -->
+  <part id="P2">
+    <measure number="1">
+      <attributes>
+        <divisions>60</divisions>
+        <key><fifths>0</fifths><mode>major</mode></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>F</sign><line>4</line></clef>
+      </attributes>
+      <note><rest measure="yes"/><duration>240</duration><type>whole</type></note>
+    </measure>
+    <measure number="2">
+      <note><rest measure="yes"/><duration>240</duration><type>whole</type></note>
+    </measure>
+    <measure number="3">
+      <note><rest measure="yes"/><duration>240</duration><type>whole</type></note>
+    </measure>
+    <measure number="4">
+      <note><pitch><step>C</step><octave>3</octave></pitch><duration>240</duration><type>whole</type></note>
+      <barline location="right"><bar-style>light-heavy</bar-style></barline>
+    </measure>
+  </part>
+
+</score-partwise>

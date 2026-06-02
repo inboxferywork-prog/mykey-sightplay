@@ -15,7 +15,7 @@
       "treble"
     ],
     "freq_split_hz": 261.63,
-    "part_size_bars": 2,
+    "part_size_bars": 4,
     "background_music": null,
     "example_audio": null,
     "hint_config": {
@@ -39,7 +39,9 @@
       "label": "Part 1",
       "bars": [
         1,
-        2
+        2,
+        3,
+        4
       ],
       "has_pickup": false,
       "example_audio": null
@@ -48,26 +50,8 @@
       "part_id": "part_2",
       "label": "Part 2",
       "bars": [
-        3,
-        4
-      ],
-      "has_pickup": false,
-      "example_audio": null
-    },
-    {
-      "part_id": "part_3",
-      "label": "Part 3",
-      "bars": [
         5,
-        6
-      ],
-      "has_pickup": false,
-      "example_audio": null
-    },
-    {
-      "part_id": "part_4",
-      "label": "Part 4",
-      "bars": [
+        6,
         7,
         8
       ],
@@ -419,7 +403,7 @@
       "label": "Frasa C",
       "start_bar": 5,
       "start_beat": 1,
-      "end_bar": 7,
+      "end_bar": 8,
       "end_beat": 1,
       "visible_clefs": [
         "treble",
@@ -431,9 +415,9 @@
     {
       "segment_id": "seg_phrase_d",
       "label": "Frasa D",
-      "start_bar": 7,
+      "start_bar": 8,
       "start_beat": 1,
-      "end_bar": 9,
+      "end_bar": 10,
       "end_beat": 1,
       "visible_clefs": [
         "treble",
@@ -442,10 +426,5 @@
       "suggested_repeats": 1,
       "order": 4
     }
-  ],
-  "library": {
-    "listed": false,
-    "collectionId": null,
-    "tags": []
-  }
+  ]
 }

@@ -1,12 +1,12 @@
 {
   "meta": {
     "id": "untitled_score",
-    "title": "Roti",
+    "title": "Pelangi",
     "composer": "Composer / arranger",
     "level": "early_beginner",
     "bpm": 72,
     "time_signature": [
-      2,
+      4,
       4
     ],
     "key_signature": "C",
@@ -15,7 +15,7 @@
       "treble"
     ],
     "freq_split_hz": 261.63,
-    "part_size_bars": 2,
+    "part_size_bars": 4,
     "background_music": null,
     "example_audio": null,
     "hint_config": {
@@ -39,7 +39,9 @@
       "label": "Part 1",
       "bars": [
         1,
-        2
+        2,
+        3,
+        4
       ],
       "has_pickup": false,
       "example_audio": null
@@ -48,26 +50,8 @@
       "part_id": "part_2",
       "label": "Part 2",
       "bars": [
-        3,
-        4
-      ],
-      "has_pickup": false,
-      "example_audio": null
-    },
-    {
-      "part_id": "part_3",
-      "label": "Part 3",
-      "bars": [
         5,
-        6
-      ],
-      "has_pickup": false,
-      "example_audio": null
-    },
-    {
-      "part_id": "part_4",
-      "label": "Part 4",
-      "bars": [
+        6,
         7,
         8
       ],
@@ -87,7 +71,7 @@
             "clef": "treble",
             "type": "note",
             "notes": [
-              "E4"
+              "C4"
             ],
             "duration": "q",
             "duration_ms": 833,
@@ -102,27 +86,15 @@
             "bar": 1,
             "beat": 2,
             "clef": "treble",
-            "type": "note",
-            "notes": [
-              "D4"
-            ],
+            "type": "rest",
             "duration": "q",
             "duration_ms": 834,
-            "t_ms": 833,
-            "finger": null,
-            "tie_start": false,
-            "tie_stop": false,
-            "tolerance_cents": 50
-          }
-        ]
-      },
-      {
-        "bar": 2,
-        "beats": [
+            "t_ms": 833
+          },
           {
             "id": "ev_000003",
-            "bar": 2,
-            "beat": 1,
+            "bar": 1,
+            "beat": 3,
             "clef": "treble",
             "type": "note",
             "notes": [
@@ -138,8 +110,8 @@
           },
           {
             "id": "ev_000004",
-            "bar": 2,
-            "beat": 2,
+            "bar": 1,
+            "beat": 4,
             "clef": "treble",
             "type": "rest",
             "duration": "q",
@@ -149,16 +121,16 @@
         ]
       },
       {
-        "bar": 3,
+        "bar": 2,
         "beats": [
           {
             "id": "ev_000005",
-            "bar": 3,
+            "bar": 2,
             "beat": 1,
             "clef": "treble",
             "type": "note",
             "notes": [
-              "E4"
+              "D4"
             ],
             "duration": "q",
             "duration_ms": 834,
@@ -170,12 +142,12 @@
           },
           {
             "id": "ev_000006",
-            "bar": 3,
+            "bar": 2,
             "beat": 2,
             "clef": "treble",
             "type": "note",
             "notes": [
-              "D4"
+              "E4"
             ],
             "duration": "q",
             "duration_ms": 833,
@@ -184,52 +156,37 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50
-          }
-        ]
-      },
-      {
-        "bar": 4,
-        "beats": [
+          },
           {
             "id": "ev_000007",
-            "bar": 4,
-            "beat": 1,
+            "bar": 2,
+            "beat": 3,
             "clef": "treble",
             "type": "note",
             "notes": [
-              "C4"
+              "F4"
             ],
-            "duration": "q",
-            "duration_ms": 833,
+            "duration": "h",
+            "duration_ms": 1667,
             "t_ms": 5000,
             "finger": null,
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50
-          },
-          {
-            "id": "ev_000008",
-            "bar": 4,
-            "beat": 2,
-            "clef": "treble",
-            "type": "rest",
-            "duration": "q",
-            "duration_ms": 834,
-            "t_ms": 5833
           }
         ]
       },
       {
-        "bar": 5,
+        "bar": 3,
         "beats": [
           {
-            "id": "ev_000009",
-            "bar": 5,
+            "id": "ev_000008",
+            "bar": 3,
             "beat": 1,
             "clef": "treble",
             "type": "note",
             "notes": [
-              "C4"
+              "E4"
             ],
             "duration": "q",
             "duration_ms": 833,
@@ -240,35 +197,23 @@
             "tolerance_cents": 50
           },
           {
-            "id": "ev_000010",
-            "bar": 5,
+            "id": "ev_000009",
+            "bar": 3,
             "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 833,
+            "t_ms": 7500
+          },
+          {
+            "id": "ev_000010",
+            "bar": 3,
+            "beat": 3,
             "clef": "treble",
             "type": "note",
             "notes": [
               "C4"
-            ],
-            "duration": "q",
-            "duration_ms": 833,
-            "t_ms": 7500,
-            "finger": null,
-            "tie_start": false,
-            "tie_stop": false,
-            "tolerance_cents": 50
-          }
-        ]
-      },
-      {
-        "bar": 6,
-        "beats": [
-          {
-            "id": "ev_000011",
-            "bar": 6,
-            "beat": 1,
-            "clef": "treble",
-            "type": "note",
-            "notes": [
-              "D4"
             ],
             "duration": "q",
             "duration_ms": 834,
@@ -279,13 +224,13 @@
             "tolerance_cents": 50
           },
           {
-            "id": "ev_000012",
-            "bar": 6,
-            "beat": 2,
+            "id": "ev_000011",
+            "bar": 3,
+            "beat": 4,
             "clef": "treble",
             "type": "note",
             "notes": [
-              "D4"
+              "C4"
             ],
             "duration": "q",
             "duration_ms": 833,
@@ -298,10 +243,147 @@
         ]
       },
       {
-        "bar": 7,
+        "bar": 4,
+        "beats": [
+          {
+            "id": "ev_000012",
+            "bar": 4,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "w",
+            "duration_ms": 3333,
+            "t_ms": 10000,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 5,
         "beats": [
           {
             "id": "ev_000013",
+            "bar": 5,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "C4"
+            ],
+            "duration": "q",
+            "duration_ms": 834,
+            "t_ms": 13333,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000014",
+            "bar": 5,
+            "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 833,
+            "t_ms": 14167
+          },
+          {
+            "id": "ev_000015",
+            "bar": 5,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "C4"
+            ],
+            "duration": "q",
+            "duration_ms": 833,
+            "t_ms": 15000,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000016",
+            "bar": 5,
+            "beat": 4,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 834,
+            "t_ms": 15833
+          }
+        ]
+      },
+      {
+        "bar": 6,
+        "beats": [
+          {
+            "id": "ev_000017",
+            "bar": 6,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "q",
+            "duration_ms": 833,
+            "t_ms": 16667,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000018",
+            "bar": 6,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 833,
+            "t_ms": 17500,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000019",
+            "bar": 6,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "F4"
+            ],
+            "duration": "h",
+            "duration_ms": 1667,
+            "t_ms": 18333,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 7,
+        "beats": [
+          {
+            "id": "ev_000020",
             "bar": 7,
             "beat": 1,
             "clef": "treble",
@@ -311,24 +393,51 @@
             ],
             "duration": "q",
             "duration_ms": 833,
-            "t_ms": 10000,
+            "t_ms": 20000,
             "finger": null,
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50
           },
           {
-            "id": "ev_000014",
+            "id": "ev_000021",
             "bar": 7,
             "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 834,
+            "t_ms": 20833
+          },
+          {
+            "id": "ev_000022",
+            "bar": 7,
+            "beat": 3,
             "clef": "treble",
             "type": "note",
             "notes": [
               "D4"
             ],
             "duration": "q",
-            "duration_ms": 834,
-            "t_ms": 10833,
+            "duration_ms": 833,
+            "t_ms": 21667,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000023",
+            "bar": 7,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "q",
+            "duration_ms": 833,
+            "t_ms": 22500,
             "finger": null,
             "tie_start": false,
             "tie_stop": false,
@@ -340,7 +449,7 @@
         "bar": 8,
         "beats": [
           {
-            "id": "ev_000015",
+            "id": "ev_000024",
             "bar": 8,
             "beat": 1,
             "clef": "treble",
@@ -348,23 +457,13 @@
             "notes": [
               "C4"
             ],
-            "duration": "q",
-            "duration_ms": 833,
-            "t_ms": 11667,
+            "duration": "w",
+            "duration_ms": 3334,
+            "t_ms": 23333,
             "finger": null,
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50
-          },
-          {
-            "id": "ev_000016",
-            "bar": 8,
-            "beat": 2,
-            "clef": "treble",
-            "type": "rest",
-            "duration": "q",
-            "duration_ms": 833,
-            "t_ms": 12500
           }
         ]
       }
@@ -394,8 +493,7 @@
       "end_bar": 3,
       "end_beat": 1,
       "visible_clefs": [
-        "treble",
-        "bass"
+        "treble"
       ],
       "suggested_repeats": 1,
       "order": 1
@@ -408,8 +506,7 @@
       "end_bar": 5,
       "end_beat": 1,
       "visible_clefs": [
-        "treble",
-        "bass"
+        "treble"
       ],
       "suggested_repeats": 1,
       "order": 2
@@ -419,11 +516,10 @@
       "label": "Frasa C",
       "start_bar": 5,
       "start_beat": 1,
-      "end_bar": 7,
+      "end_bar": 8,
       "end_beat": 1,
       "visible_clefs": [
-        "treble",
-        "bass"
+        "treble"
       ],
       "suggested_repeats": 1,
       "order": 3
@@ -431,13 +527,12 @@
     {
       "segment_id": "seg_phrase_d",
       "label": "Frasa D",
-      "start_bar": 7,
+      "start_bar": 8,
       "start_beat": 1,
-      "end_bar": 9,
+      "end_bar": 10,
       "end_beat": 1,
       "visible_clefs": [
-        "treble",
-        "bass"
+        "treble"
       ],
       "suggested_repeats": 1,
       "order": 4

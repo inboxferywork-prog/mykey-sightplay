@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "songs": [
+    {
+      "src": "songs/0101 Roti Panas-Piano.json",
+      "label": "0101 Roti Panas-Piano — 2/4 · 72 BPM · 8 bars · segments"
+    },
+    {
+      "src": "songs/simple_test.json",
+      "label": "simple_test — 3/4 · 72 BPM · 12 bars · segments"
+    },
+    {
+      "src": "songs/test_staccato_slur.json",
+      "label": "test_staccato_slur — 2/4 · 72 BPM · 8 bars · Key F"
+    },
+    {
+      "src": "songs/test_stem_direction.json",
+      "label": "Stem Direction Validation — Session 16 — 4/4 · 60 BPM · 8 bars"
+    },
+    {
+      "src": "songs/test_ties.json",
+      "label": "Tie Rendering Validation — Layer 3 — 4/4 · 60 BPM · 16 bars"
+    }
+  ]
+}

@@ -27,6 +27,7 @@
       <select id="songSelect"></select>
       <button id="btnFloatToggle" class="fc-toggle-btn" title="Toggle floating controls">⊡ Float</button>
       <a href="authoring.html" id="authoringLink" title="Segment Authoring Tool">✏ Author</a>
+      <a href="library-manager.html" id="libraryManagerLink" title="Library Manager Tool">📚 Library</a>
     </div>
   </div>
 </header>
@@ -1694,15 +1695,16 @@ async function _initSongLibrary() {
     const res = await fetch('songs/index.json');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const index = await res.json();
-    const songs = Array.isArray(index.songs) ? index.songs : [];
+    const allSongs = Array.isArray(index.songs) ? index.songs : [];
+    const songs = allSongs.filter(s => s.listed === true);
 
     songSelect.innerHTML = '';
     if (!songs.length) {
       const opt = document.createElement('option');
       opt.value = '';
-      opt.textContent = 'No songs found — run: python tools/update_song_index.py';
+      opt.textContent = 'No songs available';
       songSelect.appendChild(opt);
-      document.getElementById('songTitle').textContent = 'No songs found';
+      document.getElementById('songTitle').textContent = 'No songs available';
       return;
     }
 

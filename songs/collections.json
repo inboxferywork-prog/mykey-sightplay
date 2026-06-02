@@ -1,0 +1,143 @@
+{
+  "version": 2,
+  "providers": [
+    {
+      "id": "public-domain",
+      "name": "Public Domain",
+      "listed": true,
+      "requiresAssignment": false
+    },
+    {
+      "id": "mykey",
+      "name": "MyKey Music Labs",
+      "listed": true,
+      "requiresAssignment": false
+    },
+    {
+      "id": "licensed",
+      "name": "Licensed Content",
+      "listed": false,
+      "requiresAssignment": true
+    },
+    {
+      "id": "yamaha",
+      "name": "Yamaha Music Education",
+      "listed": false,
+      "requiresAssignment": true
+    }
+  ],
+  "collections": [
+    {
+      "id": "standalone",
+      "name": "Standalone",
+      "provider": "mykey",
+      "listed": true,
+      "order": 1,
+      "tags": []
+    },
+    {
+      "id": "beyer-op101",
+      "name": "Beyer Op.101",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 2,
+      "tags": ["cat:repertoire", "format:exercise", "period:romantic"]
+    },
+    {
+      "id": "czerny-op599",
+      "name": "Czerny Op.599",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 3,
+      "tags": ["cat:technique", "format:exercise", "period:romantic"]
+    },
+    {
+      "id": "burgmuller-op100",
+      "name": "Burgmüller Op.100",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 4,
+      "tags": ["cat:repertoire", "format:piece", "period:romantic"]
+    },
+    {
+      "id": "hanon",
+      "name": "Hanon — The Virtuoso Pianist",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 5,
+      "tags": ["cat:technique", "format:exercise", "period:romantic"]
+    },
+    {
+      "id": "duvernoy-op176",
+      "name": "Duvernoy Op.176",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 6,
+      "tags": ["cat:technique", "format:exercise", "period:romantic"]
+    },
+    {
+      "id": "indonesian-folk",
+      "name": "Indonesian Folk Songs",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 7,
+      "tags": ["cat:repertoire", "genre:folk", "origin:indonesia"]
+    },
+    {
+      "id": "balinese-folk",
+      "name": "Balinese Folk Songs",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 8,
+      "tags": ["cat:repertoire", "genre:folk", "origin:indonesia", "origin:bali"]
+    },
+    {
+      "id": "mykey-originals",
+      "name": "MyKey Originals",
+      "provider": "mykey",
+      "listed": true,
+      "order": 9,
+      "tags": ["cat:repertoire", "format:piece"]
+    },
+    {
+      "id": "yamaha-primary-1",
+      "name": "Yamaha Primary 1",
+      "provider": "yamaha",
+      "listed": false,
+      "order": 10,
+      "tags": []
+    },
+    {
+      "id": "yamaha-primary-2",
+      "name": "Yamaha Primary 2",
+      "provider": "yamaha",
+      "listed": false,
+      "order": 11,
+      "tags": []
+    },
+    {
+      "id": "yamaha-primary-3",
+      "name": "Yamaha Primary 3",
+      "provider": "yamaha",
+      "listed": false,
+      "order": 12,
+      "tags": []
+    },
+    {
+      "id": "yamaha-primary-4",
+      "name": "Yamaha Primary 4",
+      "provider": "yamaha",
+      "listed": false,
+      "order": 13,
+      "tags": []
+    },
+    {
+      "id": "yamaha-extension-2",
+      "name": "Yamaha Extension 2",
+      "provider": "yamaha",
+      "listed": false,
+      "order": 14,
+      "tags": []
+    }
+  ]
+}

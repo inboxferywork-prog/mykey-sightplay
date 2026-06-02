@@ -6,21 +6,13 @@ Schema version: 2
 Field ownership:
   Derived from song.json (always overwritten):
     src, label, title, composer, level
-  Curation fields (priority order):
-    1. Read from song.json.library (if present) — authoring UI updates
-    2. Preserve from existing index.json (if present) — backward compatibility
-    3. Apply migration defaults (if new file)
+  Curation fields (preserved from existing index.json):
+    collectionId, listed
 
-Curation fields detail:
-  - listed: Visibility in Song Browser
-    * Priority: song.json.library > existing_entry > fixture detection
-    * Default: False for test_* files, True for production songs
-  - collectionId: Collection assignment
-    * Priority: song.json.library > existing_entry
-    * Default: None
-  - tags: Custom tags for filtering
-    * Priority: song.json.library > existing_entry
-    * Default: []
+Migration defaults (applied only when no existing entry exists):
+  listed = False  for files whose stem starts with 'test_' or is in KNOWN_FIXTURE_STEMS
+  listed = True   for all other files (production songs)
+  collectionId = None
 
 Usage (from project root):
     python tools/update_song_index.py
@@ -158,7 +150,6 @@ def _process_file(path: Path, existing_entry: dict) -> dict | None:
 
     bars              = score.get('bars', [])
     learning_segments = data.get('learning_segments') or []
-    library           = data.get('library') or {}  # ← Read from song.json.library
     src               = f'songs/{path.name}'
 
     # ── Derived fields — always refreshed from song.json ──────────────────
@@ -167,29 +158,19 @@ def _process_file(path: Path, existing_entry: dict) -> dict | None:
     composer = _clean_composer(meta)
     level    = meta.get('level') or None
 
-    # ── Curation fields — read from song.json.library if present; ────────────
-    # ── otherwise preserve from existing entry; defaults on first run ────────
-    
-    # listed: priority: song.json.library > existing_entry > default (based on filename)
-    if 'listed' in library:
-        listed = bool(library['listed'])
-    elif 'listed' in existing_entry:
+    # ── Curation fields — preserved from existing entry; defaults on first run ──
+    # listed: preserve if already set; otherwise default based on filename pattern.
+    if 'listed' in existing_entry:
         listed = bool(existing_entry['listed'])
     else:
         listed = not _is_fixture(path.stem)
 
-    # collectionId: priority: song.json.library > existing_entry > default (None)
-    if 'collectionId' in library:
-        collection_id = library['collectionId']
-    else:
-        collection_id = existing_entry.get('collectionId', None)
+    # collectionId: preserve if already set; default None.
+    collection_id = existing_entry.get('collectionId', None)
 
-    # tags: priority: song.json.library > existing_entry > default ([])
-    if 'tags' in library and isinstance(library['tags'], list):
-        tags = library['tags']
-    else:
-        existing_tags = existing_entry.get('tags', None)
-        tags = existing_tags if isinstance(existing_tags, list) else []
+    # tags: preserve if already set; default empty list.
+    existing_tags = existing_entry.get('tags', None)
+    tags = existing_tags if isinstance(existing_tags, list) else []
 
     return {
         'src':          src,

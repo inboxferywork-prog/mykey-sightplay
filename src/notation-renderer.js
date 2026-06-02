@@ -343,9 +343,10 @@ class NotationRenderer {
     const noteAreaW = Math.max(50,
       primaryStave.getWidth() - (primaryStave.getNoteStartX() - primaryStave.getX()) - 12
     );
-    // Reserve 10% optical margin before the barline — notes breathe rather than
-    // stretching flush to the bar edge, which reads as mechanically grid-like.
-    const formatW = noteAreaW * 0.90;
+    // Reserve optical margin before the barline — 15% for tuplet bars (tick inflation
+    // from nominal durations can crowd the right edge), 10% for normal bars.
+    const hasTuplets = trebleItems.some(it => it.tupletGroup) || bassItems.some(it => it.tupletGroup);
+    const formatW = noteAreaW * (hasTuplets ? 0.85 : 0.90);
 
     // Formatter — conditional on what voices exist
     if (showBoth && tv && bv) {
@@ -390,6 +391,13 @@ class NotationRenderer {
 
     // Draw beam lines after voices so beam pixel positions (set during note draw) are ready.
     [...tBeams, ...bBeams].forEach(b => b.setContext(ctx).draw());
+
+    // Draw tuplet brackets after beams — note positions and stem directions are finalized.
+    if (VF.Tuplet) {
+      const tTuplets = showTreble ? _collectTuplets(VF, trebleItems) : [];
+      const bTuplets = showBass   ? _collectTuplets(VF, bassItems)   : [];
+      [...tTuplets, ...bTuplets].forEach(t => { try { t.setContext(ctx).draw(); } catch (_) {} });
+    }
 
     // Map event IDs → SVG elements.
     // VexFlow 5.x: note.attrs has no .el — use getSVGElement() (DOM lookup by prefixed ID).
@@ -495,7 +503,7 @@ class NotationRenderer {
       // Slur requires custom SVG Bezier path pass after all voices are drawn.
       // See docs/engraving-standards.md §4.7 and docs/music-notation-semantics.md §10.2.
 
-      return { note, eventId: ev.id, dur: base, step };
+      return { note, eventId: ev.id, dur: base, step, tupletGroup: ev.tuplet_group || null };
     });
   }
 
@@ -947,6 +955,8 @@ function _barNoteWeight(barData) {
       dw += accs * 0.25;
       // Additional chord notes (stacked intervals may need spread)
       dw += Math.max(0, (ev.notes || []).length - 1) * 0.1;
+      // Tuplet notes carry bracket + number-label overhead — widen bar to absorb it.
+      if (ev.tuplet_group) dw *= 1.25;
       slotW = Math.max(slotW, dw);
     }
     weight += slotW;
@@ -1067,15 +1077,43 @@ function _globalAvgBarW(bars) {
 function _beatGroupedBeams(VF, items, beats, barStartMs, msPerBeat, clef) {
   const middle = clef === 'treble' ? _TREBLE_MID : _BASS_MID;
   const groups = new Map();
+
+  // Tuplet membership takes precedence over beat-boundary grouping.
+  // At high BPMs the last note of a triplet group can fall in the next beat slot
+  // (e.g. BPM=120: 3rd triplet 8th at t=666ms → beatIdx=1 when msPerBeat=500ms).
+  // Using the tuplet ratio + chunk index as the group key keeps all n notes together.
+  // Counter is advanced for ALL items (including rests/non-beamable) so chunk-index
+  // arithmetic stays correct when a tuplet group contains non-beamable notes.
+  let prevTupletRatio = null;
+  let tupletPos       = 0;
+
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
+
+    if (item.tupletGroup !== prevTupletRatio) {
+      prevTupletRatio = item.tupletGroup ?? null;
+      tupletPos = 0;
+    }
+    const posInRun = item.tupletGroup ? tupletPos++ : 0;
+
     if (item.note.isRest() || !_isBeamable(item.dur)) continue;
-    const t       = beats[i]?.t_ms ?? barStartMs;
-    // +0.001 absorbs integer t_ms rounding at beat boundaries (max 0.5ms error vs 833ms beat)
-    const beatIdx = Math.floor((t - barStartMs) / msPerBeat + 0.001);
-    if (!groups.has(beatIdx)) groups.set(beatIdx, []);
-    groups.get(beatIdx).push(item);
+
+    let groupKey;
+    if (item.tupletGroup) {
+      const numNotes = parseInt(item.tupletGroup.split(':')[0], 10);
+      const chunkIdx = isNaN(numNotes) ? 0 : Math.floor(posInRun / numNotes);
+      groupKey = `t:${item.tupletGroup}:${chunkIdx}`;
+    } else {
+      const t       = beats[i]?.t_ms ?? barStartMs;
+      // +0.001 absorbs integer t_ms rounding at beat boundaries (max 0.5ms error vs 833ms beat)
+      const beatIdx = Math.floor((t - barStartMs) / msPerBeat + 0.001);
+      groupKey = `b:${beatIdx}`;
+    }
+
+    if (!groups.has(groupKey)) groups.set(groupKey, []);
+    groups.get(groupKey).push(item);
   }
+
   const beams = [];
   for (const grp of groups.values()) {
     if (grp.length < 2) continue;
@@ -1092,6 +1130,71 @@ function _beatGroupedBeams(VF, items, beats, barStartMs, msPerBeat, clef) {
     VF.Beam.generateBeams(notes).forEach(b => beams.push(b));
   }
   return beams;
+}
+
+// ---------------------------------------------------------------------------
+// Tuplet rendering helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Collect VF.Tuplet objects for one voice's items in one bar.
+ *
+ * Groups consecutive items that share the same tuplet_group tag (e.g. "3:2").
+ * Splits each run into chunks of exactly numNotes (the ratio numerator).
+ * Incomplete trailing chunks (orphaned by bar boundary) are silently discarded.
+ *
+ * Position: LOCATION_TOP when stem direction is up (stem-up → bracket above),
+ * LOCATION_BOTTOM when stem direction is down, matching standard engraving convention.
+ *
+ * Drawn after voices and beams so all note positions and stem directions are final.
+ */
+function _collectTuplets(VF, items) {
+  if (!VF.Tuplet || !items.length) return [];
+  const LOC_TOP    = VF.Tuplet.LOCATION_TOP    ?? 1;
+  const LOC_BOTTOM = VF.Tuplet.LOCATION_BOTTOM ?? -1;
+  const tuplets    = [];
+  let group        = [];
+  let currentRatio = null;
+
+  const flush = () => {
+    if (!group.length || !currentRatio) { group = []; return; }
+    const parts = currentRatio.split(':');
+    const numNotes      = parseInt(parts[0], 10);
+    const beatsOccupied = parseInt(parts[1], 10);
+    if (isNaN(numNotes) || isNaN(beatsOccupied) || numNotes < 2) { group = []; return; }
+    for (let i = 0; i < group.length; i += numNotes) {
+      const chunk = group.slice(i, i + numNotes);
+      if (chunk.length < numNotes) break;  // incomplete trailing chunk — discard
+      const notes    = chunk.map(it => it.note);
+      const stemDir  = typeof notes[0].getStemDirection === 'function' ? notes[0].getStemDirection() : 1;
+      const location = stemDir >= 0 ? LOC_TOP : LOC_BOTTOM;
+      try {
+        tuplets.push(new VF.Tuplet(notes, {
+          num_notes:      numNotes,
+          beats_occupied: beatsOccupied,
+          bracketed:      true,
+          ratioed:        false,
+          location,
+        }));
+      } catch (_) {}
+    }
+    group = [];
+  };
+
+  for (const item of items) {
+    if (item.tupletGroup) {
+      if (item.tupletGroup !== currentRatio) {
+        flush();
+        currentRatio = item.tupletGroup;
+      }
+      group.push(item);
+    } else {
+      flush();
+      currentRatio = null;
+    }
+  }
+  flush();
+  return tuplets;
 }
 
 // ---------------------------------------------------------------------------

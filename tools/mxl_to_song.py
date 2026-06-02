@@ -464,7 +464,26 @@ def parse_part(part, clef_name, tempo_map, ev_counter_start, ottava_notes=None):
 
             dur_str = ql_to_duration(el.duration.quarterLength)
             ql_rounded = round(float(el.duration.quarterLength), 6)
-            if dur_str == "q" and ql_rounded not in DURATION_MAP:
+
+            # Tuplet detection: recover visual (nominal) duration and emit tuplet_group.
+            # A tuplet note's quarterLength is compressed; multiplying by actual/normal
+            # restores the nominal value (e.g. triplet 8th: 0.333 × 3/2 = 0.5 → "8").
+            tuplet_group = None
+            if el.duration.tuplets:
+                tup = el.duration.tuplets[0]
+                try:
+                    num_actual = int(tup.numberNotesActual)
+                    num_normal = int(tup.numberNotesNormal)
+                    if num_actual >= 2 and num_normal >= 1:
+                        tuplet_group = f"{num_actual}:{num_normal}"
+                        nominal_ql = round(
+                            float(el.duration.quarterLength) * num_actual / num_normal, 6
+                        )
+                        dur_str = ql_to_duration(nominal_ql)
+                except Exception:
+                    pass
+
+            if dur_str == "q" and ql_rounded not in DURATION_MAP and tuplet_group is None:
                 warnings.append(
                     f"Bar {bar_n} ({clef_name}): unrecognized quarterLength "
                     f"{el.duration.quarterLength:.4f} — fallback duration 'q'."
@@ -555,6 +574,9 @@ def parse_part(part, clef_name, tempo_map, ev_counter_start, ottava_notes=None):
 
             else:
                 continue  # unrecognized element type
+
+            if tuplet_group:
+                ev["tuplet_group"] = tuplet_group
 
             events.append(ev)
             ev_counter += 1

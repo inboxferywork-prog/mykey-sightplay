@@ -188,14 +188,46 @@
     tr:not(.editing):hover td { background: var(--surface2); }
     tr.editing td { background: rgba(240,165,0,0.03); }
     .td-num { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px; text-align: right; }
-    .td-label { font-weight: 500; min-width: 180px; }
+    .td-title { font-weight: 500; min-width: 180px; }
     .td-src { color: var(--muted); font-family: 'Consolas', monospace; font-size: 12px; min-width: 200px; }
     .td-level { color: var(--muted); font-size: 12px; width: 120px; }
+    .td-collection { color: var(--muted); font-family: 'Consolas', monospace; font-size: 12px; min-width: 140px; }
+    .td-listed { width: 76px; text-align: center; }
     .td-actions { width: 80px; text-align: right; white-space: nowrap; }
-    .td-edit-cell { min-width: 380px; }
+    .td-edit-cell { min-width: 400px; }
+
+    /* Listed badge + toggle */
+    .listed-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .listed-yes {
+      background: rgba(126,200,126,0.12);
+      border: 1px solid rgba(126,200,126,0.35);
+      color: var(--green);
+    }
+    .listed-no {
+      background: rgba(102,102,102,0.10);
+      border: 1px solid rgba(102,102,102,0.25);
+      color: var(--muted);
+    }
+    .listed-toggle {
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 2px;
+      border-radius: 3px;
+      line-height: 1;
+    }
+    .listed-toggle:hover .listed-badge { opacity: 0.75; }
 
     /* Edit inputs */
     .edit-row { display: flex; gap: 8px; align-items: center; }
+    .edit-row + .edit-row { margin-top: 5px; }
     .edit-input {
       background: var(--bg);
       border: 1px solid var(--orange);
@@ -208,6 +240,20 @@
     }
     .edit-input.mono { font-family: 'Consolas', monospace; font-size: 12px; }
     .edit-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(240,165,0,0.2); }
+    .edit-listed-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      cursor: pointer;
+      padding: 4px 8px;
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      background: var(--bg);
+    }
+    .edit-listed-label input[type=checkbox] { cursor: pointer; accent-color: var(--orange); }
     .edit-actions { display: flex; gap: 4px; }
 
     /* Empty state */
@@ -322,7 +368,7 @@
   <button class="btn" id="btn-save">💾 Save index.json</button>
   <div class="search-wrap">
     <span class="search-icon">⌕</span>
-    <input type="text" class="search-input" id="search" placeholder="Filter by label or filename…">
+    <input type="text" class="search-input" id="search" placeholder="Filter by title, level, collection…">
   </div>
 </div>
 
@@ -341,9 +387,11 @@
         <thead>
           <tr>
             <th class="td-num">#</th>
-            <th>Label</th>
+            <th>Title</th>
             <th>Source File</th>
             <th>Level</th>
+            <th>Collection</th>
+            <th class="td-listed">Listed</th>
             <th class="td-actions">Actions</th>
           </tr>
         </thead>
@@ -365,7 +413,7 @@
   <span id="status-folder" style="display:none"></span>
   <div class="status-sep" id="sep-dirty" style="display:none"></div>
   <span class="status-dirty" id="status-dirty">● Unsaved changes</span>
-  <span class="status-right">Song Manager v1.0</span>
+  <span class="status-right">Song Manager v2.0</span>
 </div>
 
 <!-- Confirm modal -->
@@ -382,15 +430,22 @@
 
 <script>
 // ─────────────────────────────────────────────
-// State
+// State — index.json v2 schema
+// Fields: src, label, title, composer, level, collectionId, listed
+// Derived (from song.json, not editable here): title, composer, level, label
+// Curation (editable): collectionId, listed
 // ─────────────────────────────────────────────
-let registry    = [];   // [{src, label, _level}]
+let registry    = [];
 let dirty       = false;
-let folderHandle = null;                // FileSystemDirectoryHandle
-let fileHandles  = new Map();           // basename → FileSystemFileHandle
+let folderHandle = null;
+let fileHandles  = new Map();
 let editingIndex = -1;
 let filterText   = '';
 const hasFSAPI   = typeof window.showDirectoryPicker === 'function';
+
+// Placeholder values set by MuseScore / importer — treated as absent on import.
+const PLACEHOLDER_TITLES    = new Set(['', 'untitled score', 'untitled']);
+const PLACEHOLDER_COMPOSERS = new Set(['', 'composer / arranger', 'composer/arranger']);
 
 // ─────────────────────────────────────────────
 // Boot
@@ -444,7 +499,16 @@ async function loadIndexFromFile(file) {
   try {
     const data = JSON.parse(await file.text());
     if (!Array.isArray(data.songs)) throw new Error('Missing "songs" array');
-    registry = data.songs.map(e => ({ src: e.src || '', label: e.label || '', _level: '' }));
+    registry = data.songs.map(e => ({
+      src:          e.src          || '',
+      label:        e.label        || '',
+      title:        e.title        || '',
+      composer:     e.composer     || null,
+      level:        e.level        || null,
+      collectionId: e.collectionId || null,
+      listed:       typeof e.listed === 'boolean' ? e.listed : true,
+      tags:         Array.isArray(e.tags) ? e.tags : [],
+    }));
     editingIndex = -1;
     setDirty(false);
     showToast(`Loaded ${registry.length} songs`, 'success');
@@ -525,8 +589,17 @@ async function importSongFiles(files) {
 
     if (registry.some(r => r.src === src)) { dupes++; continue; }
 
-    const label  = meta.title || basename.replace(/\.json$/, '');
-    const _level = meta.level || '';
+    // Extract derived fields from song.json meta.
+    const rawTitle    = (meta.title    || '').trim();
+    const rawComposer = (meta.composer || '').trim();
+    const title    = PLACEHOLDER_TITLES.has(rawTitle.toLowerCase())
+                   ? basename.replace(/\.json$/, '') : rawTitle;
+    const label    = title;
+    const composer = PLACEHOLDER_COMPOSERS.has(rawComposer.toLowerCase()) ? null : rawComposer;
+    const level    = meta.level || null;
+
+    // Default listed: false for test_ files, true otherwise.
+    const listed = !/^test_/i.test(basename);
 
     if (folderHandle) {
       try {
@@ -542,7 +615,7 @@ async function importSongFiles(files) {
       }
     }
 
-    registry.push({ src, label, _level });
+    registry.push({ src, label, title, composer, level, collectionId: null, listed });
     added++;
   }
 
@@ -579,12 +652,11 @@ function renderTable() {
 
   empty.style.display = 'none';
 
+  // Search across all meaningful text fields.
   const visible = filterText
-    ? registry.filter(r =>
-        r.label.toLowerCase().includes(filterText) ||
-        r.src.toLowerCase().includes(filterText) ||
-        r._level.toLowerCase().includes(filterText)
-      )
+    ? registry.filter(r => [r.title, r.label, r.src, r.level, r.collectionId, r.composer]
+        .filter(Boolean)
+        .some(v => v.toLowerCase().includes(filterText)))
     : registry;
 
   if (filterText && visible.length < registry.length) {
@@ -605,34 +677,64 @@ function renderTable() {
     if (isEdit) {
       tr.innerHTML = `
         <td class="td-num">${i + 1}</td>
-        <td class="td-edit-cell" colspan="2">
+        <td class="td-edit-cell" colspan="5">
           <div class="edit-row">
-            <input class="edit-input" id="edit-label"    value="${h(entry.label)}"    placeholder="Label" onkeydown="editKey(event,${i})">
+            <input class="edit-input" id="edit-label" value="${h(entry.label)}" placeholder="Display label" onkeydown="editKey(event,${i})">
             <input class="edit-input mono" id="edit-file" value="${h(basename)}" placeholder="filename.json" onkeydown="editKey(event,${i})">
           </div>
+          <div class="edit-row">
+            <input class="edit-input mono" id="edit-collection" value="${h(entry.collectionId || '')}" placeholder="collectionId  (e.g. beyer-op101  or leave blank)" onkeydown="editKey(event,${i})">
+            <label class="edit-listed-label">
+              <input type="checkbox" id="edit-listed" ${entry.listed ? 'checked' : ''}> Public (listed)
+            </label>
+          </div>
         </td>
-        <td class="td-level">${h(entry._level || '—')}</td>
         <td>
           <div class="edit-actions">
             <button class="btn btn-primary btn-sm" onclick="saveEdit(${i})">Save</button>
             <button class="btn btn-sm" onclick="cancelEdit()">Cancel</button>
           </div>
         </td>`;
-      tbody.appendChild(tr);
-      setTimeout(() => document.getElementById('edit-label')?.focus(), 0);
     } else {
+      const listedClass = entry.listed ? 'listed-yes' : 'listed-no';
+      const listedText  = entry.listed ? 'public' : 'hidden';
       tr.innerHTML = `
         <td class="td-num">${i + 1}</td>
-        <td class="td-label">${h(entry.label)}</td>
+        <td class="td-title">${h(entry.title || entry.label)}</td>
         <td class="td-src">${h(entry.src)}</td>
-        <td class="td-level">${h(entry._level || '—')}</td>
+        <td class="td-level">${h(entry.level || '—')}</td>
+        <td class="td-collection">${h(entry.collectionId || '—')}</td>
+        <td class="td-listed">
+          <button class="listed-toggle" onclick="toggleListed(${i})" title="Click to toggle">
+            <span class="listed-badge ${listedClass}">${listedText}</span>
+          </button>
+        </td>
         <td class="td-actions">
-          <button class="btn btn-icon btn-sm" title="Edit"   onclick="startEdit(${i})">✎</button>
+          <button class="btn btn-icon btn-sm" title="Edit" onclick="startEdit(${i})">✎</button>
           <button class="btn btn-icon btn-sm btn-danger" title="Remove" onclick="confirmRemove(${i})">✕</button>
         </td>`;
-      tbody.appendChild(tr);
+    }
+    tbody.appendChild(tr);
+
+    if (isEdit) {
+      setTimeout(() => document.getElementById('edit-label')?.focus(), 0);
     }
   });
+}
+
+// ─────────────────────────────────────────────
+// Listed toggle — quick click-to-flip in table
+// ─────────────────────────────────────────────
+function toggleListed(i) {
+  if (i < 0 || i >= registry.length) return;
+  registry[i].listed = !registry[i].listed;
+  setDirty(true);
+  renderTable();
+  updateStatus();
+  showToast(
+    registry[i].listed ? `"${registry[i].title || registry[i].label}" set to public` : `"${registry[i].title || registry[i].label}" set to hidden`,
+    'success'
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -651,6 +753,8 @@ function editKey(e, i) {
 function saveEdit(i) {
   const newLabel = (document.getElementById('edit-label')?.value || '').trim();
   let   newFile  = (document.getElementById('edit-file')?.value  || '').trim();
+  const newColl  = (document.getElementById('edit-collection')?.value || '').trim() || null;
+  const newListed = document.getElementById('edit-listed')?.checked ?? registry[i].listed;
 
   if (!newLabel) { showToast('Label cannot be empty', 'error'); return; }
   if (!newFile)  { showToast('Filename cannot be empty', 'error'); return; }
@@ -662,8 +766,10 @@ function saveEdit(i) {
     return;
   }
 
-  registry[i].label = newLabel;
-  registry[i].src   = newSrc;
+  registry[i].label        = newLabel;
+  registry[i].src          = newSrc;
+  registry[i].collectionId = newColl;
+  registry[i].listed       = newListed;
   editingIndex = -1;
   setDirty(true);
   renderTable();
@@ -685,7 +791,7 @@ function confirmRemove(i) {
   const canDel   = folderHandle && fileHandles.has(basename);
 
   showModal(
-    `Remove "${entry.label}"`,
+    `Remove "${entry.title || entry.label}"`,
     canDel
       ? `Remove from registry?<br><br>File: <code>${h(entry.src)}</code><br><br>Do you also want to delete the physical file from the folder?`
       : `Remove <code>${h(entry.src)}</code> from the registry?<br><br>The file will not be deleted.`,
@@ -723,12 +829,25 @@ async function doRemove(i, deleteFile) {
 }
 
 // ─────────────────────────────────────────────
-// Save Registry
+// Save Registry — outputs index.json v2 schema
 // ─────────────────────────────────────────────
 async function saveRegistry() {
   if (registry.length === 0) { showToast('Nothing to save', 'error'); return; }
 
-  const json = JSON.stringify({ songs: registry.map(r => ({ src: r.src, label: r.label })) }, null, 2);
+  const payload = {
+    version: 2,
+    songs: registry.map(r => ({
+      src:          r.src,
+      label:        r.label,
+      title:        r.title        || null,
+      composer:     r.composer     || null,
+      level:        r.level        || null,
+      collectionId: r.collectionId || null,
+      listed:       typeof r.listed === 'boolean' ? r.listed : true,
+      tags:         Array.isArray(r.tags) ? r.tags : [],
+    })),
+  };
+  const json = JSON.stringify(payload, null, 2);
 
   if (folderHandle) {
     try {
@@ -768,10 +887,13 @@ function setDirty(val) {
 }
 
 function updateStatus() {
+  const listedCount = registry.filter(r => r.listed).length;
   const el = document.getElementById('status-count');
-  el.textContent = registry.length === 0
-    ? 'No registry loaded'
-    : `${registry.length} song${registry.length !== 1 ? 's' : ''} in registry`;
+  if (registry.length === 0) {
+    el.textContent = 'No registry loaded';
+  } else {
+    el.textContent = `${registry.length} song${registry.length !== 1 ? 's' : ''} · ${listedCount} public`;
+  }
 }
 
 // ─────────────────────────────────────────────
