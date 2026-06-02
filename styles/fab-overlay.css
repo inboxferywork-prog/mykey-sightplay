@@ -183,7 +183,7 @@ body.nk-fab-mode .fab-overlay {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   height: var(--fab-bar-h);
   padding: 0 14px;
   pointer-events: auto;
@@ -204,7 +204,7 @@ body.nk-fab-mode .fab-overlay {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0;
+  gap: 4px;
 }
 
 /* Right group — flex:1 mirrors left, keeps play centered */
@@ -213,7 +213,7 @@ body.nk-fab-mode .fab-overlay {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 0;
+  gap: 4px;
 }
 
 /* Generic icon button — circular, transparent base */
@@ -279,20 +279,50 @@ body.nk-fab-mode .fab-overlay {
   margin: 0 3px;
 }
 
-/* Tempo select — compact, styled to bar color */
-.fab-tempo-select {
+/* Tempo / Note-mode icon buttons */
+.fab-tempo-btn, .fab-notemode-btn { font-size: 18px; color: var(--muted); }
+.fab-tempo-btn:hover:not(:disabled),
+.fab-notemode-btn:hover:not(:disabled) { color: var(--text); background: rgba(255,255,255,0.07); }
+
+/* Picker panels — appear above FAB bar on icon tap */
+.fab-pick-panel {
+  position: absolute;
+  bottom: calc(var(--fab-kb-h) + var(--fab-bar-h) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  min-width: 150px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+  z-index: 20;
+}
+
+.fab-pick-panel.fab-panel-open { display: flex; }
+
+.fab-pick-item {
   background: transparent;
   border: none;
+  border-bottom: 1px solid var(--border);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   font-family: inherit;
+  padding: 11px 18px;
   cursor: pointer;
-  outline: none;
-  padding: 0 2px;
-  max-width: 76px;
-  flex-shrink: 0;
+  text-align: left;
+  white-space: nowrap;
+  line-height: 1;
+  transition: background 0.08s, color 0.08s;
   -webkit-tap-highlight-color: transparent;
 }
+
+.fab-pick-item:last-child { border-bottom: none; }
+.fab-pick-item:hover { background: var(--surface2); color: var(--text); }
+.fab-pick-item.fab-pick-active { color: var(--orange); background: rgba(240,165,0,0.10); }
 
 /* ================================================================
    Portrait mode — larger touch targets and tighter bar layout.
@@ -300,7 +330,7 @@ body.nk-fab-mode .fab-overlay {
    ================================================================ */
 
 body.nk-portrait .fab-bar {
-  gap: 6px;
+  gap: 5px;
   padding: 0 12px;
   height: 66px;
 }
@@ -315,12 +345,6 @@ body.nk-portrait .fab-main-btn {
   width: 54px;
   height: 54px;
   font-size: 23px;
-}
-
-body.nk-portrait .fab-tempo-select {
-  font-size: 13px;
-  max-width: 70px;
-  padding: 0 2px;
 }
 
 body.nk-portrait .fab-tools-hand-btn {
@@ -558,10 +582,10 @@ body.nk-fab-mode .fab-ngr { display: flex; }
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.2px;
   line-height: 1;
-  padding: 1px 4px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 10px;
   background: transparent;
-  transition: color 0.08s, background 0.12s, text-shadow 0.12s;
+  transition: color 0.08s, background 0.12s;
 }
 
 .ngr-notes.ngr-pulse {
@@ -582,16 +606,12 @@ body.nk-fab-mode .fab-ngr { display: flex; }
 .ngr-lh .ngr-notes.ngr-active {
   color: var(--lh-color, #ff80c8);
   font-weight: 700;
-  background: rgba(255, 128, 200, 0.12);
-  text-shadow: 0 0 7px rgba(255, 128, 200, 0.95), 0 0 18px rgba(255, 128, 200, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(255, 128, 200, 0.32);
+  background: #ffffff;
 }
 .ngr-rh .ngr-notes.ngr-active {
   color: var(--rh-color, #5bc8f5);
   font-weight: 700;
-  background: rgba(91, 200, 245, 0.12);
-  text-shadow: 0 0 7px rgba(91, 200, 245, 0.95), 0 0 18px rgba(91, 200, 245, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(91, 200, 245, 0.32);
+  background: #ffffff;
 }
 
 .ngr-div {
@@ -601,25 +621,6 @@ body.nk-fab-mode .fab-ngr { display: flex; }
   flex-shrink: 0;
 }
 
-/* Note-name cycle button in FAB bar */
-.fab-mode-btn {
-  background: transparent;
-  border: 1px solid var(--border2);
-  color: var(--muted);
-  font-size: 11px;
-  font-family: inherit;
-  font-weight: 600;
-  padding: 0 8px;
-  height: 26px;
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  letter-spacing: 0.3px;
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
-  -webkit-tap-highlight-color: transparent;
-}
-.fab-mode-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); }
-.fab-mode-btn:active { background: rgba(255,255,255,0.13); }
 
 /* Drag handle — subtle grab target at the edge of the FAB bar */
 .fab-drag-handle {

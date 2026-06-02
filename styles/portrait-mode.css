@@ -71,7 +71,7 @@ body.nk-portrait.nk-fab-mode .fab-ngr {
   right:         10px;
   background:    var(--mykey-purple);
   border-bottom: none;
-  border-radius: 16px 16px 0 0;    /* rounded top — card starts here */
+  border-radius: 24px 24px 0 0;    /* rounded top — card starts here */
   box-shadow:    0 0 28px var(--mykey-purple-glow);
 }
 
@@ -85,16 +85,14 @@ body.nk-portrait.nk-fab-mode .ngr-notes {
   color: rgba(255, 255, 255, 0.52);
 }
 
-/* Active notes: white + hand-color glow */
+/* Active notes: clef-color text on white pill (matches base active style) */
 body.nk-portrait.nk-fab-mode .ngr-lh .ngr-notes.ngr-active {
-  color:       #ffffff;
-  background:  rgba(255, 255, 255, 0.14);
-  text-shadow: 0 0 12px rgba(255, 128, 200, 0.80);
+  color:      var(--lh-color, #ff80c8);
+  background: #ffffff;
 }
 body.nk-portrait.nk-fab-mode .ngr-rh .ngr-notes.ngr-active {
-  color:       #ffffff;
-  background:  rgba(255, 255, 255, 0.14);
-  text-shadow: 0 0 12px rgba(91, 200, 245, 0.80);
+  color:      var(--rh-color, #5bc8f5);
+  background: #ffffff;
 }
 
 /* Mode selector: light treatment on purple */
@@ -130,7 +128,7 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 body.nk-portrait.nk-fab-mode .score-card {
   margin:         0 10px;
   padding-top:    24px;
-  border-radius:  16px;
+  border-radius:  24px;
   box-shadow:     0 8px 32px rgba(0, 0, 0, 0.35);
 }
 

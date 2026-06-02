@@ -223,23 +223,33 @@
     </div>
   </div>
 
+  <!-- Tempo picker panel -->
+  <div class="fab-pick-panel" id="fabTempoPick" aria-hidden="true">
+    <button class="fab-pick-item" data-val="0.5000">🐌 Easy</button>
+    <button class="fab-pick-item" data-val="0.6250">🐢 Grave</button>
+    <button class="fab-pick-item" data-val="1.0000">🚶 Normal</button>
+    <button class="fab-pick-item" data-val="1.3889">🚴 Fast</button>
+  </div>
+
+  <!-- Note mode picker panel -->
+  <div class="fab-pick-panel" id="fabNoteModePick" aria-hidden="true">
+    <button class="fab-pick-item" data-mode="letter">ABC</button>
+    <button class="fab-pick-item" data-mode="solfege">Do Re Mi</button>
+    <button class="fab-pick-item" data-mode="number">1 2 3</button>
+  </div>
+
   <!-- Compact floating controls pill above keyboard -->
   <div class="fab-bar" id="fabBar">
+    <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
     <div class="fab-bar-left">
-      <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
       <button class="fab-btn fab-tools-btn" id="fabToolsBtn" title="Hand &amp; Part">⚙</button>
       <button class="fab-btn fab-song-btn" id="fabSongBtn" title="Select Song">♪</button>
       <button class="fab-btn fab-reset-btn" id="fabBtnReset" title="Reset" disabled>⏹</button>
     </div>
     <button class="fab-btn fab-main-btn" id="fabBtnMain" title="Play / Pause">▶</button>
     <div class="fab-bar-right">
-      <select class="fab-tempo-select" id="fabTempoSelect" title="Tempo">
-        <option value="0.5000">🐌 Easy</option>
-        <option value="0.6250">🐢 Grave</option>
-        <option value="1.0000" selected>🚶 Normal</option>
-        <option value="1.3889">🚴 Fast</option>
-      </select>
-      <button class="fab-mode-btn" id="fabNoteMode" title="Note name format">ABC</button>
+      <button class="fab-btn fab-tempo-btn" id="fabTempoBtn" title="Tempo">🏃</button>
+      <button class="fab-btn fab-notemode-btn" id="fabNoteModeBtn" title="Note name">🎵</button>
       <button class="fab-btn fab-exit-btn" id="fabExitBtn" title="Exit compact mode">⊠</button>
     </div>
   </div>
@@ -1359,32 +1369,63 @@ if (_noteNameModeEl) {
   // Re-render when main note name selector changes
   document.getElementById('noteNameMode')?.addEventListener('change', () => {
     _renderClef('treble'); _renderClef('bass');
-    _syncNoteModeBtn();
+    _syncNoteModePick();
   });
 
-  // Cycle button in FAB bar — cycles ABC → Do Re Mi → 1 2 3 → ABC
-  const _MODE_CYCLE = ['letter', 'solfege', 'number'];
-  const _MODE_LABELS = { letter: 'ABC', solfege: 'Do', number: '1 2 3' };
+  const fabNoteModePick = document.getElementById('fabNoteModePick');
+  const fabNoteModeBtn  = document.getElementById('fabNoteModeBtn');
 
-  function _syncNoteModeBtn() {
-    const btn = document.getElementById('fabNoteMode');
-    if (btn) btn.textContent = _MODE_LABELS[_noteNameMode] || 'ABC';
-  }
-
-  _syncNoteModeBtn();
-
-  const fabNoteModeBtn = document.getElementById('fabNoteMode');
-  if (fabNoteModeBtn) {
-    fabNoteModeBtn.addEventListener('click', () => {
-      const idx = _MODE_CYCLE.indexOf(_noteNameMode);
-      _noteNameMode = _MODE_CYCLE[(idx + 1) % _MODE_CYCLE.length];
-      const mainSel = document.getElementById('noteNameMode');
-      if (mainSel) mainSel.value = _noteNameMode;
-      _applyNoteNameMode();
-      _renderClef('treble'); _renderClef('bass');
-      _syncNoteModeBtn();
+  function _syncNoteModePick() {
+    if (!fabNoteModePick) return;
+    fabNoteModePick.querySelectorAll('.fab-pick-item').forEach(btn => {
+      btn.classList.toggle('fab-pick-active', btn.dataset.mode === _noteNameMode);
     });
   }
+
+  function _applyNoteMode(mode) {
+    _noteNameMode = mode;
+    const mainSel = document.getElementById('noteNameMode');
+    if (mainSel) mainSel.value = mode;
+    _applyNoteNameMode();
+    _renderClef('treble'); _renderClef('bass');
+  }
+
+  if (fabNoteModePick) {
+    fabNoteModePick.querySelectorAll('.fab-pick-item').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        _applyNoteMode(btn.dataset.mode);
+        fabNoteModePick.classList.remove('fab-panel-open');
+        fabNoteModePick.setAttribute('aria-hidden', 'true');
+      });
+    });
+  }
+
+  if (fabNoteModeBtn) {
+    fabNoteModeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = fabNoteModePick?.classList.contains('fab-panel-open');
+      // close tempo pick if open
+      document.getElementById('fabTempoPick')?.classList.remove('fab-panel-open');
+      document.getElementById('fabTempoPick')?.setAttribute('aria-hidden', 'true');
+      if (fabNoteModePick) {
+        if (isOpen) {
+          fabNoteModePick.classList.remove('fab-panel-open');
+          fabNoteModePick.setAttribute('aria-hidden', 'true');
+        } else {
+          _syncNoteModePick();
+          fabNoteModePick.classList.add('fab-panel-open');
+          fabNoteModePick.setAttribute('aria-hidden', 'false');
+        }
+      }
+    });
+  }
+
+  // Close note mode pick on outside click
+  document.addEventListener('click', () => {
+    fabNoteModePick?.classList.remove('fab-panel-open');
+    fabNoteModePick?.setAttribute('aria-hidden', 'true');
+  });
 })();
 
 // -----------------------------------------------------------------------
@@ -1529,7 +1570,8 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   // can later add/remove the class dynamically; observers remain active.
   const fabBtnMain    = document.getElementById('fabBtnMain');
   const fabBtnReset   = document.getElementById('fabBtnReset');
-  const fabTempoSel   = document.getElementById('fabTempoSelect');
+  const fabTempoBtn   = document.getElementById('fabTempoBtn');
+  const fabTempoPick  = document.getElementById('fabTempoPick');
   const fabProgressWr = document.getElementById('fabProgressWrap');
   const fabProgressFl = document.getElementById('fabProgressFill');
   const fabSongPanel  = document.getElementById('fabSongPanel');
@@ -1551,12 +1593,51 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     _vpUpdateScaleLabel(viewportManager.scale);
   };
 
-  // --- Tempo: mirror original select ---
-  fabTempoSel.value = origTempoSel?.value || '1.0000';
-  fabTempoSel.onchange = function() {
-    if (origTempoSel) origTempoSel.value = this.value;
-    origTempoSel?.dispatchEvent(new Event('change'));
-  };
+  // --- Tempo picker ---
+  function _syncTempoPick() {
+    if (!fabTempoPick) return;
+    const cur = origTempoSel?.value || '1.0000';
+    fabTempoPick.querySelectorAll('.fab-pick-item').forEach(btn => {
+      btn.classList.toggle('fab-pick-active', btn.dataset.val === cur);
+    });
+  }
+
+  if (fabTempoPick) {
+    fabTempoPick.querySelectorAll('.fab-pick-item').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (origTempoSel) { origTempoSel.value = btn.dataset.val; origTempoSel.dispatchEvent(new Event('change')); }
+        fabTempoPick.classList.remove('fab-panel-open');
+        fabTempoPick.setAttribute('aria-hidden', 'true');
+      });
+    });
+  }
+
+  if (fabTempoBtn) {
+    fabTempoBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = fabTempoPick?.classList.contains('fab-panel-open');
+      // close note mode pick if open
+      document.getElementById('fabNoteModePick')?.classList.remove('fab-panel-open');
+      document.getElementById('fabNoteModePick')?.setAttribute('aria-hidden', 'true');
+      if (fabTempoPick) {
+        if (isOpen) {
+          fabTempoPick.classList.remove('fab-panel-open');
+          fabTempoPick.setAttribute('aria-hidden', 'true');
+        } else {
+          _syncTempoPick();
+          fabTempoPick.classList.add('fab-panel-open');
+          fabTempoPick.setAttribute('aria-hidden', 'false');
+        }
+      }
+    });
+  }
+
+  // Close tempo pick on outside click
+  document.addEventListener('click', () => {
+    fabTempoPick?.classList.remove('fab-panel-open');
+    fabTempoPick?.setAttribute('aria-hidden', 'true');
+  });
 
   // --- Progress bar seek ---
   fabProgressWr.addEventListener('click', e => {
