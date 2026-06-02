@@ -15,7 +15,7 @@
 
 :root {
   /* Core palette */
-  --bg:            #0d0d1a;
+  --bg:            #c4c8dc;
   --surface:       #1a1a30;
   --surface2:      #252545;
   --border:        #3a3a60;
@@ -73,10 +73,11 @@
    ================================================================ */
 
 body, .app-body {
-  background: radial-gradient(
-    ellipse at 30% 20%,
-    #1a1040 0%,
-    #0d0d1a 65%
+  background: linear-gradient(
+    145deg,
+    #dde0ec 0%,
+    #c4c8dc 50%,
+    #a8adcc 100%
   ) !important;
 }
 

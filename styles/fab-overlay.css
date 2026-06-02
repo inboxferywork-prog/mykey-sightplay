@@ -467,7 +467,7 @@ body.nk-portrait .fab-tools-hand-btn {
 .fab-ngr {
   position: absolute;
   left: 0; right: 0; top: 3px;   /* sits below the 3px progress strip */
-  height: 64px;
+  height: 100px;
   display: none;
   flex-direction: column;
   pointer-events: none;   /* passive — score touches pass through */
