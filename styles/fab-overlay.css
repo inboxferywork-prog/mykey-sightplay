@@ -183,9 +183,9 @@ body.nk-fab-mode .fab-overlay {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 8px;
   height: var(--fab-bar-h);
-  padding: 0 12px;
+  padding: 0 14px;
   pointer-events: auto;
   background: var(--header-bg);
   border: 1px solid var(--border2);
@@ -196,6 +196,24 @@ body.nk-fab-mode .fab-overlay {
   white-space: nowrap;
   max-width: calc(100vw - 32px);
   user-select: none;
+}
+
+/* Left group — flex:1 pushes play button to true center */
+.fab-bar-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+/* Right group — flex:1 mirrors left, keeps play centered */
+.fab-bar-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
 }
 
 /* Generic icon button — circular, transparent base */
@@ -282,7 +300,7 @@ body.nk-fab-mode .fab-overlay {
    ================================================================ */
 
 body.nk-portrait .fab-bar {
-  gap: 4px;
+  gap: 6px;
   padding: 0 12px;
   height: 66px;
 }
@@ -417,18 +435,17 @@ body.nk-portrait .fab-tools-hand-btn {
 .fab-tools-btn.fab-tools-open { color: var(--orange); }
 
 /* ================================================================
-   Note guidance strip — passive display of current notes.
-   Lives inside .fab-overlay; portrait mode only.
+   Note guidance strip — all FAB modes (portrait + landscape).
    Pinned to viewport top (below the 3px progress strip).
-   Note-name mode selector is interactive (pointer-events: auto).
+   Two rows: title row (top) + notes row (bottom). Fully passive.
    ================================================================ */
 
 .fab-ngr {
   position: absolute;
   left: 0; right: 0; top: 3px;   /* sits below the 3px progress strip */
-  height: 60px;
+  height: 64px;
   display: none;
-  align-items: center;
+  flex-direction: column;
   pointer-events: none;   /* passive — score touches pass through */
   background: var(--header-bg);
   border-bottom: 1px solid var(--border);
@@ -437,99 +454,172 @@ body.nk-portrait .fab-tools-hand-btn {
   user-select: none;
 }
 
-/* Revealed only in portrait FAB mode — body.nk-portrait set by JS */
-body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
+/* Revealed in all FAB modes */
+body.nk-fab-mode .fab-ngr { display: flex; }
 
-/* Two-halves layout: LH (bass) left, RH (treble) right.
-   justify-content brings each cluster toward the center selector
-   rather than pinning them to the screen edges. */
+/* Row 1: song title */
+.ngr-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex: 1;
+  padding: 10px 20px 4px;
+  min-width: 0;
+}
+
+.ngr-song-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--title-color, #e8e8e8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  letter-spacing: 0.1px;
+  line-height: 1;
+}
+
+/* Row 2: LH / RH notes */
+.ngr-notes-row {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding-bottom: 4px;
+  min-width: 0;
+}
+
+/* Two-halves layout: LH (bass) left, RH (treble) right. */
 .ngr-half {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: 0 14px;
   min-width: 0;
 }
 
-.ngr-lh { justify-content: flex-end; }   /* cluster right → near selector */
-.ngr-rh { justify-content: flex-start; } /* cluster left  → near selector */
+/* Icons pinned to outer edges, notes float toward center divider */
+.ngr-lh { justify-content: space-between; }
+.ngr-rh { justify-content: space-between; }
 
-.ngr-clef-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+/* Hand + clef badge — fixed at outer edge of each half */
+.ngr-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   flex-shrink: 0;
+  line-height: 1;
+  opacity: 0.72;
+}
+
+.ngr-hand {
+  font-size: 14px;
   line-height: 1;
 }
 
-.ngr-lh .ngr-clef-label { color: var(--lh-color, #ff80c8); }
-.ngr-rh .ngr-clef-label { color: var(--rh-color, #5bc8f5); }
+/* Flip horizontally for RH (mirror of ✋) */
+.ngr-hand-flip {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+/* SMuFL clef glyphs from Bravura (U+E062 = F clef, U+E050 = G clef) */
+.ngr-clef-glyph {
+  font-family: 'Bravura', serif;
+  font-size: 16px;
+  line-height: 1;
+  overflow: visible;
+}
+
+/* Bravura music font — needed for SMuFL clef glyphs (U+E050, U+E062) */
+@font-face {
+  font-family: 'Bravura';
+  src: url('https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* Same-name note transition — brief fade-in pulse to mark note boundary */
+@keyframes ngr-note-pulse {
+  0%   { opacity: 0.15; transform: scale(0.88); }
+  60%  { opacity: 1;    transform: scale(1.06); }
+  100% { opacity: 1;    transform: scale(1);    }
+}
 
 .ngr-notes {
-  font-size: 18px;
-  font-weight: 500;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--muted);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  letter-spacing: 0.2px;
   line-height: 1;
-  padding: 2px 5px;
+  padding: 1px 4px;
   border-radius: 4px;
   background: transparent;
   transition: color 0.08s, background 0.12s, text-shadow 0.12s;
+}
+
+.ngr-notes.ngr-pulse {
+  animation: ngr-note-pulse 200ms ease-out forwards;
+}
+
+/* Octave superscript inside note label */
+.ngr-oct {
+  font-size: 0.68em;
+  vertical-align: super;
+  line-height: 0;
+  opacity: 0.65;
+  letter-spacing: 0;
+  margin-left: 1px;
 }
 
 /* Active state — notes currently sounding */
 .ngr-lh .ngr-notes.ngr-active {
   color: var(--lh-color, #ff80c8);
   font-weight: 700;
-  background: rgba(255, 128, 200, 0.10);
-  text-shadow: 0 0 10px rgba(255, 128, 200, 0.55);
+  background: rgba(255, 128, 200, 0.12);
+  text-shadow: 0 0 7px rgba(255, 128, 200, 0.95), 0 0 18px rgba(255, 128, 200, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 128, 200, 0.32);
 }
 .ngr-rh .ngr-notes.ngr-active {
   color: var(--rh-color, #5bc8f5);
   font-weight: 700;
-  background: rgba(91, 200, 245, 0.10);
-  text-shadow: 0 0 10px rgba(91, 200, 245, 0.55);
+  background: rgba(91, 200, 245, 0.12);
+  text-shadow: 0 0 7px rgba(91, 200, 245, 0.95), 0 0 18px rgba(91, 200, 245, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(91, 200, 245, 0.32);
 }
 
 .ngr-div {
   width: 1px;
-  height: 22px;
+  height: 16px;
   background: var(--border);
   flex-shrink: 0;
 }
 
-/* Note-name mode selector inside the guidance strip.
-   appearance: none normalizes Android Chrome vs iOS Safari rendering.
-   text-align-last centers the selected option text cross-platform. */
-.ngr-mode-select {
-  -webkit-appearance: none;
-  appearance: none;
+/* Note-name cycle button in FAB bar */
+.fab-mode-btn {
   background: transparent;
   border: 1px solid var(--border2);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-family: inherit;
+  font-weight: 600;
+  padding: 0 8px;
+  height: 26px;
   border-radius: 6px;
-  padding: 4px 10px;
   cursor: pointer;
-  outline: none;
   flex-shrink: 0;
-  pointer-events: auto;  /* interactive inside the passive strip */
+  letter-spacing: 0.3px;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
   -webkit-tap-highlight-color: transparent;
-  max-width: 90px;
-  min-height: 28px;
-  box-sizing: border-box;
-  text-align: center;
-  text-align-last: center;
-  line-height: 1.2;
 }
+.fab-mode-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+.fab-mode-btn:active { background: rgba(255,255,255,0.13); }
 
 /* Drag handle — subtle grab target at the edge of the FAB bar */
 .fab-drag-handle {
@@ -537,7 +627,7 @@ body.nk-portrait.nk-fab-mode .fab-ngr { display: flex; }
   color: var(--muted);
   opacity: 0.45;
   cursor: grab;
-  padding: 0 5px;
+  padding: 0 2px;
   flex-shrink: 0;
   touch-action: none;
   user-select: none;

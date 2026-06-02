@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>MyKey Music Labs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
   <link rel="stylesheet" href="themes/base-ui.css">
   <link rel="stylesheet" href="themes/children-fun.css">
   <link rel="stylesheet" href="styles/mobile-layout.css">
@@ -196,44 +199,49 @@
     </div>
   </div>
 
-  <!-- Note guidance strip — portrait only, passive note awareness overlay.
-       Pinned to top (below 3px progress strip). LH left, RH right.
-       Center holds the note-name mode selector (interactive). -->
+  <!-- Note guidance strip — all FAB modes.
+       Pinned to top (below 3px progress strip).
+       Row 1: song title (center). Row 2: LH notes left, RH notes right. -->
   <div class="fab-ngr" id="fabNgr" aria-live="polite" aria-label="Current notes">
-    <div class="ngr-half ngr-lh">
-      <span class="ngr-clef-label">LH</span>
-      <span class="ngr-notes" id="ngrLH">—</span>
+    <div class="ngr-title-row">
+      <span class="ngr-song-title" id="fabNgrTitle">—</span>
     </div>
-    <div class="ngr-div"></div>
-    <select id="fabNgrMode" class="ngr-mode-select" title="Note name format">
-      <option value="letter">ABC</option>
-      <option value="solfege">Do Re Mi</option>
-      <option value="number">1 2 3</option>
-    </select>
-    <div class="ngr-div"></div>
-    <div class="ngr-half ngr-rh">
-      <span class="ngr-notes" id="ngrRH">—</span>
-      <span class="ngr-clef-label">RH</span>
+    <div class="ngr-notes-row">
+      <div class="ngr-half ngr-lh">
+        <span class="ngr-icon-group">
+          <span class="ngr-hand">✋</span><span class="ngr-clef-glyph">&#xE062;</span>
+        </span>
+        <span class="ngr-notes" id="ngrLH">—</span>
+      </div>
+      <div class="ngr-div"></div>
+      <div class="ngr-half ngr-rh">
+        <span class="ngr-notes" id="ngrRH">—</span>
+        <span class="ngr-icon-group">
+          <span class="ngr-clef-glyph">&#xE050;</span><span class="ngr-hand ngr-hand-flip">✋</span>
+        </span>
+      </div>
     </div>
   </div>
 
   <!-- Compact floating controls pill above keyboard -->
   <div class="fab-bar" id="fabBar">
-    <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
-    <button class="fab-btn fab-song-btn" id="fabSongBtn" title="Select Song">♪</button>
-    <div class="fab-sep"></div>
+    <div class="fab-bar-left">
+      <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
+      <button class="fab-btn fab-tools-btn" id="fabToolsBtn" title="Hand &amp; Part">⚙</button>
+      <button class="fab-btn fab-song-btn" id="fabSongBtn" title="Select Song">♪</button>
+      <button class="fab-btn fab-reset-btn" id="fabBtnReset" title="Reset" disabled>⏹</button>
+    </div>
     <button class="fab-btn fab-main-btn" id="fabBtnMain" title="Play / Pause">▶</button>
-    <button class="fab-btn fab-reset-btn" id="fabBtnReset" title="Reset" disabled>⏹</button>
-    <div class="fab-sep"></div>
-    <select class="fab-tempo-select" id="fabTempoSelect" title="Tempo">
-      <option value="0.5000">🐌 Easy</option>
-      <option value="0.6250">🐢 Grave</option>
-      <option value="1.0000" selected>🚶 Normal</option>
-      <option value="1.3889">🚴 Fast</option>
-    </select>
-    <div class="fab-sep"></div>
-    <button class="fab-btn fab-tools-btn" id="fabToolsBtn" title="Hand &amp; Part">⚙</button>
-    <button class="fab-btn fab-exit-btn" id="fabExitBtn" title="Exit compact mode">⊠</button>
+    <div class="fab-bar-right">
+      <select class="fab-tempo-select" id="fabTempoSelect" title="Tempo">
+        <option value="0.5000">🐌 Easy</option>
+        <option value="0.6250">🐢 Grave</option>
+        <option value="1.0000" selected>🚶 Normal</option>
+        <option value="1.3889">🚴 Fast</option>
+      </select>
+      <button class="fab-mode-btn" id="fabNoteMode" title="Note name format">ABC</button>
+      <button class="fab-btn fab-exit-btn" id="fabExitBtn" title="Exit compact mode">⊠</button>
+    </div>
   </div>
 
 </div>
@@ -1249,6 +1257,15 @@ if (_noteNameModeEl) {
     return m ? m[1] : name;
   }
 
+  function _noteLabelHtml(name) {
+    const label = _noteLabel(name);
+    // Number mode: skip octave suffix (e.g. "5" stays "5")
+    if (_noteNameMode === 'number') return label;
+    const octMatch = name.match(/(-?\d+)$/);
+    if (!octMatch) return label;
+    return label + '<span class="ngr-oct">' + octMatch[1] + '</span>';
+  }
+
   function _renderClef(clef) {
     const el   = clef === 'treble' ? rhEl : lhEl;
     const map  = _active[clef];
@@ -1263,10 +1280,25 @@ if (_noteNameModeEl) {
     }).sort((a, b) => _noteToMidi(a) - _noteToMidi(b));
 
     if (!sorted.length) {
-      el.textContent = '—';
+      // Store plain-text key (not innerHTML) so same-name detection stays reliable
+      if (el.classList.contains('ngr-active')) {
+        el._prevActive = el._lastText || null;
+      }
+      el._lastText = null;
+      el.innerHTML = '—';
       el.classList.remove('ngr-active');
     } else {
-      el.textContent = sorted.map(_noteLabel).join('-');
+      const newText = sorted.map(_noteLabel).join('-');
+      // Same-name transition: label matches what was active before the clear
+      // → pulse-animate so user sees the note boundary even when name is identical
+      if (el._prevActive === newText) {
+        el.classList.remove('ngr-pulse');
+        void el.offsetWidth; // force reflow to restart animation
+        el.classList.add('ngr-pulse');
+      }
+      el._prevActive = null;
+      el._lastText   = newText;
+      el.innerHTML   = sorted.map(_noteLabelHtml).join('-');
       el.classList.add('ngr-active');
     }
   }
@@ -1324,23 +1356,33 @@ if (_noteNameModeEl) {
     _renderClef(kh.clef);
   };
 
-  // Re-render when main note name selector changes; also keep strip selector in sync
+  // Re-render when main note name selector changes
   document.getElementById('noteNameMode')?.addEventListener('change', () => {
     _renderClef('treble'); _renderClef('bass');
-    const fabNgrModeEl = document.getElementById('fabNgrMode');
-    if (fabNgrModeEl) fabNgrModeEl.value = _noteNameMode;
+    _syncNoteModeBtn();
   });
 
-  // Strip note-name selector — bidirectional sync with main #noteNameMode
-  const fabNgrModeEl = document.getElementById('fabNgrMode');
-  if (fabNgrModeEl) {
-    fabNgrModeEl.value = _noteNameMode;  // initialize to current state
-    fabNgrModeEl.addEventListener('change', e => {
-      _noteNameMode = e.target.value;
+  // Cycle button in FAB bar — cycles ABC → Do Re Mi → 1 2 3 → ABC
+  const _MODE_CYCLE = ['letter', 'solfege', 'number'];
+  const _MODE_LABELS = { letter: 'ABC', solfege: 'Do', number: '1 2 3' };
+
+  function _syncNoteModeBtn() {
+    const btn = document.getElementById('fabNoteMode');
+    if (btn) btn.textContent = _MODE_LABELS[_noteNameMode] || 'ABC';
+  }
+
+  _syncNoteModeBtn();
+
+  const fabNoteModeBtn = document.getElementById('fabNoteMode');
+  if (fabNoteModeBtn) {
+    fabNoteModeBtn.addEventListener('click', () => {
+      const idx = _MODE_CYCLE.indexOf(_noteNameMode);
+      _noteNameMode = _MODE_CYCLE[(idx + 1) % _MODE_CYCLE.length];
       const mainSel = document.getElementById('noteNameMode');
       if (mainSel) mainSel.value = _noteNameMode;
       _applyNoteNameMode();
       _renderClef('treble'); _renderClef('bass');
+      _syncNoteModeBtn();
     });
   }
 })();
@@ -1551,6 +1593,17 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     fabProgressFl.style.width = progressFill.style.width;
   }).observe(progressFill, { attributes: true, attributeFilter: ['style'] });
 
+  // Song title sync — mirror #songTitle into the NGR strip
+  const fabNgrTitleEl = document.getElementById('fabNgrTitle');
+  const songTitleEl   = document.getElementById('songTitle');
+  if (fabNgrTitleEl && songTitleEl) {
+    const _syncNgrTitle = () => { fabNgrTitleEl.textContent = songTitleEl.textContent; };
+    _syncNgrTitle();
+    new MutationObserver(_syncNgrTitle).observe(songTitleEl, {
+      childList: true, subtree: true, characterData: true,
+    });
+  }
+
   // --- Song picker ---
   function _fabBuildSongList() {
     fabSongList.innerHTML = '';
@@ -1558,7 +1611,7 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     Array.from(songSelect.options).forEach(opt => {
       const btn = document.createElement('button');
       btn.className = 'fab-song-item' + (opt.value === current ? ' fab-song-active' : '');
-      btn.textContent = opt.textContent;
+      btn.textContent = opt.dataset.title || opt.textContent;
       btn.onclick = () => {
         songSelect.value = opt.value;
         songSelect.dispatchEvent(new Event('change'));
@@ -1712,6 +1765,7 @@ async function _initSongLibrary() {
       const opt = document.createElement('option');
       opt.value = song.src || '';
       opt.textContent = song.label || song.src || '(no label)';
+      opt.dataset.title = song.title || song.label || song.src || '(no label)';
       songSelect.appendChild(opt);
     });
 

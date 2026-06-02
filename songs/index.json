@@ -60,6 +60,16 @@
       "collectionId": null,
       "listed": false,
       "tags": []
+    },
+    {
+      "src": "songs/minuet in G major.json",
+      "label": "Minuet in G — 3/4 · 80 BPM · 16 bars · Key G · segments",
+      "title": "Minuet in G",
+      "composer": "Composer / arranger",
+      "level": "beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
     }
   ]
 }
