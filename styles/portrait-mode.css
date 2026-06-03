@@ -32,11 +32,11 @@ body.nk-portrait #notation-viewport {
 }
 
 /* FAB mode in portrait: push notation below the fixed guidance strip.
-   score-card starts at 19px (app-body padding-top).
+   score-card starts at 28px (app-body padding-top).
    notation-viewport starts at 24px inside score-card (score-card padding).
-   fab-ngr occupies 19–119px of the viewport (100px header).
+   fab-ngr occupies 28-128px of the viewport (100px header).
    To keep a 24px gap below the header:
-     padding = 119 − (19+24) + 24 = 100px                              */
+     padding = 128 - (28+24) + 24 = 100px (unchanged)                  */
 body.nk-portrait.nk-fab-mode #notation-viewport {
   padding-top: 100px;
 }
@@ -47,12 +47,12 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
    become one unified visual object: a card floating on the dark
    page background (app-body).
 
-   Layout math — notation scale identical in both portrait modes:
-     FAB:     viewport.clientWidth = S − 22px (margin 10px×2 + border 1px×2)
-              _usableWidth() = (S − 22px) − 8px − 8px = S − 38px
-     Non-FAB: viewport.clientWidth = S − 18px (border 1px×2 + score-card pad 8px×2)
-              _usableWidth() = (S − 18px) − 10px − 10px = S − 38px  ✓
-   Same usable width → same scale → consistent notation size across modes.
+   Layout math — FAB portrait (margin 20px):
+     FAB:     viewport.clientWidth = S - 42px (margin 20px*2 + border 1px*2)
+              _usableWidth() = (S - 42px) - 8px - 8px = S - 58px
+     Non-FAB: viewport.clientWidth = S - 18px (border 1px*2 + score-card pad 8px*2)
+              _usableWidth() = (S - 18px) - 10px - 10px = S - 38px
+   FAB trades ~20px notation width for a more dramatic floating card aesthetic.
 
    Rollback: delete this section.
    ================================================================ */
@@ -66,9 +66,9 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 /* ── Card header: purple band, rounded top ──────────────────── */
 
 body.nk-portrait.nk-fab-mode .fab-ngr {
-  top:            19px;              /* float card 16px below 3px progress strip */
-  left:           10px;              /* inset to match card body */
-  right:          10px;
+  top:            28px;              /* float card 25px below 3px progress strip */
+  left:           20px;              /* inset to match card body */
+  right:          20px;
   background:     linear-gradient(160deg, #1a0e4a 0%, #3d28a0 45%, #25106a 100%);
   border-bottom:  none;
   border-radius:  24px 24px 0 0;    /* rounded top — card starts here */
@@ -121,34 +121,34 @@ body.nk-portrait.nk-fab-mode .ngr-mode-select {
    Intermediate system right barlines render at exactly x=CANVAS_W=960 (SVG edge).
    8px padding places the camera content away from the viewport clip boundaries.
 
-   Usable width identity — both portrait modes resolve to S − 38px:
+   Usable width:
      Non-FAB: viewport pad 10px, score-card pad 8px (base-ui), border 1px, no margin
-              usable = (S − 18px) − 20px = S − 38px
-     FAB:     viewport pad 8px, score-card pad 0 (has-viewport), border 1px, margin 10px
-              usable = (S − 22px) − 16px = S − 38px  ✓
-   Same scale in both modes; notation size is consistent. */
+              usable = (S - 18px) - 20px = S - 38px
+     FAB:     viewport pad 8px, score-card pad 0 (has-viewport), border 1px, margin 20px
+              usable = (S - 42px) - 16px = S - 58px
+   FAB trades ~20px notation width for dramatic floating card aesthetic. */
 body.nk-portrait.nk-fab-mode #notation-viewport {
   padding-left:  8px;
   padding-right: 8px;
 }
 
-/* 10px outer margin + shadow = card visually floats off the dark background.
+/* 20px outer margin + shadow = card floats dramatically off the dark background.
    padding-top: 24px = gap between guidance strip and first staff line.
    No side padding — has-viewport provides padding:0; breathing room comes
    from the viewport's 8px side padding (see rule above).
-   All corners rounded (16px) so dark bg shows correctly at header/body joint. */
+   All corners rounded (24px) so dark bg shows correctly at header/body joint. */
 body.nk-portrait.nk-fab-mode .score-card {
-  margin:         0 10px;
+  margin:         0 20px;
   padding-top:    24px;
   border-radius:  24px;
   box-shadow:     0 8px 40px rgba(0, 0, 0, 0.28), 0 2px 12px rgba(0, 0, 0, 0.18);
 }
 
 /* Dark page background breathing room above and below the card.
-   padding-top: 19px → score-card top aligns with header top.
+   padding-top: 28px → score-card top aligns with card header top.
    padding-bottom: 90px → 16px dark gap between card bottom and FAB bar top
      (FAB bar top ≈ viewport_h − 74px; card bottom ≈ viewport_h − 90px). */
 body.nk-portrait.nk-fab-mode .app-body {
-  padding-top:    19px;
+  padding-top:    28px;
   padding-bottom: 90px;
 }
