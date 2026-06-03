@@ -220,6 +220,7 @@ class NotationRenderer {
           // PUA codepoint that requires @font-face, which VexFlow SVG backend does not
           // inject. Use VF.Glyph path rendering instead.
           if (barData.segno) _drawSegno(ctx, treble, VF);
+          if (barData.bar !== 1) _drawBarNumber(ctx, barData.bar, treble);
         }
 
         if (showBass) {
@@ -238,6 +239,7 @@ class NotationRenderer {
             bass.setBegBarType(VF.Barline.type.REPEAT_BEGIN);
           }
           bass.setContext(ctx).draw();
+          if (!showTreble && barData.bar !== 1) _drawBarNumber(ctx, barData.bar, bass);
         }
 
         // Layer3-dynamics: static markings rendered after stave.draw().
@@ -1517,6 +1519,27 @@ function _drawDynamic(ctx, dynamic, stave, trebleStave) {
   text.setAttribute('fill', '#000000');
   text.setAttribute('class', 'nk-dynamic');
   text.textContent = dynamic;
+  svgEl.appendChild(text);
+}
+
+// ---------------------------------------------------------------------------
+// Bar number rendering helper
+// ---------------------------------------------------------------------------
+
+function _drawBarNumber(ctx, barNumber, stave) {
+  const svgEl = ctx.svg;
+  if (!svgEl) return;
+  const overhead = stave.getNoteStartX() - stave.getX();
+  const x = overhead > 50 ? stave.getNoteStartX() - 4 : stave.getX();
+  const y = stave.getYForLine(0) - 14;
+  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  text.setAttribute('x', String(x));
+  text.setAttribute('y', String(y));
+  text.setAttribute('font-family', "'Segoe UI', Arial, sans-serif");
+  text.setAttribute('font-size', '11');
+  text.setAttribute('fill', '#999999');
+  text.setAttribute('class', 'nk-bar-number');
+  text.textContent = String(barNumber);
   svgEl.appendChild(text);
 }
 
