@@ -1,0 +1,19 @@
+{
+  "name": "MyKey Music Labs",
+  "short_name": "MyKey",
+  "description": "Sight Playing Education — piano practice with sheet music",
+  "start_url": "/mykey-sightplay/",
+  "scope": "/mykey-sightplay/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0e0e0e",
+  "theme_color": "#1a0e4a",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
