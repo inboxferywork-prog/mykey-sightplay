@@ -163,14 +163,28 @@ body.nk-portrait.nk-fab-mode .score-card {
 }
 
 /* Dark page background breathing room above and below the card.
-   padding-top: 50px → score-card top aligns with card header top.
-   padding-bottom: 90px → 16px dark gap between card bottom and FAB bar top
-     (FAB bar top ≈ viewport_h − 74px; card bottom ≈ viewport_h − 90px). */
+   padding-top:    50px → score-card top aligns with card header top.
+   padding-bottom: 110px → accommodates seek bar above FAB bar:
+     8px gap (card → seek bar) + 20px seek bar + 8px gap + 66px FAB + 8px = 110px */
 body.nk-portrait.nk-fab-mode .app-body {
   padding-top:    50px;
-  padding-bottom: 90px;
+  padding-bottom: 110px;
 }
 
-/* Progress strip — taller touch target in portrait for easier tapping. */
-body.nk-portrait.nk-fab-mode .fab-progress       { height: 8px; }
-body.nk-portrait.nk-fab-mode .fab-progress:hover  { height: 8px; }
+/* Seek bar — repositioned above FAB bar (Spotify-style).
+   Moves from viewport top (top: 0) to floating above the FAB pill.
+   card-width margins (32px) align it with the floating score-card.
+   overflow: hidden clips the orange fill within the pill shape. */
+body.nk-portrait.nk-fab-mode .fab-progress {
+  top:           auto;
+  bottom:        82px;     /* 8px gap + 66px FAB bar + 8px gap */
+  left:          32px;
+  right:         32px;
+  height:        20px;
+  border-radius: 10px;
+  overflow:      hidden;
+}
+
+body.nk-portrait.nk-fab-mode .fab-progress:hover { height: 20px; }
+
+body.nk-portrait.nk-fab-mode .fab-progress-fill  { border-radius: 0; }
