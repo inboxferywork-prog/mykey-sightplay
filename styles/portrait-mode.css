@@ -115,14 +115,14 @@ body.nk-portrait.nk-fab-mode .ngr-notes {
   text-overflow:   unset;
 }
 
-/* Active notes: clef-color text on white pill (matches base active style) */
+/* Active notes: radial gradient circle (white dominant, clef-color ambient) + dark purple text */
 body.nk-portrait.nk-fab-mode .ngr-lh .ngr-notes.ngr-active {
-  color:      var(--lh-color, #ff80c8);
-  background: #ffffff;
+  color:      #2d1a7a;
+  background: radial-gradient(circle, #ffffff 20%, rgba(255, 128, 200, 0.55) 100%);
 }
 body.nk-portrait.nk-fab-mode .ngr-rh .ngr-notes.ngr-active {
-  color:      var(--rh-color, #5bc8f5);
-  background: #ffffff;
+  color:      #2d1a7a;
+  background: radial-gradient(circle, #ffffff 20%, rgba(91, 200, 245, 0.55) 100%);
 }
 
 /* Mode selector: light treatment on purple */

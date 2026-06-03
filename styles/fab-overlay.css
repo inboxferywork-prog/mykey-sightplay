@@ -41,9 +41,12 @@ body.nk-fab-mode .controls         { display: none; }
 body.nk-fab-mode .status-bar       { display: none; }
 body.nk-fab-mode .viewport-controls { display: none; }
 
-/* Full viewport height — header (52px) is now removed */
+/* Full viewport height — header (52px) is now removed.
+   100dvh tracks the *visible* area (shrinks when Chrome Android address bar shows).
+   100vh fallback for browsers that don't support dvh (pre-Chrome 108). */
 body.nk-fab-mode .app-body {
-  height: 100vh;
+  height: 100vh;    /* fallback */
+  height: 100dvh;   /* dynamic: matches actual visible viewport */
   padding: 0;
 }
 
