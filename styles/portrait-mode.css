@@ -47,7 +47,7 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
    become one unified visual object: a card floating on the dark
    page background (app-body).
 
-   Layout math — FAB portrait (margin 20px):
+   Layout math — FAB portrait (margin 32px):
      FAB:     viewport.clientWidth = S - 66px (margin 32px*2 + border 1px*2)
               _usableWidth() = (S - 66px) - 8px - 8px = S - 82px
      Non-FAB: viewport.clientWidth = S - 18px (border 1px*2 + score-card pad 8px*2)
