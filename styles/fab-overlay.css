@@ -651,3 +651,56 @@ body.nk-fab-mode .fab-ngr { display: flex; }
    and are not painted inside the fullscreen top-layer.
    Browser handles this correctly; no extra rules needed.
    ================================================================ */
+
+/* ================================================================
+   Landscape FAB mode  (body.nk-fab-mode without body.nk-portrait)
+   Score card takes full height; NGR shrinks to title-only strip.
+   Keyboard is compact — all keys visible without horizontal scroll.
+   ================================================================ */
+
+/* Note guidance strip — title only, slim 28px bar */
+body.nk-fab-mode:not(.nk-portrait) .fab-ngr {
+  height: 28px;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 0;
+}
+
+body.nk-fab-mode:not(.nk-portrait) .ngr-title-row {
+  flex: 1;
+  padding: 0;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+body.nk-fab-mode:not(.nk-portrait) .ngr-song-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Note name rows not needed — keyboard already shows note names */
+body.nk-fab-mode:not(.nk-portrait) .ngr-notes-row { display: none; }
+
+/* Notation viewport — horizontal scroll, no vertical */
+body.nk-fab-mode:not(.nk-portrait) #notation-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-top: 31px;   /* 3px progress + 28px title strip */
+  padding-bottom: 0;
+}
+
+/* Keyboard header (Piano label + note-name select) not needed in landscape FAB */
+body.nk-fab-mode:not(.nk-portrait) .kb-header { display: none; }
+
+/* Compact kb-wrap — flush edges, minimal padding */
+body.nk-fab-mode:not(.nk-portrait) .kb-wrap {
+  margin-top:    0;
+  margin-bottom: 0;
+  padding: 3px 8px 5px;
+  border-radius: 0;
+  border-left:   none;
+  border-right:  none;
+  border-bottom: none;
+}

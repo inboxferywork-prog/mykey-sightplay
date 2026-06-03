@@ -295,11 +295,14 @@ if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
 // Adds body.nk-portrait when height > width. CSS rules key off this class.
 // Rollback: delete this block + portrait-mode.css rules that use body.nk-portrait.
 // -----------------------------------------------------------------------
+let _landscapeFabReady = false;  // set true after engine instances are initialized
+
 function _syncPortrait() {
   const isPortrait = window.innerHeight > window.innerWidth;
   document.body.classList.toggle('nk-portrait', isPortrait);
   const root = document.documentElement;
   root.style.setProperty('--fab-bar-h', isPortrait ? '66px' : '');  // '' reverts to CSS default
+  _syncLandscapeFab();
 }
 _syncPortrait();
 window.addEventListener('resize',            _syncPortrait, { passive: true });
@@ -368,6 +371,8 @@ const _loopSelect = { mode: 'off', startId: null };
 
 // Attach keyboard visualization — builds initial DOM.
 keyboardViz.render(document.getElementById('keyboardEl'));
+_landscapeFabReady = true;
+_syncLandscapeFab(true);  // apply landscape mode immediately if active at startup
 
 // -----------------------------------------------------------------------
 // UI state
@@ -455,8 +460,9 @@ const songLoader = new SongLoader({
     _syncSegmentsBar();
     _updateStatusBarNum(-1);
     _applyNoteNameMode();
-    // Re-apply viewport mode after render to reset pan and confirm scale
-    if (viewportManager.isFitMode) viewportManager.fitWidth();
+    // Re-apply viewport mode: landscape FAB re-renders with barsPerRow:'all';
+    // otherwise defers to existing fitWidth / current zoom state.
+    _syncLandscapeFab(true);
     _vpUpdateScaleLabel(viewportManager.scale);
   },
   onTempoScaleUpdate(scale) { currentTempoScale = scale; },
@@ -1623,7 +1629,7 @@ _vpUpdateScaleLabel(viewportManager.scale);
 // Exit is via the ⊠ button inside the FAB bar itself.
 document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   document.body.classList.toggle('nk-fab-mode');
-  if (viewportManager.isFitMode) viewportManager.fitWidth();
+  _syncLandscapeFab(true);
   _vpUpdateScaleLabel(viewportManager.scale);
 });
 
@@ -1657,7 +1663,7 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
 
   fabExitBtn.onclick = () => {
     document.body.classList.remove('nk-fab-mode');
-    if (viewportManager.isFitMode) viewportManager.fitWidth();
+    _syncLandscapeFab(true);
     _vpUpdateScaleLabel(viewportManager.scale);
   };
 
@@ -1873,19 +1879,78 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     _fabCloseTools();
   }, { passive: true });
 
-  // --- Keyboard height → --fab-kb-h (positions FAB bar above keyboard) ---
-  // Portrait guidance strip is at top — no bottom offset needed from it.
-  function _syncKbHeight() {
-    const kbEl = document.querySelector('.kb-wrap');
-    const kbH  = kbEl ? kbEl.offsetHeight : 0;
-    document.documentElement.style.setProperty('--fab-kb-h', kbH + 'px');
-  }
+  // _syncKbHeight hoisted to module scope — see below IIFE
   _syncKbHeight();
   window.addEventListener('resize', _syncKbHeight, { passive: true });
   // Re-measure after song loads (keyboard range may change key count)
   setTimeout(_syncKbHeight, 600);
 
 })();
+
+// -----------------------------------------------------------------------
+// Keyboard height token — module-scope so _syncLandscapeFab can call it.
+// Positions FAB bar above the keyboard via --fab-kb-h CSS var.
+// -----------------------------------------------------------------------
+function _syncKbHeight() {
+  const kbEl = document.querySelector('.kb-wrap');
+  document.documentElement.style.setProperty('--fab-kb-h', (kbEl ? kbEl.offsetHeight : 0) + 'px');
+}
+
+// -----------------------------------------------------------------------
+// Landscape FAB mode — single-row horizontal layout.
+// Activated when body.nk-fab-mode is set AND body.nk-portrait is absent.
+// Deactivated when either condition changes.
+//
+// Rules to avoid unnecessary work:
+//   - Keyboard + readingWindow only reconfigured when mode actually CHANGES
+//   - Score re-renders only on: mode change, OR force=true while landscape FAB active
+//     (covers new song load in landscape FAB without double-render in portrait mode)
+// -----------------------------------------------------------------------
+let _landscapeFabActive = false;
+
+function _syncLandscapeFab(force) {
+  if (!_landscapeFabReady) return;
+  const isNow   = document.body.classList.contains('nk-fab-mode') &&
+                  !document.body.classList.contains('nk-portrait');
+  const changed = isNow !== _landscapeFabActive;
+  if (!force && !changed) return;
+
+  if (changed) {
+    _landscapeFabActive = isNow;
+    if (isNow) {
+      // Compact keyboard: W=22 H=58 BW=13 BH=36 LABEL_H=16 → total visual 74px
+      keyboardViz.setDimensions(22, 58, 13, 36, 16);
+      readingWindow.setScrollAxis('horizontal');
+    } else {
+      keyboardViz.restoreDefaults();
+      readingWindow.setScrollAxis('vertical');
+    }
+    setTimeout(_syncKbHeight, 60);
+  }
+
+  // Re-render: always on mode change; on force only when already in landscape FAB
+  // (prevents double-render when a song loads while not in landscape FAB mode).
+  const needsRender = changed || (force && isNow);
+  if (!currentSong || !needsRender) {
+    if (!isNow && viewportManager.isFitMode) viewportManager.fitWidth();
+    return;
+  }
+
+  const clef        = learningState.clefFilter;
+  const visibleClefs = clef === 'both' ? null : [clef];
+  const seg          = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
+  const visibleBars  = practiceLoop.active ? practiceLoop.bars : (seg ? seg.bars : null);
+
+  renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs, barsPerRow: isNow ? 'all' : undefined });
+
+  if (isNow) {
+    viewportManager.setNaturalWidth(renderer.canvasWidth);
+    viewportManager.fitHeight(renderer.rowHeight + 20);
+  } else {
+    viewportManager.setNaturalWidth(960);
+    viewportManager.fitWidth();
+  }
+}
 
 // -----------------------------------------------------------------------
 // Song library — fetch songs/index.json and populate dropdown

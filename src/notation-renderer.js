@@ -34,7 +34,11 @@ class NotationRenderer {
     this._noteObjMap = new Map();  // eventId → { note, stave }  — for tie rendering
     this._container  = null;
     this._song       = null;
+    this._canvasW    = 960;
   }
+
+  get canvasWidth()  { return this._canvasW; }
+  get rowHeight()    { return this._rowH ?? 280; }
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -145,8 +149,9 @@ class NotationRenderer {
     const showBoth   = showTreble && showBass;
 
     // Layout constants
-    const CANVAS_W     = 960;
-    const BARS_PER_ROW = 4;
+    const barsPerRowOpt = this._renderOpts?.barsPerRow;
+    const BARS_PER_ROW  = barsPerRowOpt === 'all' ? Math.max(1, bars.length) : 4;
+    const CANVAS_W      = barsPerRowOpt === 'all' ? Math.max(960, bars.length * 240) : 960;
     const MARGIN_X     = 20;   // 20px left margin — brace extends ~16px left of stave x; 10px was insufficient
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
     const BASS_Y_OFF   = showBoth ? 135 : 20;       // bass at y+135 (grand staff) OR y+20 (solo)
@@ -161,6 +166,7 @@ class NotationRenderer {
 
     const vfRenderer = new VF.Renderer(this._container, VF.Renderer.Backends.SVG);
     vfRenderer.resize(CANVAS_W, totalH);
+    this._canvasW = CANVAS_W;
     const ctx = vfRenderer.getContext();
 
     let barGlobalIdx = 0;

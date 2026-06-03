@@ -91,6 +91,33 @@ class ViewportManager {
     this._setScale(usableW / this._naturalW);
   }
 
+  /**
+   * Scale camera so the given natural height fits the viewport's usable height.
+   * Used in landscape FAB mode so one grand-staff row fills the score card.
+   * @param {number} naturalH  Native pixel height of one content row (e.g. rowHeight + padding)
+   */
+  fitHeight(naturalH) {
+    if (!this._viewportEl || !naturalH) return;
+    const cs = window.getComputedStyle(this._viewportEl);
+    const usableH = this._viewportEl.clientHeight
+      - (parseFloat(cs.paddingTop)    || 0)
+      - (parseFloat(cs.paddingBottom) || 0);
+    if (usableH <= 0) return;
+    this._fitMode = false;
+    this._panX    = 0;
+    this._setScale(usableH / naturalH);
+  }
+
+  /**
+   * Update the natural (unscaled) canvas width and sync the camera element width.
+   * Call whenever the renderer produces a canvas wider or narrower than 960px.
+   * @param {number} w  New natural width in px
+   */
+  setNaturalWidth(w) {
+    this._naturalW = w;
+    if (this._cameraEl) this._cameraEl.style.width = w + 'px';
+  }
+
   // ---------------------------------------------------------------------------
   // Fullscreen
   // ---------------------------------------------------------------------------

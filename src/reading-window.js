@@ -50,6 +50,9 @@ class ContextAwareReadingWindow {
      *  past orientationThreshold during a playback reframe. */
     this._viewportManager = null;
 
+    /** Scroll axis — 'vertical' (default) or 'horizontal' (landscape FAB mode). */
+    this._axis = 'vertical';
+
     // -----------------------------------------------------------------------
     // Tuning parameters
     // All fractions are relative to viewportEl.clientHeight (0.0 = top, 1.0 = bottom).
@@ -136,6 +139,16 @@ class ContextAwareReadingWindow {
     this._viewportManager = vm;
   }
 
+  /**
+   * Set the scroll axis for bar tracking during playback.
+   * @param {'vertical'|'horizontal'} axis
+   *   'vertical'   — default; uses scrollTop (portrait / multi-row layout)
+   *   'horizontal' — uses scrollLeft (landscape FAB single-row layout)
+   */
+  setScrollAxis(axis) {
+    this._axis = axis === 'horizontal' ? 'horizontal' : 'vertical';
+  }
+
   destroy() {
     clearTimeout(this._coalesceTimer);
     this._pending    = null;
@@ -154,7 +167,31 @@ class ContextAwareReadingWindow {
 
     const vpRect  = this._viewportEl.getBoundingClientRect();
     const barRect = barEl.getBoundingClientRect();
-    const vpH     = this._viewportEl.clientHeight;
+
+    const zoomExcess       = Math.max(0, this._viewportScale - 1.0);
+    const effectiveBottom  = Math.max(0.42, this.deadZoneBottom  - zoomExcess * 0.12);
+    const effectiveReadPos = Math.max(0.20, this.readingPosition - zoomExcess * 0.04);
+
+    // -----------------------------------------------------------------------
+    // Horizontal mode — landscape FAB single-row layout
+    // Same dead-zone / reading-position model applied to the X axis.
+    // -----------------------------------------------------------------------
+    if (this._axis === 'horizontal') {
+      const vpW = this._viewportEl.clientWidth;
+      if (vpW <= 0) return;
+      const barVisualLeft = barRect.left - vpRect.left;
+      const fraction      = barVisualLeft / vpW;
+      if (fraction >= this.deadZoneTop && fraction <= effectiveBottom) return;
+      const delta          = barVisualLeft - vpW * effectiveReadPos;
+      const targetScrollLeft = Math.max(0, this._viewportEl.scrollLeft + delta);
+      this._viewportEl.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+      return;
+    }
+
+    // -----------------------------------------------------------------------
+    // Vertical mode (default) — original behavior unchanged
+    // -----------------------------------------------------------------------
+    const vpH = this._viewportEl.clientHeight;
     if (vpH <= 0) return;
 
     // Visual top of the active bar's row, relative to the viewport's top edge.
@@ -180,9 +217,6 @@ class ContextAwareReadingWindow {
     //     Gives more forward-reading horizon at higher zoom without moving bar to extreme top.
     //     scale 1.0 → 0.30 | scale 1.5 → 0.28 | scale 2.0 → 0.26 | scale 3.0 → 0.22
     // -----------------------------------------------------------------------
-    const zoomExcess        = Math.max(0, this._viewportScale - 1.0);
-    const effectiveBottom   = Math.max(0.42, this.deadZoneBottom  - zoomExcess * 0.12);
-    const effectiveReadPos  = Math.max(0.20, this.readingPosition - zoomExcess * 0.04);
 
     // Dead zone: bar is in a comfortable reading position — hold the viewport still.
     if (fraction >= this.deadZoneTop && fraction <= effectiveBottom) return;

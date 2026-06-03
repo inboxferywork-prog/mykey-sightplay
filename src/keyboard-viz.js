@@ -117,6 +117,42 @@ class KeyboardViz {
   }
 
   /**
+   * Set compact key dimensions — for landscape FAB mode.
+   * Recalculates black-key offsets automatically from the new geometry.
+   * @param {number} W       White key width (px)
+   * @param {number} H       White key height (px)
+   * @param {number} BW      Black key width (px)
+   * @param {number} BH      Black key height (px)
+   * @param {number} LABEL_H Note label row height (px)
+   */
+  setDimensions(W, H, BW, BH, LABEL_H) {
+    this._W       = W;
+    this._G       = 1;
+    this._P       = W + 1;
+    this._H       = H;
+    this._BW      = BW;
+    this._BH      = BH;
+    this._LABEL_H = LABEL_H;
+    // Recalculate black-key left-edge offsets from new white-key geometry.
+    // White-key centers from octave C: C=W/2, D=P+W/2, E=2P+W/2 … B=6P+W/2.
+    // Black-key center = midpoint of adjacent white-key centers; left = center - BW/2.
+    const P = this._P, c = W / 2, h = BW / 2;
+    this._BOFF = {
+      1:  Math.floor(P   / 2 + c - h),   // C#
+      3:  Math.floor(3*P / 2 + c - h),   // D#
+      6:  Math.floor(7*P / 2 + c - h),   // F#
+      8:  Math.floor(9*P / 2 + c - h),   // G#
+      10: Math.floor(11*P/ 2 + c - h),   // A#
+    };
+    if (this._container) this._build();
+  }
+
+  /** Restore default key dimensions (undo setDimensions). */
+  restoreDefaults() {
+    this.setDimensions(28, 96, 16, 60, 22);
+  }
+
+  /**
    * Set MIDI range for keyboard display.
    * Snaps loMidi down to nearest C, hiMidi up to nearest B.
    * Rebuilds DOM if container is attached.
