@@ -337,26 +337,39 @@ body.nk-fab-mode .fab-overlay {
 .fab-pick-item.fab-pick-active { color: var(--orange); background: rgba(240,165,0,0.10); }
 
 /* ================================================================
-   Portrait mode — larger touch targets and tighter bar layout.
-   body.nk-portrait set by JS (_syncPortrait) when innerHeight > innerWidth.
+   Portrait mode — adaptive touch targets, no overflow on any phone width.
+
+   Drag handle hidden: bar is always pinned bottom-center in portrait
+   (kb-wrap is display:none → --fab-kb-h = 0 → bottom: 8px fixed).
+   Dragging has no effect, so the handle only wastes ~24px of pill width.
+
+   clamp() formula:
+     min  = floor touch target (38px btn / 42px play)
+     vw   = preferred size relative to screen width
+     max  = design-intent size at ≥ 480px wide (original values)
+
+   Verified fit at 360px portrait (smallest common Android):
+     6 × 38px + 43px play + 14px pad + ~20px gaps ≈ 305px < 328px ✓
    ================================================================ */
 
+body.nk-portrait .fab-drag-handle { display: none; }
+
 body.nk-portrait .fab-bar {
-  gap: 5px;
-  padding: 0 12px;
+  gap:     clamp(2px,  0.8vw,  5px);
+  padding: 0 clamp(6px, 2vw, 12px);
   height: 66px;
 }
 
 body.nk-portrait .fab-btn {
-  width: 50px;
-  height: 50px;
-  font-size: 21px;
+  width:     clamp(38px, 10.5vw, 50px);
+  height:    clamp(38px, 10.5vw, 50px);
+  font-size: clamp(17px,  4.8vw, 21px);
 }
 
 body.nk-portrait .fab-main-btn {
-  width: 54px;
-  height: 54px;
-  font-size: 23px;
+  width:     clamp(42px, 12vw, 54px);
+  height:    clamp(42px, 12vw, 54px);
+  font-size: clamp(19px, 5.5vw, 23px);
 }
 
 body.nk-portrait .fab-tools-hand-btn {
