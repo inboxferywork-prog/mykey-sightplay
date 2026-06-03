@@ -276,8 +276,10 @@ class KeyboardViz {
       el.className = 'nk-kb-white';
       if (k.isC) el.classList.add('nk-kb-c');
       if (k.midi === 60) el.classList.add('nk-kb-middlec');  // Middle C landmark
-      el.style.left = k.x + 'px';
-      el.style.top  = this._LABEL_H + 'px';
+      el.style.left   = k.x + 'px';
+      el.style.top    = this._LABEL_H + 'px';
+      el.style.width  = this._W + 'px';
+      el.style.height = this._H + 'px';
       wrap.appendChild(el);
       this._keyEls.set(k.midi, el);
 
@@ -293,8 +295,10 @@ class KeyboardViz {
     for (const k of blackKeys) {
       const el = document.createElement('div');
       el.className = 'nk-kb-black';
-      el.style.left = k.x + 'px';
-      el.style.top  = this._LABEL_H + 'px';
+      el.style.left   = k.x + 'px';
+      el.style.top    = this._LABEL_H + 'px';
+      el.style.width  = this._BW + 'px';
+      el.style.height = this._BH + 'px';
       wrap.appendChild(el);
       this._keyEls.set(k.midi, el);
 

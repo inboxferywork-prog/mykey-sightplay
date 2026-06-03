@@ -295,7 +295,8 @@ if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
 // Adds body.nk-portrait when height > width. CSS rules key off this class.
 // Rollback: delete this block + portrait-mode.css rules that use body.nk-portrait.
 // -----------------------------------------------------------------------
-let _landscapeFabReady = false;  // set true after engine instances are initialized
+let _landscapeFabReady  = false;  // set true after engine instances are initialized
+let _landscapeFabActive = false;  // true when landscape FAB mode is currently active
 
 function _syncPortrait() {
   const isPortrait = window.innerHeight > window.innerWidth;
@@ -372,7 +373,9 @@ const _loopSelect = { mode: 'off', startId: null };
 // Attach keyboard visualization — builds initial DOM.
 keyboardViz.render(document.getElementById('keyboardEl'));
 _landscapeFabReady = true;
-_syncLandscapeFab(true);  // apply landscape mode immediately if active at startup
+// Deferred: all let/const declarations must be initialized before _syncLandscapeFab runs.
+// setTimeout(0) pushes call to next macrotask — after synchronous script finishes.
+setTimeout(() => _syncLandscapeFab(true), 0);
 
 // -----------------------------------------------------------------------
 // UI state
@@ -1906,8 +1909,6 @@ function _syncKbHeight() {
 //   - Score re-renders only on: mode change, OR force=true while landscape FAB active
 //     (covers new song load in landscape FAB without double-render in portrait mode)
 // -----------------------------------------------------------------------
-let _landscapeFabActive = false;
-
 function _syncLandscapeFab(force) {
   if (!_landscapeFabReady) return;
   const isNow   = document.body.classList.contains('nk-fab-mode') &&

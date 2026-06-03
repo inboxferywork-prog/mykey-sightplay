@@ -87,6 +87,11 @@ body.nk-portrait.nk-fab-mode .ngr-notes-row {
   padding-bottom: 0;
 }
 
+/* Clef glyph — slightly smaller than base 32px for portrait card header balance */
+body.nk-portrait.nk-fab-mode .ngr-clef-glyph {
+  font-size: 27px;
+}
+
 /* Dividers: faint white separator lines on purple */
 body.nk-portrait.nk-fab-mode .ngr-div {
   background: rgba(255, 255, 255, 0.22);
