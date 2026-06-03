@@ -32,11 +32,11 @@ body.nk-portrait #notation-viewport {
 }
 
 /* FAB mode in portrait: push notation below the fixed guidance strip.
-   score-card starts at 28px (app-body padding-top).
+   score-card starts at 50px (app-body padding-top).
    notation-viewport starts at 24px inside score-card (score-card padding).
-   fab-ngr occupies 28-128px of the viewport (100px header).
+   fab-ngr occupies 50-150px of the viewport (100px header).
    To keep a 24px gap below the header:
-     padding = 128 - (28+24) + 24 = 100px (unchanged)                  */
+     padding = 150 - (50+24) + 24 = 100px (unchanged)                  */
 body.nk-portrait.nk-fab-mode #notation-viewport {
   padding-top: 100px;
 }
@@ -48,8 +48,8 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
    page background (app-body).
 
    Layout math — FAB portrait (margin 20px):
-     FAB:     viewport.clientWidth = S - 42px (margin 20px*2 + border 1px*2)
-              _usableWidth() = (S - 42px) - 8px - 8px = S - 58px
+     FAB:     viewport.clientWidth = S - 66px (margin 32px*2 + border 1px*2)
+              _usableWidth() = (S - 66px) - 8px - 8px = S - 82px
      Non-FAB: viewport.clientWidth = S - 18px (border 1px*2 + score-card pad 8px*2)
               _usableWidth() = (S - 18px) - 10px - 10px = S - 38px
    FAB trades ~20px notation width for a more dramatic floating card aesthetic.
@@ -66,9 +66,9 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 /* ── Card header: purple band, rounded top ──────────────────── */
 
 body.nk-portrait.nk-fab-mode .fab-ngr {
-  top:            28px;              /* float card 25px below 3px progress strip */
-  left:           20px;              /* inset to match card body */
-  right:          20px;
+  top:            50px;              /* float card 47px below 3px progress strip */
+  left:           32px;              /* inset to match card body */
+  right:          32px;
   background:     linear-gradient(160deg, #1a0e4a 0%, #3d28a0 45%, #25106a 100%);
   border-bottom:  none;
   border-radius:  24px 24px 0 0;    /* rounded top — card starts here */
@@ -92,9 +92,22 @@ body.nk-portrait.nk-fab-mode .ngr-div {
   background: rgba(255, 255, 255, 0.22);
 }
 
-/* Inactive note text: legible off-white on purple */
+/* Note name: fixed circle — fits "C#4" (widest content) with 13px margin per side.
+   Diameter 48px = ~22px content + 26px padding room.
+   Override base overflow/ellipsis — content is guaranteed to fit. */
 body.nk-portrait.nk-fab-mode .ngr-notes {
-  color: rgba(255, 255, 255, 0.52);
+  color:           rgba(255, 255, 255, 0.52);
+  width:           40px;
+  height:          40px;
+  border-radius:   50%;
+  padding:         0;
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  text-align:      center;
+  flex-shrink:     0;
+  overflow:        visible;
+  text-overflow:   unset;
 }
 
 /* Active notes: clef-color text on white pill (matches base active style) */
@@ -132,23 +145,27 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
   padding-right: 8px;
 }
 
-/* 20px outer margin + shadow = card floats dramatically off the dark background.
+/* 32px outer margin + shadow = card floats dramatically off the dark background.
    padding-top: 24px = gap between guidance strip and first staff line.
    No side padding — has-viewport provides padding:0; breathing room comes
    from the viewport's 8px side padding (see rule above).
    All corners rounded (24px) so dark bg shows correctly at header/body joint. */
 body.nk-portrait.nk-fab-mode .score-card {
-  margin:         0 20px;
+  margin:         0 32px;
   padding-top:    24px;
   border-radius:  24px;
   box-shadow:     0 8px 40px rgba(0, 0, 0, 0.28), 0 2px 12px rgba(0, 0, 0, 0.18);
 }
 
 /* Dark page background breathing room above and below the card.
-   padding-top: 28px → score-card top aligns with card header top.
+   padding-top: 50px → score-card top aligns with card header top.
    padding-bottom: 90px → 16px dark gap between card bottom and FAB bar top
      (FAB bar top ≈ viewport_h − 74px; card bottom ≈ viewport_h − 90px). */
 body.nk-portrait.nk-fab-mode .app-body {
-  padding-top:    28px;
+  padding-top:    50px;
   padding-bottom: 90px;
 }
+
+/* Progress strip — taller touch target in portrait for easier tapping. */
+body.nk-portrait.nk-fab-mode .fab-progress       { height: 8px; }
+body.nk-portrait.nk-fab-mode .fab-progress:hover  { height: 8px; }

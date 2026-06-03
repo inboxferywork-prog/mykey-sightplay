@@ -449,6 +449,7 @@ const songLoader = new SongLoader({
     _syncLearningControls();
     _updateProgress(0);
     _updateTime(0);
+    _refreshBarTicks();
     activeSegmentIndex = -1;
     _rebuildSegmentsBar(songLoader.resolvedSegments);
     _syncSegmentsBar();
@@ -713,6 +714,44 @@ scoreEl.addEventListener('click', e => {
   }
 });
 
+// Score tap → seek — interaction layer only, no runtime/renderer architecture touched.
+// Active only during playing / paused. Loop-select mode takes full priority.
+scoreEl.addEventListener('click', ev => {
+  if (_loopSelect.mode === 'selecting') return;
+  if (!currentSong) return;
+  if (uiState !== 'playing' && uiState !== 'paused') return;
+
+  // Path A: tapped a note — resolve via data-event-id
+  const noteEl = ev.target.closest('[data-event-id]');
+  if (noteEl) {
+    const targetId = noteEl.dataset.eventId;
+    let songEv = null;
+    for (const bar of currentSong.score.bars) {
+      songEv = (bar.beats || []).find(e => e.id === targetId);
+      if (songEv) break;
+    }
+    if (!songEv) return;
+    runtime.seek(songEv.t_ms);
+    if (uiState === 'paused') _showToast('Bar ' + songEv.bar);
+    return;
+  }
+
+  // Path B: tapped empty area (rest, barline, clef) — resolve via data-bar
+  const barEl = ev.target.closest('[data-bar]');
+  if (!barEl) return;
+  const barN = parseInt(barEl.dataset.bar, 10);
+  let first = null;
+  for (const bar of currentSong.score.bars) {
+    if (bar.bar !== barN) continue;
+    first = (bar.beats || []).reduce((min, e) =>
+      (!min || e.t_ms < min.t_ms) ? e : min, null);
+    break;
+  }
+  if (!first) return;
+  runtime.seek(first.t_ms);
+  if (uiState === 'paused') _showToast('Bar ' + barN);
+});
+
 // -----------------------------------------------------------------------
 // Segment navigation — guided learning
 // -----------------------------------------------------------------------
@@ -946,6 +985,35 @@ function _updateTime(t) {
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   };
   timeDisplay.textContent = fmt(cur) + ' / ' + fmt(tot);
+}
+
+// Inject bar tick marks into the FAB progress strip.
+// Called after song load. Ticks are positioned against full song duration
+// so they remain stable regardless of active scope. Pure DOM — no runtime
+// or renderer methods called beyond reading runtime.duration.
+function _refreshBarTicks() {
+  const wrap = document.getElementById('fabProgressWrap');
+  if (!wrap || !currentSong) return;
+  wrap.querySelectorAll('.fab-bar-tick').forEach(el => el.remove());
+  const dur = runtime.duration;
+  if (!dur || dur <= 0) return;
+  // Build barN → earliest t_ms from score.bars[].beats[]
+  const barStarts = new Map();
+  for (const bar of currentSong.score.bars) {
+    for (const ev of (bar.beats || [])) {
+      if (typeof ev.t_ms !== 'number') continue;
+      if (!barStarts.has(bar.bar) || ev.t_ms < barStarts.get(bar.bar)) {
+        barStarts.set(bar.bar, ev.t_ms);
+      }
+    }
+  }
+  barStarts.forEach(t => {
+    if (t <= 0) return;  // skip bar 1 at origin — overlaps fill start
+    const tick = document.createElement('div');
+    tick.className = 'fab-bar-tick';
+    tick.style.left = Math.min(100, (t / dur) * 100).toFixed(2) + '%';
+    wrap.appendChild(tick);
+  });
 }
 
 // -----------------------------------------------------------------------

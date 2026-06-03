@@ -103,6 +103,15 @@ body.nk-fab-mode .fab-overlay {
 
 .fab-progress:hover { height: 5px; }
 
+.fab-bar-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
 /* ================================================================
    Song picker panel — appears above FAB bar on song-button tap
    ================================================================ */
@@ -538,7 +547,7 @@ body.nk-fab-mode .fab-ngr { display: flex; }
 }
 
 .ngr-hand {
-  font-size: 14px;
+  font-size: 28px;
   line-height: 1;
 }
 
@@ -551,7 +560,7 @@ body.nk-fab-mode .fab-ngr { display: flex; }
 /* SMuFL clef glyphs from Bravura (U+E062 = F clef, U+E050 = G clef) */
 .ngr-clef-glyph {
   font-family: 'Bravura', serif;
-  font-size: 16px;
+  font-size: 32px;
   line-height: 1;
   overflow: visible;
 }
