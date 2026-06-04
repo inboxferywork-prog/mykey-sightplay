@@ -76,6 +76,9 @@ body.nk-fab-mode .fc-toggle-btn {
 
 .fab-overlay { display: none; }
 
+/* Portrait info row — hidden by default; shown only in portrait FAB mode. */
+.fab-info-row { display: none; }
+
 body.nk-fab-mode .fab-overlay {
   display: block;
   position: fixed;
@@ -357,7 +360,7 @@ body.nk-portrait .fab-drag-handle { display: none; }
 body.nk-portrait .fab-bar {
   gap:     clamp(2px,  0.8vw,  5px);
   padding: 0 clamp(6px, 2vw, 12px);
-  height: 66px;
+  height: 54px;
 }
 
 body.nk-portrait .fab-btn {
@@ -367,9 +370,9 @@ body.nk-portrait .fab-btn {
 }
 
 body.nk-portrait .fab-main-btn {
-  width:     clamp(42px, 12vw, 54px);
-  height:    clamp(42px, 12vw, 54px);
-  font-size: clamp(19px, 5.5vw, 23px);
+  width:     72px;   /* intentionally > bar height (66px) → overflows 3px each side */
+  height:    72px;
+  font-size: 24px;
 }
 
 body.nk-portrait .fab-tools-hand-btn {

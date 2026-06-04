@@ -164,27 +164,56 @@ body.nk-portrait.nk-fab-mode .score-card {
 
 /* Dark page background breathing room above and below the card.
    padding-top:    50px → score-card top aligns with card header top.
-   padding-bottom: 110px → accommodates seek bar above FAB bar:
-     8px gap (card → seek bar) + 20px seek bar + 8px gap + 66px FAB + 8px = 110px */
+   padding-bottom: 128px → accommodates info row + seek bar above FAB bar:
+     8px (card→seek) + 14px seek + 6px + 20px info row + 6px + 54px FAB + 20px = 128px */
 body.nk-portrait.nk-fab-mode .app-body {
   padding-top:    50px;
-  padding-bottom: 110px;
+  padding-bottom: 128px;
 }
 
-/* Seek bar — repositioned above FAB bar (Spotify-style).
-   Moves from viewport top (top: 0) to floating above the FAB pill.
-   card-width margins (32px) align it with the floating score-card.
-   overflow: hidden clips the orange fill within the pill shape. */
+/* FAB bar — raised from screen bottom for comfortable margin. */
+body.nk-portrait.nk-fab-mode .fab-bar { bottom: 20px; }
+
+/* Seek bar — raised to make room for info row below it.
+   bottom: 106px = 20px gap + 54px FAB + 6px gap + 20px info row + 6px gap */
 body.nk-portrait.nk-fab-mode .fab-progress {
   top:           auto;
-  bottom:        82px;     /* 8px gap + 66px FAB bar + 8px gap */
+  bottom:        106px;
   left:          32px;
   right:         32px;
-  height:        20px;
-  border-radius: 10px;
+  height:        14px;
+  border-radius: 7px;
   overflow:      hidden;
 }
 
-body.nk-portrait.nk-fab-mode .fab-progress:hover { height: 20px; }
+body.nk-portrait.nk-fab-mode .fab-progress:hover { height: 14px; }
 
 body.nk-portrait.nk-fab-mode .fab-progress-fill  { border-radius: 0; }
+
+/* Info row — centered between seek bar bottom and play button top.
+   play button top = FAB-bottom(20) + FAB-height/2 + play-radius(36)
+                   = 20px + var(--fab-bar-h)/2 + 36px = 83px at current values.
+   seek bar bottom = 106px. Available gap = 23px. Row height 16px → ~3px margin each side. */
+body.nk-portrait.nk-fab-mode .fab-info-row {
+  display:         flex;
+  position:        absolute;
+  bottom:          calc(20px + var(--fab-bar-h) / 2 + 36px + 4px);
+  left:            32px;
+  right:           32px;
+  height:          16px;
+  align-items:     center;
+  justify-content: center;
+  gap:             20px;
+  pointer-events:  none;
+  user-select:     none;
+}
+
+body.nk-portrait.nk-fab-mode .fab-info-lbl {
+  opacity: 0.55;
+}
+
+body.nk-portrait.nk-fab-mode #fabInfoPart,
+body.nk-portrait.nk-fab-mode #fabInfoBar {
+  color:       var(--mykey-purple);
+  font-weight: 700;
+}

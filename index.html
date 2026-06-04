@@ -245,6 +245,13 @@
     <button class="fab-pick-item" data-mode="number">1 2 3</button>
   </div>
 
+  <!-- Portrait info row — current phrase (Part) and bar number (Bar).
+       Shown only in portrait FAB mode via portrait-mode.css. -->
+  <div class="fab-info-row" id="fabInfoRow">
+    <span><span class="fab-info-lbl">Part</span> : <span id="fabInfoPart">—</span></span>
+    <span><span class="fab-info-lbl">Bar</span> : <span id="fabInfoBar">—</span></span>
+  </div>
+
   <!-- Compact floating controls pill above keyboard -->
   <div class="fab-bar" id="fabBar">
     <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
@@ -309,7 +316,7 @@ function _syncPortrait() {
   const isPortrait = window.innerHeight > window.innerWidth;
   document.body.classList.toggle('nk-portrait', isPortrait);
   const root = document.documentElement;
-  root.style.setProperty('--fab-bar-h', isPortrait ? '66px' : '');  // '' reverts to CSS default
+  root.style.setProperty('--fab-bar-h', isPortrait ? '54px' : '');  // '' reverts to CSS default
   _syncLandscapeFab();
 }
 _syncPortrait();
@@ -1582,6 +1589,30 @@ if (_noteNameModeEl) {
 function _updateStatusBarNum(bar) {
   const el = document.getElementById('statusBarNum');
   if (el) el.textContent = (bar != null && bar >= 0) ? String(bar) : '—';
+  _updateFabInfoRow(bar);
+}
+
+function _barToSegmentLabel(bar) {
+  const segs = songLoader.resolvedSegments;
+  if (!segs || !segs.length) return null;
+  // Segments share boundary bars (end_bar of seg N == start_bar of seg N+1).
+  // "Last segment whose start_bar <= bar" is correct: at the boundary bar,
+  // the incoming segment wins over the outgoing one.
+  let result = null;
+  for (const seg of segs) {
+    if (seg.start_bar <= bar) result = seg.label;
+    else break;
+  }
+  return result;
+}
+
+function _updateFabInfoRow(bar) {
+  const barEl  = document.getElementById('fabInfoBar');
+  const partEl = document.getElementById('fabInfoPart');
+  if (!barEl || !partEl) return;
+  const active = bar != null && bar >= 0;
+  barEl.textContent  = active ? String(bar) : '—';
+  partEl.textContent = active ? (_barToSegmentLabel(bar) ?? '—') : '—';
 }
 
 // -----------------------------------------------------------------------
@@ -1848,6 +1879,7 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
         origHandSel.dispatchEvent(new Event('change', { bubbles: true }));
       }
       _fabSyncHandBtns();
+      _fabCloseTools();
     };
   });
 
@@ -1858,6 +1890,7 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
       // bubbles:true — parent delegate listener on #segmentsBar fires correctly
       origSeg.dispatchEvent(new Event('change', { bubbles: true }));
     }
+    _fabCloseTools();
   };
 
   if (origHandSel) {
