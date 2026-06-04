@@ -97,32 +97,28 @@ body.nk-portrait.nk-fab-mode .ngr-div {
   background: rgba(255, 255, 255, 0.22);
 }
 
-/* Note name: fixed circle — fits "C#4" (widest content) with 13px margin per side.
-   Diameter 48px = ~22px content + 26px padding room.
+/* Note name: no circle — plain white text with glow for readability on purple.
    Override base overflow/ellipsis — content is guaranteed to fit. */
 body.nk-portrait.nk-fab-mode .ngr-notes {
-  color:           rgba(255, 255, 255, 0.52);
-  width:           40px;
-  height:          40px;
-  border-radius:   50%;
-  padding:         0;
-  display:         inline-flex;
-  align-items:     center;
-  justify-content: center;
-  text-align:      center;
-  flex-shrink:     0;
+  color:           #ffffff;
+  text-shadow:     0 0 8px rgba(255, 255, 255, 0.75), 0 0 18px rgba(255, 255, 255, 0.35);
+  width:           auto;
+  height:          auto;
+  border-radius:   0;
   overflow:        visible;
   text-overflow:   unset;
 }
 
-/* Active notes: radial gradient circle (white dominant, clef-color ambient) + dark purple text */
+/* Active notes: brighter white glow with clef-color ambient (no circle background) */
 body.nk-portrait.nk-fab-mode .ngr-lh .ngr-notes.ngr-active {
-  color:      #2d1a7a;
-  background: radial-gradient(circle, #ffffff 20%, rgba(255, 128, 200, 0.55) 100%);
+  color:       #ffffff;
+  background:  none;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 22px rgba(255, 128, 200, 0.7);
 }
 body.nk-portrait.nk-fab-mode .ngr-rh .ngr-notes.ngr-active {
-  color:      #2d1a7a;
-  background: radial-gradient(circle, #ffffff 20%, rgba(91, 200, 245, 0.55) 100%);
+  color:       #ffffff;
+  background:  none;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 22px rgba(91, 200, 245, 0.7);
 }
 
 /* Mode selector: light treatment on purple */

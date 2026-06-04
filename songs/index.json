@@ -70,6 +70,16 @@
       "collectionId": null,
       "listed": true,
       "tags": []
+    },
+    {
+      "src": "songs/0609 Small Avelenche.json",
+      "label": "Small A — 6/8 · 80 BPM · 16 bars · segments",
+      "title": "Small A",
+      "composer": "Composer / arranger",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
     }
   ]
 }
