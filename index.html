@@ -527,14 +527,16 @@ const _DYNAMIC_VOL = { pp: 0.20, p: 0.24, mp: 0.27, mf: 0.30, f: 0.34, ff: 0.38 
 //   Must never change: altering it would shift the beat grid under the player.
 //
 // performedDurationMs — the audible sustain sent to the audio envelope.
-//   Articulation affects this value only. Score layout and timing are unaffected.
-//   Staccato: ~50% of written duration. Normal: full written duration.
-function _playNote(noteNames, writtenDurationMs, articulations, dynamic) {
+//   Scaled by tempoScale so audio fills the actual wall-clock note duration.
+//   Staccato: ~50% of wall-clock duration. Normal: full wall-clock duration.
+function _playNote(noteNames, writtenDurationMs, articulations, dynamic, tempoScale) {
   if (!noteNames || !noteNames.length) return;
   const now = _audioCtx.currentTime;
 
+  const scale = tempoScale > 0 ? tempoScale : 1.0;
   const isStaccato = Array.isArray(articulations) && articulations.includes('staccato');
-  const performedDurationMs = isStaccato ? writtenDurationMs * 0.5 : writtenDurationMs;
+  const wallClockMs = writtenDurationMs / scale;
+  const performedDurationMs = isStaccato ? wallClockMs * 0.5 : wallClockMs;
   const dur = Math.max(0.05, performedDurationMs / 1000);
 
   const vol = (_DYNAMIC_VOL[dynamic] ?? 0.30) / Math.sqrt(noteNames.length); // chord compensation
@@ -608,7 +610,7 @@ runtime
     // 3. Audio — learning state decides (rest / tie_stop / filtered clef → silent).
     //    Articulation + tie semantics are preserved inside _playNote and learningState.
     if (learningState.shouldPlayAudio(ev)) {
-      _playNote(ev.notes, ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar]);
+      _playNote(ev.notes, ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar], currentTempoScale);
     }
 
     // 4. Keyboard highlight state — hook for future visual piano keyboard.
