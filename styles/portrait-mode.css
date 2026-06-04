@@ -59,8 +59,10 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
 
 /* Brand token */
 :root {
-  --mykey-purple:      #6B47D6;
-  --mykey-purple-glow: rgba(107, 71, 214, 0.26);
+  --mykey-purple:        #6B47D6;
+  --mykey-purple-glow:   rgba(107, 71, 214, 0.26);
+  --portrait-card-margin: 32px;
+  --portrait-card-radius: 24px;
 }
 
 /* ── Card header: purple band, rounded top ──────────────────── */
@@ -152,19 +154,19 @@ body.nk-portrait.nk-fab-mode #notation-viewport {
    from the viewport's 8px side padding (see rule above).
    All corners rounded (24px) so dark bg shows correctly at header/body joint. */
 body.nk-portrait.nk-fab-mode .score-card {
-  margin:         0 32px;
+  margin:         0 var(--portrait-card-margin);
   padding-top:    24px;
-  border-radius:  24px;
+  border-radius:  var(--portrait-card-radius);
   box-shadow:     0 8px 40px rgba(0, 0, 0, 0.28), 0 2px 12px rgba(0, 0, 0, 0.18);
 }
 
 /* Dark page background breathing room above and below the card.
    padding-top:    50px → score-card top aligns with card header top.
-   padding-bottom: 128px → accommodates info row + seek bar above FAB bar:
-     8px (card→seek) + 14px seek + 6px + 20px info row + 6px + 54px FAB + 20px = 128px */
+   padding-bottom: 121px → accommodates info row + seek bar above FAB bar:
+     8px (card→seek) + 7px seek + 6px + 20px info row + 6px + 54px FAB + 20px = 121px */
 body.nk-portrait.nk-fab-mode .app-body {
   padding-top:    50px;
-  padding-bottom: 128px;
+  padding-bottom: 121px;
 }
 
 /* FAB bar — raised from screen bottom for comfortable margin. */
@@ -175,14 +177,14 @@ body.nk-portrait.nk-fab-mode .fab-bar { bottom: 20px; }
 body.nk-portrait.nk-fab-mode .fab-progress {
   top:           auto;
   bottom:        106px;
-  left:          32px;
-  right:         32px;
-  height:        14px;
-  border-radius: 7px;
+  left:          calc(var(--portrait-card-margin) + var(--portrait-card-radius));
+  right:         calc(var(--portrait-card-margin) + var(--portrait-card-radius));
+  height:        7px;
+  border-radius: 3.5px;
   overflow:      hidden;
 }
 
-body.nk-portrait.nk-fab-mode .fab-progress:hover { height: 14px; }
+body.nk-portrait.nk-fab-mode .fab-progress:hover { height: 7px; }
 
 body.nk-portrait.nk-fab-mode .fab-progress-fill  { border-radius: 0; }
 
@@ -216,15 +218,15 @@ body.nk-portrait.nk-fab-mode #fabInfoBar {
 
 /* ── Panels: clear seek bar + info row in portrait FAB mode ─── */
 /* Default formula (--fab-kb-h + --fab-bar-h + 10px = 64px) puts panels
-   inside the FAB bar range (20–74px). Seek bar sits at 106–120px.
-   Override to 130px so all panels open above seek bar with a 10px gap. */
+   inside the FAB bar range (20–74px). Seek bar sits at 106–113px.
+   Override to 123px so all panels open above seek bar with a 10px gap. */
 body.nk-portrait.nk-fab-mode .fab-song-panel {
   left:   32px;   /* align with floating card edges */
   right:  32px;
-  bottom: 130px;
+  bottom: 123px;
 }
 
 body.nk-portrait.nk-fab-mode .fab-tools-panel,
 body.nk-portrait.nk-fab-mode .fab-pick-panel {
-  bottom: 130px;
+  bottom: 123px;
 }
