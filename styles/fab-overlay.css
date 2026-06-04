@@ -494,7 +494,7 @@ body.nk-portrait .fab-tools-hand-btn {
 
 .fab-ngr {
   position: absolute;
-  left: 0; right: 0; top: 3px;   /* sits below the 3px progress strip */
+  left: 0; right: 0; top: 3px;   /* portrait: sits below the 3px progress strip */
   height: 100px;
   display: none;
   flex-direction: column;
@@ -677,20 +677,21 @@ body.nk-fab-mode .fab-ngr { display: flex; }
    Keyboard is compact — all keys visible without horizontal scroll.
    ================================================================ */
 
-/* Note guidance strip — title only, slim 28px bar */
+/* Note guidance strip — title only, slim 28px bar. Pinned to top (no progress strip above). */
 body.nk-fab-mode:not(.nk-portrait) .fab-ngr {
   height: 28px;
   flex-direction: row;
   align-items: center;
   padding: 0 16px;
   border-radius: 0;
+  top: 0;
 }
 
 body.nk-fab-mode:not(.nk-portrait) .ngr-title-row {
   flex: 1;
   padding: 0;
   min-width: 0;
-  align-items: center;
+  align-items: baseline;
   justify-content: flex-start;
 }
 
@@ -702,13 +703,99 @@ body.nk-fab-mode:not(.nk-portrait) .ngr-song-title {
 /* Note name rows not needed — keyboard already shows note names */
 body.nk-fab-mode:not(.nk-portrait) .ngr-notes-row { display: none; }
 
+/* Landscape meta strip (Part + Bar) — right side of title strip */
+.ngr-meta { display: none; }
+
+body.nk-fab-mode:not(.nk-portrait) .ngr-meta {
+  display:     flex;
+  align-items: baseline;
+  gap:         4px;
+  flex-shrink: 0;
+  font-size:   11px;
+  font-weight: 600;
+  line-height: 1;
+  color:       var(--title-color, #e8e8e8);
+  white-space: nowrap;
+  margin-left: 100px;
+}
+
+.ngr-meta-lbl {
+  color:   inherit;
+  opacity: 0.65;
+}
+
+.ngr-meta-val {
+  color:       var(--orange);
+  font-weight: 700;
+}
+
+.ngr-meta-div {
+  width:      1px;
+  height:     10px;
+  background: var(--border);
+  margin:     0 6px;
+  flex-shrink: 0;
+}
+
 /* Notation viewport — horizontal scroll, no vertical */
 body.nk-fab-mode:not(.nk-portrait) #notation-viewport {
   overflow-x: auto;
   overflow-y: hidden;
-  padding-top: 31px;   /* 3px progress + 28px title strip */
-  padding-bottom: 0;
+  padding-top: 28px;    /* 28px title strip only — progress strip moved to bottom */
+  padding-bottom: 3px;  /* reserve space for progress strip at bottom edge */
 }
+
+/* Progress strip — moved to bottom edge of notation viewport in landscape FAB */
+body.nk-fab-mode:not(.nk-portrait) .fab-progress {
+  top: auto;
+  bottom: var(--fab-kb-h);
+}
+
+/* Clickable meta values — opt back in to pointer events (parent .fab-ngr is pointer-events:none) */
+body.nk-fab-mode:not(.nk-portrait) .ngr-meta-clickable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+body.nk-fab-mode:not(.nk-portrait) .ngr-meta-clickable:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+body.nk-fab-mode:not(.nk-portrait) .ngr-bar-input {
+  pointer-events: auto;
+}
+
+/* NGR part picker — anchored below title strip, right-aligned */
+#fabNgrPartPick {
+  top: 28px;
+  bottom: auto;
+  right: 16px;
+  left: auto;
+  transform: none;
+  max-height: 40vh;
+  overflow-y: auto;
+  min-width: 100px;
+}
+
+/* Bar number inline input — replaces bar value span while editing */
+.ngr-bar-input {
+  display:          none;
+  width:            44px;
+  background:       transparent;
+  border:           none;
+  border-bottom:    1px solid var(--orange);
+  color:            var(--orange);
+  font-size:        11px;
+  font-weight:      700;
+  font-family:      inherit;
+  line-height:      1;
+  text-align:       center;
+  outline:          none;
+  padding:          0 2px;
+  -moz-appearance:  textfield;
+}
+.ngr-bar-input::-webkit-outer-spin-button,
+.ngr-bar-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 /* Keyboard header (Piano label + note-name select) not needed in landscape FAB */
 body.nk-fab-mode:not(.nk-portrait) .kb-header { display: none; }

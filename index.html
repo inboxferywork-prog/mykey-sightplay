@@ -212,6 +212,11 @@
   <div class="fab-ngr" id="fabNgr" aria-live="polite" aria-label="Current notes">
     <div class="ngr-title-row">
       <span class="ngr-song-title" id="fabNgrTitle">—</span>
+      <span class="ngr-meta" id="fabNgrMeta">
+        <span class="ngr-meta-lbl">Part</span>&thinsp;:&thinsp;<span class="ngr-meta-val ngr-meta-clickable" id="ngrMetaPart">—</span>
+        <span class="ngr-meta-div"></span>
+        <span class="ngr-meta-lbl">Bar</span>&thinsp;:&thinsp;<span class="ngr-meta-val ngr-meta-clickable" id="ngrMetaBar">—</span><input type="number" id="ngrBarInput" class="ngr-bar-input">
+      </span>
     </div>
     <div class="ngr-notes-row">
       <div class="ngr-half ngr-lh">
@@ -244,6 +249,9 @@
     <button class="fab-pick-item" data-mode="solfege">Do Re Mi</button>
     <button class="fab-pick-item" data-mode="number">1 2 3</button>
   </div>
+
+  <!-- Part picker for NGR landscape title strip — populated dynamically -->
+  <div class="fab-pick-panel" id="fabNgrPartPick" aria-hidden="true"></div>
 
   <!-- Portrait info row — current phrase (Part) and bar number (Bar).
        Shown only in portrait FAB mode via portrait-mode.css. -->
@@ -692,7 +700,11 @@ learningRow.addEventListener('change', e => {
     const visibleClefs = clef === 'both' ? null : [clef];
     // Loop viewport takes priority over segment scope for rendering
     const visibleBars = practiceLoop.active ? practiceLoop.bars : (seg ? seg.bars : null);
-    renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs });
+    renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs, barsPerRow: _landscapeFabActive ? 'all' : undefined });
+    if (_landscapeFabActive) {
+      viewportManager.setNaturalWidth(renderer.canvasWidth);
+      viewportManager.fitHeight(renderer.rowHeight + 20);
+    }
     if (!practiceLoop.active && seg) _applyBeatDim(currentSong, seg);
     const scrollBar = practiceLoop.active ? practiceLoop.start_bar : (seg ? seg.start_bar : null);
     if (scrollBar != null) renderer.scrollToBar(scrollBar);
@@ -1611,8 +1623,14 @@ function _updateFabInfoRow(bar) {
   const partEl = document.getElementById('fabInfoPart');
   if (!barEl || !partEl) return;
   const active = bar != null && bar >= 0;
-  barEl.textContent  = active ? String(bar) : '—';
-  partEl.textContent = active ? (_barToSegmentLabel(bar) ?? '—') : '—';
+  const barTxt  = active ? String(bar) : '—';
+  const partTxt = active ? (_barToSegmentLabel(bar) ?? '—') : '—';
+  barEl.textContent  = barTxt;
+  partEl.textContent = partTxt;
+  const ngrBar  = document.getElementById('ngrMetaBar');
+  const ngrPart = document.getElementById('ngrMetaPart');
+  if (ngrBar)  ngrBar.textContent  = barTxt;
+  if (ngrPart) ngrPart.textContent = partTxt;
 }
 
 // -----------------------------------------------------------------------
@@ -1927,6 +1945,95 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   window.addEventListener('resize', _syncKbHeight, { passive: true });
   // Re-measure after song loads (keyboard range may change key count)
   setTimeout(_syncKbHeight, 600);
+
+  // -----------------------------------------------------------------------
+  // NGR Part picker — click the yellow Part value to pick a segment
+  // -----------------------------------------------------------------------
+  const ngrPartPick    = document.getElementById('fabNgrPartPick');
+  const ngrMetaPartEl  = document.getElementById('ngrMetaPart');
+
+  function _ngrPartPickClose() {
+    ngrPartPick.classList.remove('fab-panel-open');
+    ngrPartPick.setAttribute('aria-hidden', 'true');
+  }
+
+  function _ngrPartPickOpen() {
+    const segs = songLoader.resolvedSegments || [];
+    ngrPartPick.innerHTML = '';
+
+    const allBtn = document.createElement('button');
+    allBtn.className = 'fab-pick-item' + (activeSegmentIndex < 0 ? ' fab-pick-active' : '');
+    allBtn.textContent = 'All';
+    allBtn.onclick = () => { _deactivateSegment(); _ngrPartPickClose(); };
+    ngrPartPick.appendChild(allBtn);
+
+    segs.forEach((seg, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'fab-pick-item' + (activeSegmentIndex === i ? ' fab-pick-active' : '');
+      btn.textContent = seg.label || ('Part ' + (i + 1));
+      btn.onclick = () => { _activateSegment(i); _ngrPartPickClose(); };
+      ngrPartPick.appendChild(btn);
+    });
+
+    ngrPartPick.classList.add('fab-panel-open');
+    ngrPartPick.setAttribute('aria-hidden', 'false');
+  }
+
+  if (ngrMetaPartEl) {
+    ngrMetaPartEl.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!currentSong || !(songLoader.resolvedSegments?.length)) return;
+      ngrPartPick.classList.contains('fab-panel-open') ? _ngrPartPickClose() : _ngrPartPickOpen();
+    });
+  }
+
+  // Close NGR part picker on outside interaction
+  document.addEventListener('pointerdown', e => {
+    if (!ngrPartPick.classList.contains('fab-panel-open')) return;
+    if (!ngrPartPick.contains(e.target) && e.target !== ngrMetaPartEl) _ngrPartPickClose();
+  }, { passive: true });
+
+  // -----------------------------------------------------------------------
+  // NGR Bar input — click the yellow Bar value to jump to a specific bar
+  // -----------------------------------------------------------------------
+  const ngrMetaBarEl = document.getElementById('ngrMetaBar');
+  const ngrBarInput  = document.getElementById('ngrBarInput');
+
+  function _barInputCommit() {
+    const bars = currentSong?.score?.bars;
+    if (!bars?.length) { _barInputClose(); return; }
+    const val = parseInt(ngrBarInput.value, 10);
+    _barInputClose();
+    if (!isNaN(val) && val >= bars[0].bar && val <= bars[bars.length - 1].bar) {
+      renderer.scrollToBar(val);
+    }
+  }
+
+  function _barInputClose() {
+    ngrBarInput.style.display = 'none';
+    if (ngrMetaBarEl) ngrMetaBarEl.style.display = '';
+  }
+
+  if (ngrMetaBarEl && ngrBarInput) {
+    ngrMetaBarEl.addEventListener('click', e => {
+      e.stopPropagation();
+      const bars = currentSong?.score?.bars;
+      if (!bars?.length) return;
+      ngrBarInput.min   = bars[0].bar;
+      ngrBarInput.max   = bars[bars.length - 1].bar;
+      ngrBarInput.value = ngrMetaBarEl.textContent !== '—' ? ngrMetaBarEl.textContent : bars[0].bar;
+      ngrMetaBarEl.style.display = 'none';
+      ngrBarInput.style.display  = '';
+      ngrBarInput.focus();
+      ngrBarInput.select();
+    });
+
+    ngrBarInput.addEventListener('blur', _barInputCommit);
+    ngrBarInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  { ngrBarInput.blur(); }
+      if (e.key === 'Escape') { _barInputClose(); }
+    });
+  }
 
 })();
 
