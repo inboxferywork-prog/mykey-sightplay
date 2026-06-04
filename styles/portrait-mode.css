@@ -213,3 +213,18 @@ body.nk-portrait.nk-fab-mode #fabInfoBar {
   color:       var(--mykey-purple);
   font-weight: 700;
 }
+
+/* ── Panels: clear seek bar + info row in portrait FAB mode ─── */
+/* Default formula (--fab-kb-h + --fab-bar-h + 10px = 64px) puts panels
+   inside the FAB bar range (20–74px). Seek bar sits at 106–120px.
+   Override to 130px so all panels open above seek bar with a 10px gap. */
+body.nk-portrait.nk-fab-mode .fab-song-panel {
+  left:   32px;   /* align with floating card edges */
+  right:  32px;
+  bottom: 130px;
+}
+
+body.nk-portrait.nk-fab-mode .fab-tools-panel,
+body.nk-portrait.nk-fab-mode .fab-pick-panel {
+  bottom: 130px;
+}

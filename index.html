@@ -1510,9 +1510,13 @@ if (_noteNameModeEl) {
     fabNoteModeBtn.addEventListener('click', e => {
       e.stopPropagation();
       const isOpen = fabNoteModePick?.classList.contains('fab-panel-open');
-      // close tempo pick if open
+      // close all other panels
       document.getElementById('fabTempoPick')?.classList.remove('fab-panel-open');
       document.getElementById('fabTempoPick')?.setAttribute('aria-hidden', 'true');
+      document.getElementById('fabSongPanel')?.classList.remove('fab-panel-open');
+      document.getElementById('fabSongBtn')?.classList.remove('fab-song-open');
+      document.getElementById('fabToolsPanel')?.classList.remove('fab-panel-open');
+      document.getElementById('fabToolsBtn')?.classList.remove('fab-tools-open');
       if (fabNoteModePick) {
         if (isOpen) {
           fabNoteModePick.classList.remove('fab-panel-open');
@@ -1752,9 +1756,11 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     fabTempoBtn.addEventListener('click', e => {
       e.stopPropagation();
       const isOpen = fabTempoPick?.classList.contains('fab-panel-open');
-      // close note mode pick if open
+      // close all other panels
       document.getElementById('fabNoteModePick')?.classList.remove('fab-panel-open');
       document.getElementById('fabNoteModePick')?.setAttribute('aria-hidden', 'true');
+      _fabClosePanel();
+      _fabCloseTools();
       if (fabTempoPick) {
         if (isOpen) {
           fabTempoPick.classList.remove('fab-panel-open');
@@ -1848,6 +1854,11 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
       _fabClosePanel();
     } else {
       _fabBuildSongList();
+      _fabCloseTools();
+      fabTempoPick?.classList.remove('fab-panel-open');
+      fabTempoPick?.setAttribute('aria-hidden', 'true');
+      document.getElementById('fabNoteModePick')?.classList.remove('fab-panel-open');
+      document.getElementById('fabNoteModePick')?.setAttribute('aria-hidden', 'true');
       fabSongPanel.classList.add('fab-panel-open');
       fabSongPanel.setAttribute('aria-hidden', 'false');
       fabSongBtn.classList.add('fab-song-open');
@@ -1930,6 +1941,10 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
       _fabSyncHandBtns();
       _fabSyncPart();
       _fabClosePanel();  // close song panel if open
+      fabTempoPick?.classList.remove('fab-panel-open');
+      fabTempoPick?.setAttribute('aria-hidden', 'true');
+      document.getElementById('fabNoteModePick')?.classList.remove('fab-panel-open');
+      document.getElementById('fabNoteModePick')?.setAttribute('aria-hidden', 'true');
       fabToolsPanel.classList.add('fab-panel-open');
       fabToolsPanel.setAttribute('aria-hidden', 'false');
       fabToolsBtn.classList.add('fab-tools-open');
