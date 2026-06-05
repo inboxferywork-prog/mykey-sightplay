@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "id": "test_beaming_128",
+    "title": "Beam 12/8 — Quaver (3+3+3+3) groups",
+    "composer": "Engraving Test",
+    "level": "early_beginner",
+    "bpm": 60,
+    "time_signature": [12, 8],
+    "key_signature": "C",
+    "hand_mode": "both",
+    "active_clefs": ["treble", "bass"],
+    "freq_split_hz": 261.63,
+    "part_size_bars": 4,
+    "background_music": null,
+    "example_audio": null,
+    "hint_config": {
+      "auto_hint_timeout_ms": 7000,
+      "auto_play_timeout_ms": 12000,
+      "show_note_name_always": true,
+      "show_keyboard_highlight": true,
+      "show_fingering_always": true,
+      "hint_penalty": {
+        "auto_highlight": -3, "auto_play": -5, "tap_note": -5,
+        "question_mark": -8, "wrong_2x_narrowing": -5
+      }
+    }
+  },
+  "parts": [
+    {
+      "part_id": "part_1",
+      "label": "Bar 1: 12/8 quaver — expected: 4 groups of 3 (C-D-E)+(F-G-A)+(G-F-E)+(D-E-F)",
+      "bars": [1],
+      "has_pickup": false,
+      "example_audio": null
+    }
+  ],
+  "score": {
+    "bars": [
+      {
+        "bar": 1,
+        "beats": [
+          {"id": "ev_000001", "bar": 1, "beat":  1, "clef": "treble", "type": "note", "notes": ["C4"], "duration": "8", "duration_ms": 500, "t_ms": 0,    "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000002", "bar": 1, "beat":  2, "clef": "treble", "type": "note", "notes": ["D4"], "duration": "8", "duration_ms": 500, "t_ms": 500,  "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000003", "bar": 1, "beat":  3, "clef": "treble", "type": "note", "notes": ["E4"], "duration": "8", "duration_ms": 500, "t_ms": 1000, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000004", "bar": 1, "beat":  4, "clef": "treble", "type": "note", "notes": ["F4"], "duration": "8", "duration_ms": 500, "t_ms": 1500, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000005", "bar": 1, "beat":  5, "clef": "treble", "type": "note", "notes": ["G4"], "duration": "8", "duration_ms": 500, "t_ms": 2000, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000006", "bar": 1, "beat":  6, "clef": "treble", "type": "note", "notes": ["A4"], "duration": "8", "duration_ms": 500, "t_ms": 2500, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000007", "bar": 1, "beat":  7, "clef": "treble", "type": "note", "notes": ["G4"], "duration": "8", "duration_ms": 500, "t_ms": 3000, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000008", "bar": 1, "beat":  8, "clef": "treble", "type": "note", "notes": ["F4"], "duration": "8", "duration_ms": 500, "t_ms": 3500, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000009", "bar": 1, "beat":  9, "clef": "treble", "type": "note", "notes": ["E4"], "duration": "8", "duration_ms": 500, "t_ms": 4000, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000010", "bar": 1, "beat": 10, "clef": "treble", "type": "note", "notes": ["D4"], "duration": "8", "duration_ms": 500, "t_ms": 4500, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000011", "bar": 1, "beat": 11, "clef": "treble", "type": "note", "notes": ["E4"], "duration": "8", "duration_ms": 500, "t_ms": 5000, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000012", "bar": 1, "beat": 12, "clef": "treble", "type": "note", "notes": ["F4"], "duration": "8", "duration_ms": 500, "t_ms": 5500, "finger": null, "tie_start": false, "tie_stop": false, "tolerance_cents": 50},
+          {"id": "ev_000013", "bar": 1, "beat":  1, "clef": "bass",   "type": "rest", "duration": "h.", "duration_ms": 3000, "t_ms": 0},
+          {"id": "ev_000014", "bar": 1, "beat":  7, "clef": "bass",   "type": "rest", "duration": "h.", "duration_ms": 3000, "t_ms": 3000}
+        ]
+      }
+    ]
+  },
+  "scoring": {
+    "perfect_window_ms": 150,
+    "good_window_ms": 400,
+    "points_per_note": {"perfect": 10, "good": 6, "late": 3, "miss": 0},
+    "timing_bonus": true,
+    "streak_bonus": {"every": 5, "bonus": 10}
+  }
+}

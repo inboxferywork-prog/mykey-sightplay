@@ -386,12 +386,10 @@ class NotationRenderer {
     // VF.Beam.generateBeams() sets note.beam on each note in the group, which causes
     // StaveNote.draw() to suppress the individual flag. If beams are created after
     // voices are drawn, flags render first and appear as double-flags behind the beam line.
-    const barStartMs  = (beats[0]?.t_ms ?? 0);
-    const msPerBeat   = 60000 / bpm * (4 / beatValue);
     const trebleBeats = showTreble ? beats.filter(e => e.clef === 'treble') : [];
     const bassBeats   = showBass   ? beats.filter(e => e.clef === 'bass')   : [];
-    const tBeams = showTreble ? _beatGroupedBeams(VF, trebleItems, trebleBeats, barStartMs, msPerBeat, 'treble') : [];
-    const bBeams = showBass   ? _beatGroupedBeams(VF, bassItems,   bassBeats,   barStartMs, msPerBeat, 'bass')   : [];
+    const tBeams = showTreble ? _beatGroupedBeams(VF, trebleItems, trebleBeats, numBeats, beatValue, 'treble') : [];
+    const bBeams = showBass   ? _beatGroupedBeams(VF, bassItems,   bassBeats,   numBeats, beatValue, 'bass')   : [];
 
     // Voice drawing — guard with null checks
     if (tv && treble) tv.draw(ctx, treble);
@@ -1076,24 +1074,31 @@ function _globalAvgBarW(bars) {
  * Beamed groups receive a unified stem direction from the note most removed from the
  * middle line across the group (Gould furthest-note rule), overriding per-note direction.
  *
- * Current scope: simple meter (2/4, 3/4, 4/4) only. msPerBeat uses quarter-note-based
- * formula and gives wrong beat-unit grouping for compound meter (6/8, 9/8).
+ * Beat group size derives from meter only — tempo does not affect beam grouping.
+ * Compound meters (6/8, 9/8, 12/8) use dotted quarter as the beat unit (1.5 QL).
+ * Simple meters use 4/beatValue as the beat unit (1.0 QL for x/4, 2.0 QL for x/2).
+ * Position is tracked via cumQL accumulated from beats[i].duration, so groupKey
+ * reflects each note's start position within the bar (pre-advance order).
  * TODO(Layer3-tuplets): tuplet brackets require a VF.Tuplet pass over tagged tuplet
  * groups after beam creation. Requires tuplet metadata in song.json events.
  * See docs/music-notation-semantics.md §10.1.
  */
-function _beatGroupedBeams(VF, items, beats, barStartMs, msPerBeat, clef) {
+function _beatGroupedBeams(VF, items, beats, numBeats, beatValue, clef) {
   const middle = clef === 'treble' ? _TREBLE_MID : _BASS_MID;
   const groups = new Map();
 
-  // Tuplet membership takes precedence over beat-boundary grouping.
-  // At high BPMs the last note of a triplet group can fall in the next beat slot
-  // (e.g. BPM=120: 3rd triplet 8th at t=666ms → beatIdx=1 when msPerBeat=500ms).
-  // Using the tuplet ratio + chunk index as the group key keeps all n notes together.
-  // Counter is advanced for ALL items (including rests/non-beamable) so chunk-index
-  // arithmetic stays correct when a tuplet group contains non-beamable notes.
+  // Meter-based beat group size in quarter lengths — tempo-independent.
+  // Compound (6/8, 9/8, 12/8): dotted quarter = 3 × 8th = 1.5 QL.
+  // Simple: denominator unit (1.0 QL for x/4, 0.5 QL for x/8 simple, 2.0 QL for x/2).
+  const isCompound  = beatValue === 8 && (numBeats === 6 || numBeats === 9 || numBeats === 12);
+  const beatGroupQL = isCompound ? (4 / beatValue) * 3 : (4 / beatValue);
+
+  // QL lookup for cumulative position accumulation from note durations.
+  const QL = { w: 4, h: 2, q: 1, '8': 0.5, '16': 0.25, '32': 0.125 };
+
   let prevTupletRatio = null;
   let tupletPos       = 0;
+  let cumQL           = 0;  // cumulative quarter-length position from bar start
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
@@ -1104,22 +1109,32 @@ function _beatGroupedBeams(VF, items, beats, barStartMs, msPerBeat, clef) {
     }
     const posInRun = item.tupletGroup ? tupletPos++ : 0;
 
-    if (item.note.isRest() || !_isBeamable(item.dur)) continue;
+    // Event QL from beats[i].duration — preserves dots that item.dur drops.
+    const { base: evBase, dots: evDots } = _parseDur(beats[i]?.duration ?? item.dur);
+    const evQL = (QL[evBase] ?? 1) * (evDots ? 1.5 : 1);
 
-    let groupKey;
-    if (item.tupletGroup) {
-      const numNotes = parseInt(item.tupletGroup.split(':')[0], 10);
-      const chunkIdx = isNaN(numNotes) ? 0 : Math.floor(posInRun / numNotes);
-      groupKey = `t:${item.tupletGroup}:${chunkIdx}`;
-    } else {
-      const t       = beats[i]?.t_ms ?? barStartMs;
-      // +0.001 absorbs integer t_ms rounding at beat boundaries (max 0.5ms error vs 833ms beat)
-      const beatIdx = Math.floor((t - barStartMs) / msPerBeat + 0.001);
-      groupKey = `b:${beatIdx}`;
+    if (!item.note.isRest() && _isBeamable(item.dur)) {
+      let groupKey;
+      if (item.tupletGroup) {
+        const numNotes = parseInt(item.tupletGroup.split(':')[0], 10);
+        const chunkIdx = isNaN(numNotes) ? 0 : Math.floor(posInRun / numNotes);
+        groupKey = `t:${item.tupletGroup}:${chunkIdx}`;
+      } else {
+        // groupKey from cumQL START position (before advancing) — tempo-independent.
+        // +0.001 absorbs floating-point rounding at exact beat boundaries; safe because
+        // all standard durations are exact binary fractions and the minimum gap between
+        // a genuine pre-boundary position and the boundary is 0.125 QL (one 32nd note).
+        const beatIdx = Math.floor(cumQL / beatGroupQL + 0.001);
+        groupKey = `b:${beatIdx}`;
+      }
+
+      if (!groups.has(groupKey)) groups.set(groupKey, []);
+      groups.get(groupKey).push(item);
     }
 
-    if (!groups.has(groupKey)) groups.set(groupKey, []);
-    groups.get(groupKey).push(item);
+    // Advance position AFTER groupKey is computed — uses event start, not end.
+    // Rests and non-beamable notes still advance cumQL so subsequent note positions are correct.
+    cumQL += evQL;
   }
 
   const beams = [];
@@ -1135,7 +1150,7 @@ function _beatGroupedBeams(VF, items, beats, barStartMs, msPerBeat, clef) {
     }
     const groupDir = furthestStep < middle ? 1 : -1;
     const notes    = grp.map(it => { it.note.setStemDirection(groupDir); return it.note; });
-    VF.Beam.generateBeams(notes).forEach(b => beams.push(b));
+    beams.push(new VF.Beam(notes));
   }
   return beams;
 }

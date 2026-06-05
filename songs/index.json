@@ -80,6 +80,66 @@
       "collectionId": null,
       "listed": true,
       "tags": []
+    },
+    {
+      "src": "songs/test_beaming_44_quaver.json",
+      "label": "Beam 4/4 — Quaver (2+2+2+2) groups — 4/4 · 60 BPM · 1 bars",
+      "title": "Beam 4/4 — Quaver (2+2+2+2) groups",
+      "composer": "Engraving Test",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
+    },
+    {
+      "src": "songs/test_beaming_44_semiquaver.json",
+      "label": "Beam 4/4 — Semiquaver (4+4+4+4) groups — 4/4 · 60 BPM · 1 bars",
+      "title": "Beam 4/4 — Semiquaver (4+4+4+4) groups",
+      "composer": "Engraving Test",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
+    },
+    {
+      "src": "songs/test_beaming_68_quaver.json",
+      "label": "Beam 6/8 — Quaver (3+3) groups — 6/8 · 60 BPM · 2 bars",
+      "title": "Beam 6/8 — Quaver (3+3) groups",
+      "composer": "Engraving Test",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
+    },
+    {
+      "src": "songs/test_beaming_68_semiquaver.json",
+      "label": "Beam 6/8 — Semiquaver (6+6) groups — 6/8 · 60 BPM · 1 bars",
+      "title": "Beam 6/8 — Semiquaver (6+6) groups",
+      "composer": "Engraving Test",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
+    },
+    {
+      "src": "songs/test_beaming_98.json",
+      "label": "Beam 9/8 — Quaver (3+3+3) groups — 9/8 · 60 BPM · 1 bars",
+      "title": "Beam 9/8 — Quaver (3+3+3) groups",
+      "composer": "Engraving Test",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
+    },
+    {
+      "src": "songs/test_beaming_128.json",
+      "label": "Beam 12/8 — Quaver (3+3+3+3) groups — 12/8 · 60 BPM · 1 bars",
+      "title": "Beam 12/8 — Quaver (3+3+3+3) groups",
+      "composer": "Engraving Test",
+      "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
     }
   ]
 }
