@@ -150,12 +150,19 @@ class NotationRenderer {
 
     // Layout constants
     const barsPerRowOpt = this._renderOpts?.barsPerRow;
-    const BARS_PER_ROW  = barsPerRowOpt === 'all' ? Math.max(1, bars.length) : 4;
+    const BARS_PER_ROW  = barsPerRowOpt === 'all' ? Math.max(1, bars.length) : (typeof barsPerRowOpt === 'number' ? barsPerRowOpt : 4);
     const CANVAS_W      = barsPerRowOpt === 'all' ? Math.max(960, bars.length * 240) : 960;
     const MARGIN_X     = 20;   // 20px left margin — brace extends ~16px left of stave x; 10px was insufficient
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
     const BASS_Y_OFF   = showBoth ? 135 : 20;       // bass at y+135 (grand staff) OR y+20 (solo)
-    const ROW_H        = showBoth ? 280 : 120;      // single-clef rows are half height
+    // 2-bar only: pick row height from 3 density levels using max _barNoteWeight.
+    // 4-bar and landscape ('all') are unchanged.
+    const _2barMaxW = barsPerRowOpt === 2 ? Math.max(...bars.map(_barNoteWeight)) : 0;
+    const ROW_H     = barsPerRowOpt === 2
+      ? (_2barMaxW > 7.0 ? (showBoth ? 440 : 190)   // high density
+       : _2barMaxW > 4.5 ? (showBoth ? 360 : 155)   // medium density
+       :                   (showBoth ? 300 : 130))   // low density
+      : (showBoth ? 280 : 120);                      // 4-bar / landscape: unchanged
     this._rowH = ROW_H;  // expose to _drawSlurs — single-clef uses 120, grand staff uses 280
 
     const rowLayout        = _computeRowLayout(bars, BARS_PER_ROW);  // filtered bars
@@ -502,7 +509,12 @@ class NotationRenderer {
         art.setPosition(stemDir === 1 ? 4 : 3);
         note.addModifier(art, 0);
       }
-      // TODO(Layer3-articulations): tenuto, accent, marcato attach the same way with different glyphs.
+      if (ev.type !== 'rest' && ev.articulations?.includes('accent')) {
+        const art = new VF.Articulation('a>');
+        art.setPosition(stemDir === 1 ? 4 : 3);
+        note.addModifier(art, 0);
+      }
+      // TODO(Layer3-articulations): tenuto, marcato attach the same way with different glyphs.
       // Fermata requires runtime-engine.js extension (timeline pause) — implement last.
       // TODO(Layer3-slur): slur rendering uses SEPARATE infrastructure from ties.
       // Do NOT reuse _drawStaveTies or _noteHeadProxy for slurs.

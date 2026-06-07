@@ -2126,6 +2126,8 @@ function _mxlParsePart(partEl, clef, tmap, evStart) {
     }
   }
 
+  let pendingDynamic = null; // dynamic marking waiting to be attached to next note
+
   for (let barIdx = 0; barIdx < measures.length; barIdx++) {
     const mEl = measures[barIdx];
     const barN = barIdx + 1; // sequential 1-based (Opsi A: pickup = bar 1)
@@ -2160,6 +2162,14 @@ function _mxlParsePart(partEl, clef, tmap, evStart) {
       if (el.tagName === 'forward') {
         const dur = parseInt(el.querySelector('duration')?.textContent || '0');
         posQl += divisions > 0 ? dur / divisions : 0;
+        continue;
+      }
+      // <direction>: capture dynamic markings (mf, f, p, mp, ff, pp, etc.)
+      if (el.tagName === 'direction') {
+        const dynEl = el.querySelector('direction-type > dynamics');
+        if (dynEl && dynEl.firstElementChild) {
+          pendingDynamic = dynEl.firstElementChild.tagName.toLowerCase();
+        }
         continue;
       }
       if (el.tagName !== 'note') continue;
@@ -2236,8 +2246,10 @@ function _mxlParsePart(partEl, clef, tmap, evStart) {
         if (tt === 'stop'  || tt === 'continue') tieStop  = true;
       }
 
-      // Articulations (staccato)
-      const arts = nEl.querySelector('notations > articulations > staccato') ? ['staccato'] : [];
+      // Articulations
+      const arts = [];
+      if (nEl.querySelector('notations > articulations > staccato')) arts.push('staccato');
+      if (nEl.querySelector('notations > articulations > accent'))   arts.push('accent');
 
       // Slur flags
       let slurStart = false, slurStop = false;
@@ -2258,9 +2270,10 @@ function _mxlParsePart(partEl, clef, tmap, evStart) {
         finger, tie_start:tieStart, tie_stop:tieStop,
         tolerance_cents: 50,
       };
-      if (arts.length) ev.articulations = arts;
-      if (slurStart)   ev.slur_start    = true;
-      if (slurStop)    ev.slur_stop     = true;
+      if (arts.length)    ev.articulations = arts;
+      if (slurStart)      ev.slur_start    = true;
+      if (slurStop)       ev.slur_stop     = true;
+      if (pendingDynamic) { ev.dynamic = pendingDynamic; pendingDynamic = null; }
       evs.push(ev);
     }
 
@@ -2286,7 +2299,14 @@ function _mxlBuildBars(events) {
   const map = {};
   events.forEach(ev => (map[ev.bar] = map[ev.bar] || []).push(ev));
   return Object.keys(map).map(Number).sort((a, b) => a - b)
-    .map(bar => ({ bar, beats: map[bar] }));
+    .map(bar => {
+      const beats = map[bar];
+      const barObj = { bar, beats };
+      // Lift ev.dynamic → bar.dynamics (renderer reads bar-level, not event-level)
+      const dynEv = beats.find(ev => ev.dynamic);
+      if (dynEv) { barObj.dynamics = dynEv.dynamic; beats.forEach(ev => delete ev.dynamic); }
+      return barObj;
+    });
 }
 
 // Build parts[] — same algorithm as build_parts_list() in mxl_to_song.py

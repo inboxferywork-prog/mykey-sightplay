@@ -190,8 +190,8 @@
     <div class="fab-song-list" id="fabSongList"></div>
   </div>
 
-  <!-- Tools panel (shown/hidden by ⚙ button) -->
-  <div class="fab-tools-panel" id="fabToolsPanel" aria-hidden="true">
+  <!-- Hand panel (shown/hidden by Hand button) -->
+  <div class="fab-tools-panel" id="fabHandPanel" aria-hidden="true">
     <div class="fab-tools-section" id="fabHandSection">
       <span class="fab-tools-label">Hand</span>
       <div class="fab-tools-hand-group">
@@ -200,6 +200,10 @@
         <button class="fab-tools-hand-btn" data-clef="bass">LH</button>
       </div>
     </div>
+  </div>
+
+  <!-- Segment panel (shown/hidden by Segment button) -->
+  <div class="fab-tools-panel" id="fabToolsPanel" aria-hidden="true">
     <div class="fab-tools-section" id="fabPartSection" style="display:none">
       <span class="fab-tools-label">Part</span>
       <select id="fabPartSelect" class="fab-tools-select"></select>
@@ -264,15 +268,15 @@
   <div class="fab-bar" id="fabBar">
     <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
     <div class="fab-bar-left">
-      <button class="fab-btn fab-tools-btn" id="fabToolsBtn" title="Hand &amp; Part">⚙</button>
+      <button class="fab-btn fab-practice-btn" id="fabPracticeBtn" title="Practice">⚑</button>
       <button class="fab-btn fab-song-btn" id="fabSongBtn" title="Select Song">♪</button>
-      <button class="fab-btn fab-reset-btn" id="fabBtnReset" title="Reset" disabled>⏹</button>
+      <button class="fab-btn fab-tools-btn" id="fabToolsBtn" title="Segment">≡</button>
     </div>
-    <button class="fab-btn fab-main-btn" id="fabBtnMain" title="Play / Pause">▶</button>
+    <button class="fab-btn fab-main-btn" id="fabBtnMain" title="Play">▶</button>
     <div class="fab-bar-right">
       <button class="fab-btn fab-tempo-btn" id="fabTempoBtn" title="Tempo">🏃</button>
-      <button class="fab-btn fab-notemode-btn" id="fabNoteModeBtn" title="Note name">🎵</button>
-      <button class="fab-btn fab-exit-btn" id="fabExitBtn" title="Exit compact mode">⊠</button>
+      <button class="fab-btn fab-notemode-btn" id="fabNoteModeBtn" title="Note name">&#x1F3B5;</button>
+      <button class="fab-btn fab-hand-btn" id="fabHandBtn" title="Hand">✋</button>
     </div>
   </div>
 
@@ -317,6 +321,11 @@ if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
 // Adds body.nk-portrait when height > width. CSS rules key off this class.
 // Rollback: delete this block + portrait-mode.css rules that use body.nk-portrait.
 // -----------------------------------------------------------------------
+function _portraitBarsPerRow() {
+  const vp = document.getElementById('notation-viewport');
+  return (vp && vp.clientWidth < 480) ? 2 : 4;
+}
+
 let _landscapeFabReady  = false;  // set true after engine instances are initialized
 let _landscapeFabActive = false;  // true when landscape FAB mode is currently active
 
@@ -408,6 +417,7 @@ let uiState            = 'idle'; // 'idle' | 'playing' | 'paused' | 'ended'
 let lastBar            = -1;    // for scroll-to-bar on bar change
 let activeSegmentIndex = -1;    // -1 = no segment active; ≥0 = index in resolvedSegments
 let _barDynamicsMap    = {};    // bar number → dynamics string, rebuilt on song load
+let _slurActive        = {};    // clef → bool, tracks whether we are inside a slur phrase
 
 // -----------------------------------------------------------------------
 // DOM refs
@@ -475,6 +485,7 @@ const songLoader = new SongLoader({
     if (window._ngrDiag) { window._ngrDiag.enterCount = 0; window._ngrDiag.exitCount = 0; } // DIAG reset
     currentSong = data;
     _barDynamicsMap = {};
+    _slurActive     = {};
     (data.score?.bars || []).forEach(b => { if (b.dynamics) _barDynamicsMap[b.bar] = b.dynamics; });
     _syncLearningControls();
     _updateProgress(0);
@@ -529,17 +540,19 @@ const _DYNAMIC_VOL = { pp: 0.20, p: 0.24, mp: 0.27, mf: 0.30, f: 0.34, ff: 0.38 
 // performedDurationMs — the audible sustain sent to the audio envelope.
 //   Scaled by tempoScale so audio fills the actual wall-clock note duration.
 //   Staccato: ~50% of wall-clock duration. Normal: full wall-clock duration.
-function _playNote(noteNames, writtenDurationMs, articulations, dynamic, tempoScale) {
+function _playNote(noteNames, writtenDurationMs, articulations, dynamic, tempoScale, isLegato = false, isSlurEnd = false) {
   if (!noteNames || !noteNames.length) return;
   const now = _audioCtx.currentTime;
 
   const scale = tempoScale > 0 ? tempoScale : 1.0;
   const isStaccato = Array.isArray(articulations) && articulations.includes('staccato');
+  const isAccent   = Array.isArray(articulations) && articulations.includes('accent');
   const wallClockMs = writtenDurationMs / scale;
   const performedDurationMs = isStaccato ? wallClockMs * 0.5 : wallClockMs;
   const dur = Math.max(0.05, performedDurationMs / 1000);
 
-  const vol = (_DYNAMIC_VOL[dynamic] ?? 0.30) / Math.sqrt(noteNames.length); // chord compensation
+  const baseVol = (_DYNAMIC_VOL[dynamic] ?? 0.30) * (isAccent ? 1.35 : 1.0);
+  const vol = baseVol / Math.sqrt(noteNames.length); // chord compensation
 
   noteNames.forEach(name => {
     const freq = _noteToHz(name);
@@ -552,17 +565,42 @@ function _playNote(noteNames, writtenDurationMs, articulations, dynamic, tempoSc
     osc.connect(gain);
     gain.connect(_audioCtx.destination);
 
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(vol, now + 0.006);
-
     if (isStaccato) {
       // Sharp cutoff at performed duration — audibly detached.
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(vol, now + 0.006);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.06);
       osc.start(now);
       osc.stop(now + dur + 0.08);
+    } else if (isLegato && !isSlurEnd) {
+      // Legato mid-slur: soft attack + sustain bridging to next note.
+      gain.gain.setValueAtTime(vol * 0.45, now);
+      gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(vol * 0.65, now + dur);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.05);
+      osc.start(now);
+      osc.stop(now + dur + 0.08);
+    } else if (isLegato && isSlurEnd) {
+      // Slur-end: soft attack + 3-segment duration-scaled envelope.
+      // Segment 1 (transient): vol → vol*0.6 in 80ms — initial brightness
+      // Segment 2 (sustain):   vol*0.6 → vol*0.35 over 85% of note — stays audible throughout
+      // Segment 3 (release):   vol*0.35 → ~0 in 200ms — phrase boundary
+      gain.gain.setValueAtTime(vol * 0.45, now);
+      gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(vol * 0.6, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(vol * 0.35, now + dur * 0.85);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.2);
+      osc.start(now);
+      osc.stop(now + dur + 0.3);
     } else {
-      // Piano-like envelope: fast attack, exponential decay + release.
-      gain.gain.exponentialRampToValueAtTime(vol * 0.4, now + 0.5);
+      // Normal piano-like envelope: duration-scaled 3-segment decay.
+      // Segment 1 (transient): vol → vol*0.6 in 80ms — bright attack
+      // Segment 2 (sustain):   vol*0.6 → vol*0.3 over 85% of note — stays audible
+      // Segment 3 (release):   vol*0.3 → ~0 in 400ms — natural piano tail
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(vol, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(vol * 0.6, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(vol * 0.3, now + dur * 0.85);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.4);
       osc.start(now);
       osc.stop(now + dur + 0.5);
@@ -610,7 +648,11 @@ runtime
     // 3. Audio — learning state decides (rest / tie_stop / filtered clef → silent).
     //    Articulation + tie semantics are preserved inside _playNote and learningState.
     if (learningState.shouldPlayAudio(ev)) {
-      _playNote(ev.notes, ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar], currentTempoScale);
+      if (ev.slur_start) _slurActive[ev.clef] = true;
+      const isLegato   = !!_slurActive[ev.clef];
+      const isSlurEnd  = !!ev.slur_stop;
+      _playNote(ev.notes, ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar], currentTempoScale, isLegato, isSlurEnd);
+      if (ev.slur_stop) _slurActive[ev.clef] = false;
     }
 
     // 4. Keyboard highlight state — hook for future visual piano keyboard.
@@ -702,7 +744,7 @@ learningRow.addEventListener('change', e => {
     const visibleClefs = clef === 'both' ? null : [clef];
     // Loop viewport takes priority over segment scope for rendering
     const visibleBars = practiceLoop.active ? practiceLoop.bars : (seg ? seg.bars : null);
-    renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs, barsPerRow: _landscapeFabActive ? 'all' : undefined });
+    renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs, barsPerRow: _landscapeFabActive ? 'all' : _portraitBarsPerRow() });
     if (_landscapeFabActive) {
       viewportManager.setNaturalWidth(renderer.canvasWidth);
       viewportManager.fitHeight(renderer.rowHeight + 20);
@@ -878,7 +920,7 @@ function _activateSegment(index) {
   if (currentSong) {
     const clef = learningState.clefFilter;
     const visibleClefs = clef === 'both' ? null : [clef];
-    renderer.render(currentSong, scoreEl, { visibleBars: seg.bars, visibleClefs });
+    renderer.render(currentSong, scoreEl, { visibleBars: seg.bars, visibleClefs, barsPerRow: _portraitBarsPerRow() });
     _applyBeatDim(currentSong, seg);
   }
 
@@ -922,7 +964,7 @@ function _deactivateSegment() {
   if (currentSong) {
     const clef = learningState.clefFilter;
     const visibleClefs = clef === 'both' ? null : [clef];
-    renderer.render(currentSong, scoreEl, { visibleClefs });  // no visibleBars = all bars
+    renderer.render(currentSong, scoreEl, { visibleClefs, barsPerRow: _portraitBarsPerRow() });  // no visibleBars = all bars
   }
 
   _syncSegmentsBar();
@@ -954,7 +996,7 @@ function _activatePracticeLoop(params) {
   // Respect current clef filter unless loop specifies its own visible_clefs
   const visibleClefs = practiceLoop.visible_clefs
     || (learningState.clefFilter !== 'both' ? [learningState.clefFilter] : null);
-  renderer.render(currentSong, scoreEl, { visibleBars: practiceLoop.bars, visibleClefs });
+  renderer.render(currentSong, scoreEl, { visibleBars: practiceLoop.bars, visibleClefs, barsPerRow: _portraitBarsPerRow() });
   if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
 
   _updateProgress(0);
@@ -981,11 +1023,11 @@ function _deactivatePracticeLoop() {
   const visibleClefs = clef === 'both' ? null : [clef];
 
   if (seg) {
-    renderer.render(currentSong, scoreEl, { visibleBars: seg.bars, visibleClefs });
+    renderer.render(currentSong, scoreEl, { visibleBars: seg.bars, visibleClefs, barsPerRow: _portraitBarsPerRow() });
     _applyBeatDim(currentSong, seg);
     if (seg.start_bar != null) renderer.scrollToBar(seg.start_bar);
   } else {
-    renderer.render(currentSong, scoreEl, { visibleClefs });
+    renderer.render(currentSong, scoreEl, { visibleClefs, barsPerRow: _portraitBarsPerRow() });
   }
 
   _updateProgress(0);
@@ -1690,13 +1732,12 @@ document.getElementById('btnVpFullscreen').onclick = () => {
 viewportManager.fitWidth();
 _vpUpdateScaleLabel(viewportManager.scale);
 
-// FAB mode toggle — header button enters compact notation-first mode.
-// Exit is via the ⊠ button inside the FAB bar itself.
-document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
-  document.body.classList.toggle('nk-fab-mode');
-  _syncLandscapeFab(true);
-  _vpUpdateScaleLabel(viewportManager.scale);
-});
+// FAB mode toggle — disabled. Floating mode is now always active (product decision).
+// document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
+//   document.body.classList.toggle('nk-fab-mode');
+//   _syncLandscapeFab(true);
+//   _vpUpdateScaleLabel(viewportManager.scale);
+// });
 
 // -----------------------------------------------------------------------
 // FAB overlay wiring — proxy + MutationObserver pattern.
@@ -1708,7 +1749,8 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   // Only wire when the class was added on page load. The toggle button
   // can later add/remove the class dynamically; observers remain active.
   const fabBtnMain    = document.getElementById('fabBtnMain');
-  const fabBtnReset   = document.getElementById('fabBtnReset');
+  const fabPracticeBtn = document.getElementById('fabPracticeBtn');
+  const fabHandBtn    = document.getElementById('fabHandBtn');
   const fabTempoBtn   = document.getElementById('fabTempoBtn');
   const fabTempoPick  = document.getElementById('fabTempoPick');
   const fabProgressWr = document.getElementById('fabProgressWrap');
@@ -1717,20 +1759,19 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   const fabSongList   = document.getElementById('fabSongList');
   const fabSongBtn    = document.getElementById('fabSongBtn');
   const fabSongClose  = document.getElementById('fabSongClose');
-  const fabExitBtn    = document.getElementById('fabExitBtn');
   const origTempoSel  = document.getElementById('tempoSelect');
 
   if (!fabBtnMain) return;  // overlay not in DOM
 
-  // --- Proxy clicks to original handlers ---
-  fabBtnMain.onclick  = () => btnMain.onclick?.();
-  fabBtnReset.onclick = () => btnReset.onclick?.();
-
-  fabExitBtn.onclick = () => {
-    document.body.classList.remove('nk-fab-mode');
-    _syncLandscapeFab(true);
-    _vpUpdateScaleLabel(viewportManager.scale);
+  // --- Transport: 3-state (Idle→Playing→Paused→Idle) ---
+  // Paused state shows ■ Stop and triggers reset rather than resume.
+  fabBtnMain.onclick = () => {
+    if (uiState === 'paused') btnReset.onclick?.();
+    else btnMain.onclick?.();
   };
+
+  // Practice — placeholder, no functionality yet.
+  fabPracticeBtn.onclick = () => {};
 
   // --- Tempo picker ---
   function _syncTempoPick() {
@@ -1792,22 +1833,16 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
 
   // --- MutationObservers: keep FAB state mirrored ---
 
-  // Main button label + disabled state
+  // Main button label + disabled state — 3-state transport labels
   const _syncMain = () => {
-    const t = btnMain.textContent.trim();
-    fabBtnMain.textContent = t.startsWith('⏸') ? '⏸' : '▶';
-    fabBtnMain.disabled    = btnMain.disabled;
+    if (uiState === 'playing') fabBtnMain.textContent = '❚❚';
+    else if (uiState === 'paused') fabBtnMain.textContent = '■';
+    else fabBtnMain.textContent = '▶';
+    fabBtnMain.disabled = btnMain.disabled;
   };
   _syncMain();
   new MutationObserver(_syncMain).observe(btnMain, {
     childList: true, subtree: true, characterData: true, attributes: true,
-  });
-
-  // Reset button disabled state
-  const _syncReset = () => { fabBtnReset.disabled = btnReset.disabled; };
-  _syncReset();
-  new MutationObserver(_syncReset).observe(btnReset, {
-    attributes: true, attributeFilter: ['disabled'],
   });
 
   // Progress fill width
@@ -1869,11 +1904,17 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
   // ---- Tools panel (hand + part selection) --------------------------------
 
   const fabToolsBtn   = document.getElementById('fabToolsBtn');
+  const fabHandPanel  = document.getElementById('fabHandPanel');
   const fabToolsPanel = document.getElementById('fabToolsPanel');
   const fabPartSect   = document.getElementById('fabPartSection');
   const fabPartSel    = document.getElementById('fabPartSelect');
   const fabHandBtns   = Array.from(document.querySelectorAll('#fabHandSection .fab-tools-hand-btn'));
   const origHandSel   = document.getElementById('handSelect');
+
+  function _fabCloseHand() {
+    fabHandPanel.classList.remove('fab-panel-open');
+    fabHandPanel.setAttribute('aria-hidden', 'true');
+  }
 
   function _fabCloseTools() {
     fabToolsPanel.classList.remove('fab-panel-open');
@@ -1910,7 +1951,7 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
         origHandSel.dispatchEvent(new Event('change', { bubbles: true }));
       }
       _fabSyncHandBtns();
-      _fabCloseTools();
+      _fabCloseHand();
     };
   });
 
@@ -1938,9 +1979,9 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     if (fabToolsPanel.classList.contains('fab-panel-open')) {
       _fabCloseTools();
     } else {
-      _fabSyncHandBtns();
       _fabSyncPart();
-      _fabClosePanel();  // close song panel if open
+      _fabClosePanel();
+      _fabCloseHand();
       fabTempoPick?.classList.remove('fab-panel-open');
       fabTempoPick?.setAttribute('aria-hidden', 'true');
       document.getElementById('fabNoteModePick')?.classList.remove('fab-panel-open');
@@ -1951,10 +1992,28 @@ document.getElementById('btnFloatToggle')?.addEventListener('click', () => {
     }
   };
 
-  // Close tools panel on score or keyboard interaction
+  // Hand button — opens the Hand panel only.
+  if (fabHandBtn) fabHandBtn.onclick = () => {
+    if (fabHandPanel.classList.contains('fab-panel-open')) {
+      _fabCloseHand();
+    } else {
+      _fabSyncHandBtns();
+      _fabClosePanel();
+      _fabCloseTools();
+      fabTempoPick?.classList.remove('fab-panel-open');
+      fabTempoPick?.setAttribute('aria-hidden', 'true');
+      document.getElementById('fabNoteModePick')?.classList.remove('fab-panel-open');
+      document.getElementById('fabNoteModePick')?.setAttribute('aria-hidden', 'true');
+      fabHandPanel.classList.add('fab-panel-open');
+      fabHandPanel.setAttribute('aria-hidden', 'false');
+    }
+  };
+
+  // Close all panels on score or keyboard interaction
   document.querySelector('.score-card')?.addEventListener('pointerdown', () => {
     _fabClosePanel();
     _fabCloseTools();
+    _fabCloseHand();
   }, { passive: true });
 
   // _syncKbHeight hoisted to module scope — see below IIFE
@@ -2106,7 +2165,7 @@ function _syncLandscapeFab(force) {
   const seg          = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
   const visibleBars  = practiceLoop.active ? practiceLoop.bars : (seg ? seg.bars : null);
 
-  renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs, barsPerRow: isNow ? 'all' : undefined });
+  renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs, barsPerRow: isNow ? 'all' : _portraitBarsPerRow() });
 
   if (isNow) {
     viewportManager.setNaturalWidth(renderer.canvasWidth);

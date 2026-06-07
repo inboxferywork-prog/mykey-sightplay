@@ -259,7 +259,8 @@
             "tolerance_cents": 50,
             "pair_with_id": "ev_000006"
           }
-        ]
+        ],
+        "dynamics": "mf"
       },
       {
         "bar": 3,
@@ -570,6 +571,9 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50,
+            "articulations": [
+              "accent"
+            ],
             "pair_with_id": "ev_000028"
           },
           {
@@ -662,7 +666,8 @@
             "tolerance_cents": 50,
             "pair_with_id": "ev_000027"
           }
-        ]
+        ],
+        "dynamics": "f"
       },
       {
         "bar": 7,
@@ -683,6 +688,9 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50,
+            "articulations": [
+              "accent"
+            ],
             "pair_with_id": "ev_000034"
           },
           {
@@ -796,6 +804,9 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50,
+            "articulations": [
+              "accent"
+            ],
             "pair_with_id": "ev_000040"
           },
           {
@@ -1104,7 +1115,8 @@
             "tolerance_cents": 50,
             "pair_with_id": "ev_000051"
           }
-        ]
+        ],
+        "dynamics": "mf"
       },
       {
         "bar": 11,
@@ -1415,6 +1427,9 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50,
+            "articulations": [
+              "accent"
+            ],
             "pair_with_id": "ev_000073"
           },
           {
@@ -1507,7 +1522,8 @@
             "tolerance_cents": 50,
             "pair_with_id": "ev_000072"
           }
-        ]
+        ],
+        "dynamics": "f"
       },
       {
         "bar": 15,
@@ -1528,6 +1544,9 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50,
+            "articulations": [
+              "accent"
+            ],
             "pair_with_id": "ev_000079"
           },
           {
@@ -1641,6 +1660,9 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50,
+            "articulations": [
+              "accent"
+            ],
             "pair_with_id": "ev_000085"
           },
           {
@@ -1754,6 +1776,9 @@
             "tie_start": false,
             "tie_stop": false,
             "tolerance_cents": 50,
+            "articulations": [
+              "accent"
+            ],
             "pair_with_id": "ev_000090"
           },
           {
