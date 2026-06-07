@@ -323,9 +323,11 @@ if (FLOAT_CONTROLS) document.body.classList.add('nk-float-controls');
 // -----------------------------------------------------------------------
 function _portraitBarsPerRow() {
   const vp = document.getElementById('notation-viewport');
-  return (vp && vp.clientWidth < 480) ? 2 : 4;
+  // EXPERIMENT Very Large Notation: 1 bar/row on phones, 2 on wider portrait
+  return (vp && vp.clientWidth < 480) ? 1 : 2;
 }
 
+let _lastEventOfBar = new Map();  // bar number → t_ms of last event (for lookahead scroll)
 let _landscapeFabReady  = false;  // set true after engine instances are initialized
 let _landscapeFabActive = false;  // true when landscape FAB mode is currently active
 
@@ -489,6 +491,7 @@ const songLoader = new SongLoader({
     _setUIState('idle');
     actionNote.textContent = '';
     lastBar = -1;
+    _lastEventOfBar = new Map();
     practiceLoop.deactivate();
     _loopSelect.mode = 'off';
     _loopSelect.startId = null;
@@ -501,6 +504,12 @@ const songLoader = new SongLoader({
     currentSong = data;
     _barDynamicsMap = {};
     _slurActive     = {};
+    _lastEventOfBar = new Map();
+    for (const bar of (data.score?.bars || [])) {
+      if (bar.beats?.length) {
+        _lastEventOfBar.set(bar.bar, Math.max(...bar.beats.map(e => e.t_ms)));
+      }
+    }
     (data.score?.bars || []).forEach(b => { if (b.dynamics) _barDynamicsMap[b.bar] = b.dynamics; });
     _syncLearningControls();
     _updateProgress(0);
@@ -648,8 +657,11 @@ runtime
     //    If this ordering ever changed, the scroll would jump to the wrong bar.
     if (ev.bar !== lastBar) {
       lastBar = ev.bar;
-      readingWindow.scrollToBar(ev.bar, scoreEl);
       _updateStatusBarNum(ev.bar);
+    }
+    // Lookahead scroll: on last event of bar N, scroll to show bar N+1
+    if (_lastEventOfBar.size && ev.t_ms === _lastEventOfBar.get(ev.bar)) {
+      readingWindow.scrollToBar(ev.bar + 1, scoreEl);
     }
 
     // 2. SVG highlight — only for clefs active in current learning filter.
@@ -2187,7 +2199,11 @@ function _syncLandscapeFab(force) {
   // (prevents double-render when a song loads while not in landscape FAB mode).
   const needsRender = changed || (force && isNow);
   if (!currentSong || !needsRender) {
-    if (!isNow && viewportManager.isFitMode) viewportManager.fitWidth();
+    if (!isNow && viewportManager.isFitMode) {
+      // EXPERIMENT: sync to actual canvas width before fitting (may be 480 for 1-bar portrait)
+      if (renderer.canvasWidth) viewportManager.setNaturalWidth(renderer.canvasWidth);
+      viewportManager.fitWidth();
+    }
     return;
   }
 
@@ -2202,7 +2218,8 @@ function _syncLandscapeFab(force) {
     viewportManager.setNaturalWidth(renderer.canvasWidth);
     viewportManager.fitHeight(renderer.rowHeight + 20);
   } else {
-    viewportManager.setNaturalWidth(960);
+    // EXPERIMENT Very Large Notation: use actual canvas width (may be 480 for 1-bar portrait)
+    viewportManager.setNaturalWidth(renderer.canvasWidth);
     viewportManager.fitWidth();
   }
 }

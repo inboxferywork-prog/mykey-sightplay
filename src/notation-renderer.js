@@ -151,14 +151,19 @@ class NotationRenderer {
     // Layout constants
     const barsPerRowOpt = this._renderOpts?.barsPerRow;
     const BARS_PER_ROW  = barsPerRowOpt === 'all' ? Math.max(1, bars.length) : (typeof barsPerRowOpt === 'number' ? barsPerRowOpt : 4);
-    const CANVAS_W      = barsPerRowOpt === 'all' ? Math.max(960, bars.length * 240) : 960;
+    // EXPERIMENT Very Large Notation: 1-bar uses 480px canvas → CSS scale ≈0.81× (vs 0.41× at 960)
+    const CANVAS_W      = barsPerRowOpt === 'all' ? Math.max(960, bars.length * 240)
+                        : barsPerRowOpt === 1 ? 480
+                        : 960;
     const MARGIN_X     = 20;   // 20px left margin — brace extends ~16px left of stave x; 10px was insufficient
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
-    const BASS_Y_OFF   = showBoth ? 135 : 20;       // bass at y+135 (grand staff) OR y+20 (solo)
+    const BASS_Y_OFF   = showBoth ? (barsPerRowOpt === 1 ? 110 : 135) : 20;  // portrait 1-bar: tighter grand staff
     // 2-bar only: pick row height from 3 density levels using max _barNoteWeight.
     // All values reduced ~20% from initial experiment for tighter vertical rhythm.
     const _2barMaxW = barsPerRowOpt === 2 ? Math.max(...bars.map(_barNoteWeight)) : 0;
-    const ROW_H     = barsPerRowOpt === 2
+    const ROW_H     = barsPerRowOpt === 1
+      ? (showBoth ? 210 : 105)                        // EXPERIMENT Very Large Notation: 1-bar portrait rows
+      : barsPerRowOpt === 2
       ? (_2barMaxW > 7.0 ? (showBoth ? 355 : 155)   // high density
        : _2barMaxW > 4.5 ? (showBoth ? 275 : 120)   // medium density
        :                   (showBoth ? 240 : 105))   // low density
