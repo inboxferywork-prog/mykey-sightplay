@@ -502,6 +502,9 @@ const songLoader = new SongLoader({
     _vpUpdateScaleLabel(viewportManager.scale);
   },
   onTempoScaleUpdate(scale) { currentTempoScale = scale; },
+  getRenderOpts() {
+    return { barsPerRow: _landscapeFabActive ? 'all' : _portraitBarsPerRow() };
+  },
 });
 
 // -----------------------------------------------------------------------

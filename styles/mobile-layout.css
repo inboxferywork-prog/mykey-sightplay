@@ -315,3 +315,31 @@
     right: calc(10px + var(--vp-safe-right));
   }
 }
+
+/* ================================================================
+   Optical scale experiment — note visual weight on mobile.
+
+   Goal: note heads feel less tiny on small screens after fitWidth()
+   scales the 960px canvas down to ~400px viewport width.
+
+   Note heads are SMuFL path glyphs inside VexFlow SVG groups.
+   Stems are <path> elements; CSS stroke-width overrides the SVG
+   presentation attribute (CSS wins over inline attr in SVG).
+   Staff line thinning is handled via Stave line_config in renderer.
+
+   Remove this section if the experiment is abandoned.
+   ================================================================ */
+
+/* Note heads — scale up 12% from the glyph's own bounding box center. */
+.score-card svg .vf-notehead,
+.score-card svg .NoteHead {
+  transform-box: fill-box;
+  transform-origin: center center;
+  transform: scale(1.12);
+}
+
+/* Stems — ~10% thicker. */
+.score-card svg .vf-stem path,
+.score-card svg .Stem path {
+  stroke-width: 1.65;
+}

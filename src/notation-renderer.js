@@ -156,14 +156,18 @@ class NotationRenderer {
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
     const BASS_Y_OFF   = showBoth ? 135 : 20;       // bass at y+135 (grand staff) OR y+20 (solo)
     // 2-bar only: pick row height from 3 density levels using max _barNoteWeight.
-    // 4-bar and landscape ('all') are unchanged.
+    // All values reduced ~20% from initial experiment for tighter vertical rhythm.
     const _2barMaxW = barsPerRowOpt === 2 ? Math.max(...bars.map(_barNoteWeight)) : 0;
     const ROW_H     = barsPerRowOpt === 2
-      ? (_2barMaxW > 7.0 ? (showBoth ? 440 : 190)   // high density
-       : _2barMaxW > 4.5 ? (showBoth ? 360 : 155)   // medium density
-       :                   (showBoth ? 300 : 130))   // low density
-      : (showBoth ? 280 : 120);                      // 4-bar / landscape: unchanged
+      ? (_2barMaxW > 7.0 ? (showBoth ? 355 : 155)   // high density
+       : _2barMaxW > 4.5 ? (showBoth ? 275 : 120)   // medium density
+       :                   (showBoth ? 240 : 105))   // low density
+      : (showBoth ? 225 : 100);                      // 4-bar / landscape
     this._rowH = ROW_H;  // expose to _drawSlurs — single-clef uses 120, grand staff uses 280
+
+    // Optical scale experiment: thinner staff lines so note heads feel more dominant.
+    // Passed as 4th arg to every Stave constructor. Silently no-op if VF5 ignores width.
+    const STAVE_OPTS = { line_config: Array(5).fill({ visible: true, width: 0.9 }) };
 
     const rowLayout        = _computeRowLayout(bars, BARS_PER_ROW);  // filtered bars
     const numRows          = rowLayout.length;
@@ -201,7 +205,7 @@ class NotationRenderer {
         let bass   = null;
 
         if (showTreble) {
-          treble = new VF.Stave(x, rowY + TREBLE_Y_OFF, barW);
+          treble = new VF.Stave(x, rowY + TREBLE_Y_OFF, barW, STAVE_OPTS);
           if (isFirstBar) {
             treble.addClef('treble').addKeySignature(meta.key_signature)
                   .addTimeSignature(`${numBeats}/${beatValue}`);
@@ -232,7 +236,7 @@ class NotationRenderer {
 
         if (showBass) {
           const bassY = rowY + BASS_Y_OFF;
-          bass = new VF.Stave(x, bassY, barW);
+          bass = new VF.Stave(x, bassY, barW, STAVE_OPTS);
           if (isFirstBar) {
             bass.addClef('bass').addKeySignature(meta.key_signature)
                 .addTimeSignature(`${numBeats}/${beatValue}`);

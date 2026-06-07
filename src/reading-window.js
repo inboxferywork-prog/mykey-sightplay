@@ -174,17 +174,29 @@ class ContextAwareReadingWindow {
 
     // -----------------------------------------------------------------------
     // Horizontal mode — landscape FAB single-row layout
-    // Same dead-zone / reading-position model applied to the X axis.
+    //
+    // Zoom-aware formula (effectiveBottom / effectiveReadPos) intentionally
+    // skipped here: fitHeight() sets scale 1.5–2.0 in landscape FAB, which
+    // would tighten the dead zone to ~0.54 and pull readPos to ~0.26 —
+    // causing over-frequent, large-delta scrolls that feel fast and jumpy.
+    // Fixed parameters below are tuned for horizontal reading rhythm:
+    //   hDeadRight  0.70  — bar can drift to 70% before scroll fires (wider rest zone)
+    //   hReadPos    0.35  — target anchor at 35% from left (smaller jump per scroll)
+    // Rollback / retune: change only these two numbers.
     // -----------------------------------------------------------------------
     if (this._axis === 'horizontal') {
+      const hDeadRight = 0.70;
+      const hReadPos   = 0.35;
       const vpW = this._viewportEl.clientWidth;
       if (vpW <= 0) return;
       const barVisualLeft = barRect.left - vpRect.left;
       const fraction      = barVisualLeft / vpW;
-      if (fraction >= this.deadZoneTop && fraction <= effectiveBottom) return;
-      const delta          = barVisualLeft - vpW * effectiveReadPos;
+      if (fraction >= this.deadZoneTop && fraction <= hDeadRight) return;
+      const delta          = barVisualLeft - vpW * hReadPos;
       const targetScrollLeft = Math.max(0, this._viewportEl.scrollLeft + delta);
-      this._viewportEl.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+      // 'instant' — note sedang highlight tidak boleh bergeser selama animasi scroll.
+      // 'smooth' menyebabkan bar aktif sliding ke kiri selama ~300-500ms saat masih menyala.
+      this._viewportEl.scrollTo({ left: targetScrollLeft, behavior: 'instant' });
       return;
     }
 

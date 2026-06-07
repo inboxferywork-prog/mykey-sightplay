@@ -38,6 +38,7 @@ class SongLoader {
     this._onSuccess          = config.onSuccess          || (() => {});
     this._onError            = config.onError            || (() => {});
     this._onTempoScaleUpdate = config.onTempoScaleUpdate || (() => {});
+    this._getRenderOpts      = config.getRenderOpts      || (() => ({}));
     this._selectedPart       = '';
     this._resolvedSegments   = [];
   }
@@ -63,7 +64,7 @@ class SongLoader {
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
         this._runtime.load(data);
-        this._renderer.render(data, this._el.scoreEl);
+        this._renderer.render(data, this._el.scoreEl, this._getRenderOpts());
 
         const m = data.meta;
         this._el.songTitle.textContent   = m.title;
