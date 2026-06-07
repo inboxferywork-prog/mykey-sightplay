@@ -810,3 +810,14 @@ body.nk-fab-mode:not(.nk-portrait) .kb-wrap {
   border-right:  none;
   border-bottom: none;
 }
+
+/* Landscape FAB bar — auto-hide during playback */
+body.nk-fab-mode:not(.nk-portrait) .fab-bar {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+body.nk-fab-mode:not(.nk-portrait).nk-fab-bar-hidden .fab-bar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(10px);
+}

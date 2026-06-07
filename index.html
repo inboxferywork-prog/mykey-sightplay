@@ -329,6 +329,21 @@ function _portraitBarsPerRow() {
 let _landscapeFabReady  = false;  // set true after engine instances are initialized
 let _landscapeFabActive = false;  // true when landscape FAB mode is currently active
 
+// Landscape FAB bar auto-hide during playback
+let _fabBarHideTimer = null;
+function _fabBarShow() {
+  clearTimeout(_fabBarHideTimer); _fabBarHideTimer = null;
+  document.body.classList.remove('nk-fab-bar-hidden');
+}
+function _fabBarHide() {
+  clearTimeout(_fabBarHideTimer); _fabBarHideTimer = null;
+  document.body.classList.add('nk-fab-bar-hidden');
+}
+function _fabBarScheduleHide(ms) {
+  clearTimeout(_fabBarHideTimer);
+  _fabBarHideTimer = setTimeout(() => { if (uiState === 'playing') _fabBarHide(); }, ms);
+}
+
 function _syncPortrait() {
   const isPortrait = window.innerHeight > window.innerWidth;
   document.body.classList.toggle('nk-portrait', isPortrait);
@@ -1110,6 +1125,7 @@ function _setUIState(state) {
       btnMain.disabled    = false;
       btnReset.disabled   = true;
       actionNote.textContent = '';
+      _fabBarShow();
       break;
     }
     case 'playing':
@@ -1117,18 +1133,21 @@ function _setUIState(state) {
       btnMain.disabled    = false;
       btnReset.disabled   = false;
       actionNote.textContent = '';
+      if (_landscapeFabActive) _fabBarHide();
       break;
     case 'paused':
       btnMain.textContent = '▶ Resume';
       btnMain.disabled    = false;
       btnReset.disabled   = false;
       actionNote.textContent = '';
+      _fabBarShow();
       break;
     case 'ended':
       btnMain.textContent    = '↺ Replay';
       btnMain.disabled       = false;
       btnReset.disabled      = false;
       actionNote.textContent = '✓ Explore complete!';
+      _fabBarShow();
       break;
   }
 }
@@ -2072,6 +2091,13 @@ _vpUpdateScaleLabel(viewportManager.scale);
     if (!ngrPartPick.contains(e.target) && e.target !== ngrMetaPartEl) _ngrPartPickClose();
   }, { passive: true });
 
+  // Landscape playback: tap anywhere to reveal FAB bar, auto-hide after 3s of no interaction
+  document.addEventListener('pointerdown', () => {
+    if (!_landscapeFabActive || uiState !== 'playing') return;
+    _fabBarShow();
+    _fabBarScheduleHide(3000);
+  }, { passive: true });
+
   // -----------------------------------------------------------------------
   // NGR Bar input — click the yellow Bar value to jump to a specific bar
   // -----------------------------------------------------------------------
@@ -2148,9 +2174,11 @@ function _syncLandscapeFab(force) {
       // Compact keyboard: W=22 H=58 BW=13 BH=36 LABEL_H=16 → total visual 74px
       keyboardViz.setDimensions(22, 58, 13, 36, 16);
       readingWindow.setScrollAxis('horizontal');
+      if (uiState === 'playing') _fabBarHide();
     } else {
       keyboardViz.restoreDefaults();
       readingWindow.setScrollAxis('vertical');
+      _fabBarShow();
     }
     setTimeout(_syncKbHeight, 60);
   }
