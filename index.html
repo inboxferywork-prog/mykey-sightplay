@@ -2191,6 +2191,10 @@ function _syncLandscapeFab(force) {
       keyboardViz.restoreDefaults();
       readingWindow.setScrollAxis('vertical');
       _fabBarShow();
+      // Reset horizontal scroll accumulated during landscape mode; without this
+      // the viewport stays shifted left in portrait, hiding bar(s) at the left edge.
+      const _vpEl = document.getElementById('notation-viewport');
+      if (_vpEl) _vpEl.scrollLeft = 0;
     }
     setTimeout(_syncKbHeight, 60);
   }
