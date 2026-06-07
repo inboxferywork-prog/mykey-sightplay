@@ -1,9 +1,9 @@
 {
   "meta": {
     "id": "untitled_score",
-    "title": "Waltz",
+    "title": "Waltz book 1",
     "composer": "Composer / arranger",
-    "level": "beginner",
+    "level": "early_beginner",
     "bpm": 80,
     "time_signature": [
       3,
@@ -1850,7 +1850,7 @@
       "segment_id": "seg_phrase_a",
       "label": "Frasa A",
       "start_bar": 1,
-      "start_beat": 1,
+      "start_beat": 3,
       "end_bar": 6,
       "end_beat": 1,
       "visible_clefs": [
