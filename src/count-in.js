@@ -24,8 +24,8 @@ const _SEQUENCES = {
   '6/8': [1, 2, 3, 4, 5, 6],
 };
 
-// Index = beat number - 1
-const _COLORS = ['#4caf50', '#2196f3', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4'];
+// Index = beat number - 1  (1=merah, 2=biru, 3=orange, 4=hijau, 5=pink, 6=tosca)
+const _COLORS = ['#f44336', '#2196f3', '#ff9800', '#4caf50', '#ec407a', '#00bcd4'];
 
 class CountIn {
 
@@ -34,6 +34,7 @@ class CountIn {
     this._overlayEl = null;
     this._timer     = null;
     this._active    = false;
+    this._audioCtx  = null;
   }
 
   /**
@@ -96,14 +97,79 @@ class CountIn {
         return;
       }
       const pill = pills[idx];
-      pill.style.setProperty('--pill-color', _COLORS[(beats[idx] - 1) % _COLORS.length]);
+      const beatNum = beats[idx];
+      pill.style.setProperty('--pill-color', _COLORS[(beatNum - 1) % _COLORS.length]);
       pill.classList.add('nk-countin-pill--active');
+      this._playBeat(beatNum);
       idx++;
       this._timer = setTimeout(tick, beatMs);
     };
 
-    // 80ms settle delay — lets instant scroll complete before first pill appears
-    this._timer = setTimeout(tick, 80);
+    // 2-second preview: pills are visible (transparent) before counting starts.
+    // Also gives scroll enough time to settle.
+    this._timer = setTimeout(tick, 2000);
+  }
+
+  _playBeat(beatNum) {
+    try {
+      if (!this._audioCtx) {
+        this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = this._audioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const now      = ctx.currentTime;
+      const isAccent = (beatNum === 1);
+
+      // Wood block: fundamental + slightly inharmonic overtone + noise transient
+
+      // --- fundamental body ---
+      const fundamental = isAccent ? 680 : 880;
+      const osc1  = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(fundamental, now);
+      gain1.gain.setValueAtTime(isAccent ? 0.8 : 0.55, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc1.start(now);
+      osc1.stop(now + 0.12);
+
+      // --- inharmonic overtone (wooden hollow character) ---
+      const osc2  = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(fundamental * 2.76, now);
+      gain2.gain.setValueAtTime(isAccent ? 0.35 : 0.22, now);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc2.start(now);
+      osc2.stop(now + 0.05);
+
+      // --- attack noise burst (the "clack" of the stick) ---
+      const bufLen  = Math.ceil(ctx.sampleRate * 0.018);
+      const buf     = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const data    = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufLen);
+      }
+      const noise  = ctx.createBufferSource();
+      noise.buffer = buf;
+      const bpf    = ctx.createBiquadFilter();
+      bpf.type     = 'bandpass';
+      bpf.frequency.value = 1400;
+      bpf.Q.value  = 0.8;
+      const gainN  = ctx.createGain();
+      noise.connect(bpf);
+      bpf.connect(gainN);
+      gainN.connect(ctx.destination);
+      gainN.gain.setValueAtTime(isAccent ? 0.55 : 0.35, now);
+      noise.start(now);
+    } catch (_) {
+      // audio not available — silent fallback
+    }
   }
 
   _remove() {

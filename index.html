@@ -604,6 +604,20 @@ function _audioResume() {
   if (_audioCtx.state === 'suspended') _audioCtx.resume();
 }
 
+// Audio schedule anchor — maps a song t_ms to an absolute AudioContext time.
+// Set right after every runtime.play() call so each note's audio is scheduled
+// at the correct offset from the playback origin, even when the first RAF tick
+// fires late and multiple events land in the same engine tick.
+let _playbackAudioOrigin = null; // { ctxTime, songMs, tempoScale }
+
+function _audioScheduleAt(songTime_ms) {
+  if (!_playbackAudioOrigin) return _audioCtx.currentTime + 0.008;
+  const elapsedMs  = (songTime_ms - _playbackAudioOrigin.songMs) / _playbackAudioOrigin.tempoScale;
+  const targetCtx  = _playbackAudioOrigin.ctxTime + elapsedMs / 1000;
+  // Never schedule in the past; 3ms minimum lookahead keeps the audio engine happy
+  return Math.max(_audioCtx.currentTime + 0.003, targetCtx);
+}
+
 function _noteToHz(name) {
   const m = name.match(/^([A-G])(#{1,2}|b{1,2})?(\d+)$/);
   if (!m) return null;
@@ -630,9 +644,9 @@ const _DYNAMIC_VOL = { pp: 0.20, p: 0.24, mp: 0.27, mf: 0.30, f: 0.34, ff: 0.38 
 // performedDurationMs — the audible sustain sent to the audio envelope.
 //   Scaled by tempoScale so audio fills the actual wall-clock note duration.
 //   Staccato: ~50% of wall-clock duration. Normal: full wall-clock duration.
-function _playNote(noteNames, writtenDurationMs, articulations, dynamic, tempoScale, isLegato = false, isSlurEnd = false) {
+function _playNote(noteNames, writtenDurationMs, articulations, dynamic, tempoScale, isLegato = false, isSlurEnd = false, scheduleAt) {
   if (!noteNames || !noteNames.length) return;
-  const now = _audioCtx.currentTime;
+  const now = scheduleAt ?? (_audioCtx.currentTime + 0.008);
 
   const scale = tempoScale > 0 ? tempoScale : 1.0;
   const isStaccato = Array.isArray(articulations) && articulations.includes('staccato');
@@ -752,7 +766,7 @@ runtime
       if (ev.slur_start) _slurActive[ev.clef] = true;
       const isLegato   = !!_slurActive[ev.clef];
       const isSlurEnd  = !!ev.slur_stop;
-      _playNote(ev.notes, ev.tied_total_ms ?? ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar], currentTempoScale, isLegato, isSlurEnd);
+      _playNote(ev.notes, ev.tied_total_ms ?? ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar], currentTempoScale, isLegato, isSlurEnd, _audioScheduleAt(ev.t_ms));
       if (ev.slur_stop) _slurActive[ev.clef] = false;
     }
 
@@ -805,6 +819,7 @@ runtime
         if (!practiceLoop.active || !practiceLoop.repeat_enabled) { _setUIState('ended'); return; }
         runtime.stop();
         runtime.play({ start_ms: practiceLoop.start_ms, end_ms: practiceLoop.end_ms, tempoScale: currentTempoScale });
+        _playbackAudioOrigin = { ctxTime: _audioCtx.currentTime + 0.025, songMs: runtime.scopeStart, tempoScale: currentTempoScale };
         if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
         _setUIState('playing');
       }, 350);
@@ -1305,6 +1320,7 @@ btnMain.onclick = () => {
       tempoScale: currentTempoScale,
       onComplete: () => {
         runtime.play(playParams);
+        _playbackAudioOrigin = { ctxTime: _audioCtx.currentTime + 0.025, songMs: runtime.scopeStart, tempoScale: currentTempoScale };
         _setUIState('playing');
       },
     });
@@ -1317,6 +1333,7 @@ btnMain.onclick = () => {
   } else if (uiState === 'paused') {
     // Resume — runtime.play() from paused preserves position (per runtime-contract §3)
     runtime.play({ tempoScale: currentTempoScale });
+    _playbackAudioOrigin = { ctxTime: _audioCtx.currentTime + 0.012, songMs: runtime.currentTime, tempoScale: currentTempoScale };
     _setUIState('playing');
   }
 };

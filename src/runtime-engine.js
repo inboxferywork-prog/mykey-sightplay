@@ -183,7 +183,10 @@ class RuntimeEngine {
     if (this._state !== 'playing') return;
 
     const wallNow   = _now();
-    const wallDelta = wallNow - this._lastWallTime;
+    // Cap delta: prevents catch-up bunching when the browser stalls on the first frame
+    // (e.g. DOM work after count-in removal). Notes still fire at correct wall-clock rate
+    // because _lastWallTime is always set to the real timestamp, not the capped value.
+    const wallDelta = Math.min(wallNow - this._lastWallTime, 100);
     this._lastWallTime = wallNow;
 
     // Advance song-time by wall delta × tempo scale
