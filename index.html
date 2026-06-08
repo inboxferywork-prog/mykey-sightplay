@@ -1927,12 +1927,8 @@ _vpUpdateScaleLabel(viewportManager.scale);
 
   if (!fabBtnMain) return;  // overlay not in DOM
 
-  // --- Transport: 3-state (Idle→Playing→Paused→Idle) ---
-  // Paused state shows ■ Stop and triggers reset rather than resume.
-  fabBtnMain.onclick = () => {
-    if (uiState === 'paused') btnReset.onclick?.();
-    else btnMain.onclick?.();
-  };
+  // --- Transport: play/pause/resume (mirrors YouTube behaviour) ---
+  fabBtnMain.onclick = () => btnMain.onclick?.();
 
   // Practice — placeholder, no functionality yet.
   fabPracticeBtn.onclick = () => {};
@@ -2000,7 +1996,6 @@ _vpUpdateScaleLabel(viewportManager.scale);
   // Main button label + disabled state — 3-state transport labels
   const _syncMain = () => {
     if (uiState === 'playing') fabBtnMain.textContent = '❚❚';
-    else if (uiState === 'paused') fabBtnMain.textContent = '■';
     else fabBtnMain.textContent = '▶';
     fabBtnMain.disabled = btnMain.disabled;
   };
