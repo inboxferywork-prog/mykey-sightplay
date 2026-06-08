@@ -1,0 +1,4531 @@
+{
+  "meta": {
+    "id": "untitled_score",
+    "title": "Wildest Dream",
+    "composer": "Composer / arranger",
+    "level": "beginner",
+    "bpm": 142,
+    "time_signature": [
+      4,
+      4
+    ],
+    "key_signature": "G",
+    "hand_mode": "both",
+    "active_clefs": [
+      "treble",
+      "bass"
+    ],
+    "freq_split_hz": 261.63,
+    "part_size_bars": 4,
+    "background_music": null,
+    "example_audio": null,
+    "hint_config": {
+      "auto_hint_timeout_ms": 7000,
+      "auto_play_timeout_ms": 12000,
+      "show_note_name_always": true,
+      "show_keyboard_highlight": true,
+      "show_fingering_always": true,
+      "hint_penalty": {
+        "auto_highlight": -3,
+        "auto_play": -5,
+        "tap_note": -5,
+        "question_mark": -8,
+        "wrong_2x_narrowing": -5
+      }
+    }
+  },
+  "parts": [
+    {
+      "part_id": "part_1",
+      "label": "Part 1",
+      "bars": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_2",
+      "label": "Part 2",
+      "bars": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_3",
+      "label": "Part 3",
+      "bars": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_4",
+      "label": "Part 4",
+      "bars": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_5",
+      "label": "Part 5",
+      "bars": [
+        17,
+        18,
+        19,
+        20
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_6",
+      "label": "Part 6",
+      "bars": [
+        21,
+        22,
+        23,
+        24
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_7",
+      "label": "Part 7",
+      "bars": [
+        25,
+        26,
+        27,
+        28
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_8",
+      "label": "Part 8",
+      "bars": [
+        29,
+        30,
+        31,
+        32
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_9",
+      "label": "Part 9",
+      "bars": [
+        33,
+        34,
+        35,
+        36
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_10",
+      "label": "Part 10",
+      "bars": [
+        37,
+        38,
+        39,
+        40
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_11",
+      "label": "Part 11",
+      "bars": [
+        41,
+        42,
+        43,
+        44
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    },
+    {
+      "part_id": "part_12",
+      "label": "Part 12",
+      "bars": [
+        45,
+        46,
+        47,
+        48
+      ],
+      "has_pickup": false,
+      "example_audio": null
+    }
+  ],
+  "score": {
+    "bars": [
+      {
+        "bar": 1,
+        "beats": [
+          {
+            "id": "ev_000001",
+            "bar": 1,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 0,
+            "pair_with_id": "ev_000002"
+          },
+          {
+            "id": "ev_000002",
+            "bar": 1,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 0,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000001"
+          }
+        ],
+        "dynamics": "p"
+      },
+      {
+        "bar": 2,
+        "beats": [
+          {
+            "id": "ev_000003",
+            "bar": 2,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 1690,
+            "pair_with_id": "ev_000004"
+          },
+          {
+            "id": "ev_000004",
+            "bar": 2,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 1690,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000003"
+          }
+        ]
+      },
+      {
+        "bar": 3,
+        "beats": [
+          {
+            "id": "ev_000005",
+            "bar": 3,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 3380,
+            "pair_with_id": "ev_000006"
+          },
+          {
+            "id": "ev_000006",
+            "bar": 3,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 3380,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000005"
+          }
+        ]
+      },
+      {
+        "bar": 4,
+        "beats": [
+          {
+            "id": "ev_000007",
+            "bar": 4,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1691,
+            "t_ms": 5070,
+            "pair_with_id": "ev_000008"
+          },
+          {
+            "id": "ev_000008",
+            "bar": 4,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1691,
+            "t_ms": 5070,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000007"
+          }
+        ]
+      },
+      {
+        "bar": 5,
+        "beats": [
+          {
+            "id": "ev_000009",
+            "bar": 5,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 6761,
+            "pair_with_id": "ev_000010"
+          },
+          {
+            "id": "ev_000010",
+            "bar": 5,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 6761,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000009"
+          }
+        ]
+      },
+      {
+        "bar": 6,
+        "beats": [
+          {
+            "id": "ev_000011",
+            "bar": 6,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 8451,
+            "pair_with_id": "ev_000012"
+          },
+          {
+            "id": "ev_000012",
+            "bar": 6,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 8451,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000011"
+          }
+        ]
+      },
+      {
+        "bar": 7,
+        "beats": [
+          {
+            "id": "ev_000013",
+            "bar": 7,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 10141,
+            "pair_with_id": "ev_000014"
+          },
+          {
+            "id": "ev_000014",
+            "bar": 7,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 10141,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000013"
+          }
+        ]
+      },
+      {
+        "bar": 8,
+        "beats": [
+          {
+            "id": "ev_000015",
+            "bar": 8,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 11831,
+            "pair_with_id": "ev_000019"
+          },
+          {
+            "id": "ev_000019",
+            "bar": 8,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 11831,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000015"
+          },
+          {
+            "id": "ev_000016",
+            "bar": 8,
+            "beat": 3,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 12676
+          },
+          {
+            "id": "ev_000017",
+            "bar": 8,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 12887,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000018",
+            "bar": 8,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 13099,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 9,
+        "beats": [
+          {
+            "id": "ev_000020",
+            "bar": 9,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 13521,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000026"
+          },
+          {
+            "id": "ev_000026",
+            "bar": 9,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 13521,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000020"
+          },
+          {
+            "id": "ev_000021",
+            "bar": 9,
+            "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 13944
+          },
+          {
+            "id": "ev_000022",
+            "bar": 9,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 14155,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000023",
+            "bar": 9,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 14366,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000024",
+            "bar": 9,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 14577,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000025",
+            "bar": 9,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 14789,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 10,
+        "beats": [
+          {
+            "id": "ev_000027",
+            "bar": 10,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 15211,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true,
+            "pair_with_id": "ev_000034"
+          },
+          {
+            "id": "ev_000034",
+            "bar": 10,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 15211,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000027"
+          },
+          {
+            "id": "ev_000028",
+            "bar": 10,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 15423,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          },
+          {
+            "id": "ev_000029",
+            "bar": 10,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 15845
+          },
+          {
+            "id": "ev_000030",
+            "bar": 10,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 16056,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000031",
+            "bar": 10,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 16268,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000032",
+            "bar": 10,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 16479,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000033",
+            "bar": 10,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 16690,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 11,
+        "beats": [
+          {
+            "id": "ev_000035",
+            "bar": 11,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 16901,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true,
+            "pair_with_id": "ev_000043"
+          },
+          {
+            "id": "ev_000043",
+            "bar": 11,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1691,
+            "t_ms": 16901,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000035"
+          },
+          {
+            "id": "ev_000036",
+            "bar": 11,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 17113,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          },
+          {
+            "id": "ev_000037",
+            "bar": 11,
+            "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 17324
+          },
+          {
+            "id": "ev_000038",
+            "bar": 11,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 17535,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000039",
+            "bar": 11,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 17746,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000040",
+            "bar": 11,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 17958,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000041",
+            "bar": 11,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 18169,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000042",
+            "bar": 11,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 18380,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 12,
+        "beats": [
+          {
+            "id": "ev_000044",
+            "bar": 12,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 18592,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true,
+            "pair_with_id": "ev_000050"
+          },
+          {
+            "id": "ev_000050",
+            "bar": 12,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 18592,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000044"
+          },
+          {
+            "id": "ev_000045",
+            "bar": 12,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 18803,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          },
+          {
+            "id": "ev_000046",
+            "bar": 12,
+            "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 19014
+          },
+          {
+            "id": "ev_000047",
+            "bar": 12,
+            "beat": 3,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 19437
+          },
+          {
+            "id": "ev_000048",
+            "bar": 12,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 19648,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000049",
+            "bar": 12,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 19859,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 13,
+        "beats": [
+          {
+            "id": "ev_000051",
+            "bar": 13,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 20282,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000057"
+          },
+          {
+            "id": "ev_000057",
+            "bar": 13,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 20282,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000051"
+          },
+          {
+            "id": "ev_000052",
+            "bar": 13,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 20493,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000053",
+            "bar": 13,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 20704,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000054",
+            "bar": 13,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 21127,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000055",
+            "bar": 13,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 21549,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000056",
+            "bar": 13,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 21761,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 14,
+        "beats": [
+          {
+            "id": "ev_000058",
+            "bar": 14,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 21972,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000065"
+          },
+          {
+            "id": "ev_000065",
+            "bar": 14,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 21972,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000058"
+          },
+          {
+            "id": "ev_000059",
+            "bar": 14,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 22183
+          },
+          {
+            "id": "ev_000060",
+            "bar": 14,
+            "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 22394
+          },
+          {
+            "id": "ev_000061",
+            "bar": 14,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 22817,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000062",
+            "bar": 14,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 23028,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000063",
+            "bar": 14,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 23239,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000064",
+            "bar": 14,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 23451,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 15,
+        "beats": [
+          {
+            "id": "ev_000066",
+            "bar": 15,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 23662,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true,
+            "pair_with_id": "ev_000072"
+          },
+          {
+            "id": "ev_000072",
+            "bar": 15,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 23662,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000066"
+          },
+          {
+            "id": "ev_000067",
+            "bar": 15,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 23873,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          },
+          {
+            "id": "ev_000068",
+            "bar": 15,
+            "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 24085
+          },
+          {
+            "id": "ev_000069",
+            "bar": 15,
+            "beat": 3,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 24507
+          },
+          {
+            "id": "ev_000070",
+            "bar": 15,
+            "beat": 4,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 24930
+          },
+          {
+            "id": "ev_000071",
+            "bar": 15,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 25141,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 16,
+        "beats": [
+          {
+            "id": "ev_000073",
+            "bar": 16,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 25352,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000080"
+          },
+          {
+            "id": "ev_000080",
+            "bar": 16,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 25352,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000073"
+          },
+          {
+            "id": "ev_000074",
+            "bar": 16,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 25563,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000075",
+            "bar": 16,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 25775,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000076",
+            "bar": 16,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 25986,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000077",
+            "bar": 16,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 26197,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000078",
+            "bar": 16,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 26620,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000079",
+            "bar": 16,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 26831,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 17,
+        "beats": [
+          {
+            "id": "ev_000081",
+            "bar": 17,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 27042,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000087"
+          },
+          {
+            "id": "ev_000087",
+            "bar": 17,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 27042,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000081"
+          },
+          {
+            "id": "ev_000082",
+            "bar": 17,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 27254,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000083",
+            "bar": 17,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 27465,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000084",
+            "bar": 17,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 27887,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000085",
+            "bar": 17,
+            "beat": 4,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 28310
+          },
+          {
+            "id": "ev_000086",
+            "bar": 17,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 28521,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 18,
+        "beats": [
+          {
+            "id": "ev_000088",
+            "bar": 18,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 28732,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000093"
+          },
+          {
+            "id": "ev_000093",
+            "bar": 18,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3",
+              "B3"
+            ],
+            "duration": "w",
+            "duration_ms": 1691,
+            "t_ms": 28732,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000088"
+          },
+          {
+            "id": "ev_000089",
+            "bar": 18,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 28944,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000090",
+            "bar": 18,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 29155,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000091",
+            "bar": 18,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 29577,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000092",
+            "bar": 18,
+            "beat": 4,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 30000
+          }
+        ]
+      },
+      {
+        "bar": 19,
+        "beats": [
+          {
+            "id": "ev_000094",
+            "bar": 19,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 30423,
+            "pair_with_id": "ev_000100"
+          },
+          {
+            "id": "ev_000100",
+            "bar": 19,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 30423,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000094"
+          },
+          {
+            "id": "ev_000095",
+            "bar": 19,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 30634,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000096",
+            "bar": 19,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 30845,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000097",
+            "bar": 19,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 31268,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000098",
+            "bar": 19,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 31690,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000099",
+            "bar": 19,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 31901,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 20,
+        "beats": [
+          {
+            "id": "ev_000101",
+            "bar": 20,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 32113,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000107"
+          },
+          {
+            "id": "ev_000107",
+            "bar": 20,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 32113,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000101"
+          },
+          {
+            "id": "ev_000102",
+            "bar": 20,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 32324,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000103",
+            "bar": 20,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 32535,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000104",
+            "bar": 20,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 32958,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000105",
+            "bar": 20,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 33169,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000106",
+            "bar": 20,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 33380,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 21,
+        "beats": [
+          {
+            "id": "ev_000108",
+            "bar": 21,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 33803,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000114"
+          },
+          {
+            "id": "ev_000114",
+            "bar": 21,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 33803,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000108"
+          },
+          {
+            "id": "ev_000109",
+            "bar": 21,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 34014,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000110",
+            "bar": 21,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 34225,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000111",
+            "bar": 21,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 34437,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000112",
+            "bar": 21,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 34648,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000113",
+            "bar": 21,
+            "beat": 4,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 35070
+          }
+        ]
+      },
+      {
+        "bar": 22,
+        "beats": [
+          {
+            "id": "ev_000115",
+            "bar": 22,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 35493,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000121"
+          },
+          {
+            "id": "ev_000121",
+            "bar": 22,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3",
+              "B3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 35493,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000115"
+          },
+          {
+            "id": "ev_000116",
+            "bar": 22,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 35704,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000117",
+            "bar": 22,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 35915,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000118",
+            "bar": 22,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 36338,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000119",
+            "bar": 22,
+            "beat": 4,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 36761
+          },
+          {
+            "id": "ev_000120",
+            "bar": 22,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 36972,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 23,
+        "beats": [
+          {
+            "id": "ev_000122",
+            "bar": 23,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 37183,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000127"
+          },
+          {
+            "id": "ev_000127",
+            "bar": 23,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 37183,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000122"
+          },
+          {
+            "id": "ev_000123",
+            "bar": 23,
+            "beat": 2,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 37606
+          },
+          {
+            "id": "ev_000124",
+            "bar": 23,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 37817,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000125",
+            "bar": 23,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 38028,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000126",
+            "bar": 23,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "q.",
+            "duration_ms": 634,
+            "t_ms": 38239,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 24,
+        "beats": [
+          {
+            "id": "ev_000128",
+            "bar": 24,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 38873,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000131"
+          },
+          {
+            "id": "ev_000131",
+            "bar": 24,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 38873,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000128"
+          },
+          {
+            "id": "ev_000129",
+            "bar": 24,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "q.",
+            "duration_ms": 633,
+            "t_ms": 39085,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000130",
+            "bar": 24,
+            "beat": 3,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 39718
+          }
+        ]
+      },
+      {
+        "bar": 25,
+        "beats": [
+          {
+            "id": "ev_000132",
+            "bar": 25,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 40563,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000138"
+          },
+          {
+            "id": "ev_000138",
+            "bar": 25,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "G3",
+              "B3"
+            ],
+            "duration": "h.",
+            "duration_ms": 1268,
+            "t_ms": 40563,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000132"
+          },
+          {
+            "id": "ev_000133",
+            "bar": 25,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 40775,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000134",
+            "bar": 25,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 41197,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000135",
+            "bar": 25,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 41408,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000136",
+            "bar": 25,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 41831,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000139"
+          },
+          {
+            "id": "ev_000139",
+            "bar": 25,
+            "beat": 4,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "G3",
+              "B3"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 41831,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000136"
+          },
+          {
+            "id": "ev_000137",
+            "bar": 25,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 42042,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ],
+        "dynamics": "f"
+      },
+      {
+        "bar": 26,
+        "beats": [
+          {
+            "id": "ev_000140",
+            "bar": 26,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 42254,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000145"
+          },
+          {
+            "id": "ev_000145",
+            "bar": 26,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 42254,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000140"
+          },
+          {
+            "id": "ev_000141",
+            "bar": 26,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 43099,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000146"
+          },
+          {
+            "id": "ev_000146",
+            "bar": 26,
+            "beat": 3,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 43099,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000141"
+          },
+          {
+            "id": "ev_000142",
+            "bar": 26,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 43310,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000143",
+            "bar": 26,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 43521,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000144",
+            "bar": 26,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 43732,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 27,
+        "beats": [
+          {
+            "id": "ev_000147",
+            "bar": 27,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 43944,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000153"
+          },
+          {
+            "id": "ev_000153",
+            "bar": 27,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "A3",
+              "C4"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 43944,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000147"
+          },
+          {
+            "id": "ev_000148",
+            "bar": 27,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 44366,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000149",
+            "bar": 27,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 44789,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000150",
+            "bar": 27,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 45000,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000151",
+            "bar": 27,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 45211,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000152",
+            "bar": 27,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 45423,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 28,
+        "beats": [
+          {
+            "id": "ev_000154",
+            "bar": 28,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 45634,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000157"
+          },
+          {
+            "id": "ev_000157",
+            "bar": 28,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 45634,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000154"
+          },
+          {
+            "id": "ev_000155",
+            "bar": 28,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 46056,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000156",
+            "bar": 28,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 46479,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000158"
+          },
+          {
+            "id": "ev_000158",
+            "bar": 28,
+            "beat": 3,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 46479,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000156"
+          }
+        ]
+      },
+      {
+        "bar": 29,
+        "beats": [
+          {
+            "id": "ev_000159",
+            "bar": 29,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 47324,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000165"
+          },
+          {
+            "id": "ev_000165",
+            "bar": 29,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "G3",
+              "B3"
+            ],
+            "duration": "h.",
+            "duration_ms": 1268,
+            "t_ms": 47324,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000159"
+          },
+          {
+            "id": "ev_000160",
+            "bar": 29,
+            "beat": 1.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 47535,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000161",
+            "bar": 29,
+            "beat": 2.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 47958,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000162",
+            "bar": 29,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 48169,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000163",
+            "bar": 29,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 48592,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000166"
+          },
+          {
+            "id": "ev_000166",
+            "bar": 29,
+            "beat": 4,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "G3",
+              "B3"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 48592,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000163"
+          },
+          {
+            "id": "ev_000164",
+            "bar": 29,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 48803,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 30,
+        "beats": [
+          {
+            "id": "ev_000167",
+            "bar": 30,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 49014,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000172"
+          },
+          {
+            "id": "ev_000172",
+            "bar": 30,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 49014,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000167"
+          },
+          {
+            "id": "ev_000168",
+            "bar": 30,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 49859,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000173"
+          },
+          {
+            "id": "ev_000173",
+            "bar": 30,
+            "beat": 3,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 49859,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000168"
+          },
+          {
+            "id": "ev_000169",
+            "bar": 30,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 50070,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000170",
+            "bar": 30,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 50282,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000171",
+            "bar": 30,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 50493,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 31,
+        "beats": [
+          {
+            "id": "ev_000174",
+            "bar": 31,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 50704,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000180"
+          },
+          {
+            "id": "ev_000180",
+            "bar": 31,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "A3",
+              "C4"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 50704,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000174"
+          },
+          {
+            "id": "ev_000175",
+            "bar": 31,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 51127,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000176",
+            "bar": 31,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 51549,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000177",
+            "bar": 31,
+            "beat": 3.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 51761,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000178",
+            "bar": 31,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 51972,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000179",
+            "bar": 31,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 52183,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 32,
+        "beats": [
+          {
+            "id": "ev_000181",
+            "bar": 32,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 52394,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000184"
+          },
+          {
+            "id": "ev_000184",
+            "bar": 32,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 52394,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000181"
+          },
+          {
+            "id": "ev_000182",
+            "bar": 32,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 52817,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000183",
+            "bar": 32,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "h",
+            "duration_ms": 846,
+            "t_ms": 53239,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000185"
+          },
+          {
+            "id": "ev_000185",
+            "bar": 32,
+            "beat": 3,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "h",
+            "duration_ms": 846,
+            "t_ms": 53239,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000183"
+          }
+        ]
+      },
+      {
+        "bar": 33,
+        "beats": [
+          {
+            "id": "ev_000186",
+            "bar": 33,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "h.",
+            "duration_ms": 1267,
+            "t_ms": 54085,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000189"
+          },
+          {
+            "id": "ev_000189",
+            "bar": 33,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "G3",
+              "B3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 54085,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000186"
+          },
+          {
+            "id": "ev_000187",
+            "bar": 33,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 55352,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000188",
+            "bar": 33,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 212,
+            "t_ms": 55563,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 34,
+        "beats": [
+          {
+            "id": "ev_000190",
+            "bar": 34,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 55775,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000194"
+          },
+          {
+            "id": "ev_000194",
+            "bar": 34,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 55775,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000190"
+          },
+          {
+            "id": "ev_000191",
+            "bar": 34,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 56197,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000192",
+            "bar": 34,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 56620,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true,
+            "pair_with_id": "ev_000195"
+          },
+          {
+            "id": "ev_000195",
+            "bar": 34,
+            "beat": 3,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 56620,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000192"
+          },
+          {
+            "id": "ev_000193",
+            "bar": 34,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D5"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 57042,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          }
+        ]
+      },
+      {
+        "bar": 35,
+        "beats": [
+          {
+            "id": "ev_000196",
+            "bar": 35,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 57465,
+            "pair_with_id": "ev_000199"
+          },
+          {
+            "id": "ev_000199",
+            "bar": 35,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "A3",
+              "C4"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 57465,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000196"
+          },
+          {
+            "id": "ev_000197",
+            "bar": 35,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 57887,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true
+          },
+          {
+            "id": "ev_000198",
+            "bar": 35,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 58310,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          }
+        ]
+      },
+      {
+        "bar": 36,
+        "beats": [
+          {
+            "id": "ev_000200",
+            "bar": 36,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 59155,
+            "pair_with_id": "ev_000201"
+          },
+          {
+            "id": "ev_000201",
+            "bar": 36,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "h.",
+            "duration_ms": 1268,
+            "t_ms": 59155,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000200"
+          },
+          {
+            "id": "ev_000202",
+            "bar": 36,
+            "beat": 4,
+            "clef": "bass",
+            "type": "note",
+            "notes": [
+              "C3"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 60423,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 37,
+        "beats": [
+          {
+            "id": "ev_000203",
+            "bar": 37,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "h.",
+            "duration_ms": 1268,
+            "t_ms": 60845,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000206"
+          },
+          {
+            "id": "ev_000206",
+            "bar": 37,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "G3",
+              "B3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 60845,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000203"
+          },
+          {
+            "id": "ev_000204",
+            "bar": 37,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 62113,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000205",
+            "bar": 37,
+            "beat": 4.5,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "8",
+            "duration_ms": 211,
+            "t_ms": 62324,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 38,
+        "beats": [
+          {
+            "id": "ev_000207",
+            "bar": 38,
+            "beat": 1,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "B4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 62535,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000211"
+          },
+          {
+            "id": "ev_000211",
+            "bar": 38,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3",
+              "A3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 62535,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000207"
+          },
+          {
+            "id": "ev_000208",
+            "bar": 38,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 62958,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          },
+          {
+            "id": "ev_000209",
+            "bar": 38,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "A4"
+            ],
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 63380,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true
+          },
+          {
+            "id": "ev_000210",
+            "bar": 38,
+            "beat": 4,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "D5"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 63803,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          }
+        ]
+      },
+      {
+        "bar": 39,
+        "beats": [
+          {
+            "id": "ev_000212",
+            "bar": 39,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "q",
+            "duration_ms": 423,
+            "t_ms": 64225,
+            "pair_with_id": "ev_000215"
+          },
+          {
+            "id": "ev_000215",
+            "bar": 39,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "A3",
+              "C4"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 64225,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000212"
+          },
+          {
+            "id": "ev_000213",
+            "bar": 39,
+            "beat": 2,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "G4"
+            ],
+            "duration": "q",
+            "duration_ms": 422,
+            "t_ms": 64648,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_start": true
+          },
+          {
+            "id": "ev_000214",
+            "bar": 39,
+            "beat": 3,
+            "clef": "treble",
+            "type": "note",
+            "notes": [
+              "E4"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 65070,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "slur_stop": true
+          }
+        ]
+      },
+      {
+        "bar": 40,
+        "beats": [
+          {
+            "id": "ev_000216",
+            "bar": 40,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1691,
+            "t_ms": 65915,
+            "pair_with_id": "ev_000217"
+          },
+          {
+            "id": "ev_000217",
+            "bar": 40,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "h",
+            "duration_ms": 846,
+            "t_ms": 65915,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000216"
+          },
+          {
+            "id": "ev_000218",
+            "bar": 40,
+            "beat": 3,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3",
+              "G3"
+            ],
+            "duration": "h",
+            "duration_ms": 845,
+            "t_ms": 66761,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50
+          }
+        ]
+      },
+      {
+        "bar": 41,
+        "beats": [
+          {
+            "id": "ev_000219",
+            "bar": 41,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 67606,
+            "pair_with_id": "ev_000220"
+          },
+          {
+            "id": "ev_000220",
+            "bar": 41,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 67606,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000219"
+          }
+        ]
+      },
+      {
+        "bar": 42,
+        "beats": [
+          {
+            "id": "ev_000221",
+            "bar": 42,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 69296,
+            "pair_with_id": "ev_000222"
+          },
+          {
+            "id": "ev_000222",
+            "bar": 42,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 69296,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000221"
+          }
+        ]
+      },
+      {
+        "bar": 43,
+        "beats": [
+          {
+            "id": "ev_000223",
+            "bar": 43,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 70986,
+            "pair_with_id": "ev_000224"
+          },
+          {
+            "id": "ev_000224",
+            "bar": 43,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 70986,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000223"
+          }
+        ]
+      },
+      {
+        "bar": 44,
+        "beats": [
+          {
+            "id": "ev_000225",
+            "bar": 44,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 72676,
+            "pair_with_id": "ev_000226"
+          },
+          {
+            "id": "ev_000226",
+            "bar": 44,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 72676,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000225"
+          }
+        ]
+      },
+      {
+        "bar": 45,
+        "beats": [
+          {
+            "id": "ev_000227",
+            "bar": 45,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 74366,
+            "pair_with_id": "ev_000228"
+          },
+          {
+            "id": "ev_000228",
+            "bar": 45,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "C3",
+              "E3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 74366,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000227"
+          }
+        ]
+      },
+      {
+        "bar": 46,
+        "beats": [
+          {
+            "id": "ev_000229",
+            "bar": 46,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 76056,
+            "pair_with_id": "ev_000230"
+          },
+          {
+            "id": "ev_000230",
+            "bar": 46,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "E3",
+              "G3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 76056,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000229"
+          }
+        ]
+      },
+      {
+        "bar": 47,
+        "beats": [
+          {
+            "id": "ev_000231",
+            "bar": 47,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1691,
+            "t_ms": 77746,
+            "pair_with_id": "ev_000232"
+          },
+          {
+            "id": "ev_000232",
+            "bar": 47,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1691,
+            "t_ms": 77746,
+            "finger": null,
+            "tie_start": true,
+            "tie_stop": false,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000231"
+          }
+        ]
+      },
+      {
+        "bar": 48,
+        "beats": [
+          {
+            "id": "ev_000233",
+            "bar": 48,
+            "beat": 1,
+            "clef": "treble",
+            "type": "rest",
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 79437,
+            "pair_with_id": "ev_000234"
+          },
+          {
+            "id": "ev_000234",
+            "bar": 48,
+            "beat": 1,
+            "clef": "bass",
+            "type": "chord",
+            "notes": [
+              "D3",
+              "F#3"
+            ],
+            "duration": "w",
+            "duration_ms": 1690,
+            "t_ms": 79437,
+            "finger": null,
+            "tie_start": false,
+            "tie_stop": true,
+            "tolerance_cents": 50,
+            "pair_with_id": "ev_000233"
+          }
+        ]
+      }
+    ]
+  },
+  "scoring": {
+    "perfect_window_ms": 150,
+    "good_window_ms": 400,
+    "points_per_note": {
+      "perfect": 10,
+      "good": 6,
+      "late": 3,
+      "miss": 0
+    },
+    "timing_bonus": true,
+    "streak_bonus": {
+      "every": 5,
+      "bonus": 10
+    }
+  },
+  "library": {
+    "listed": true,
+    "collectionId": null,
+    "tags": []
+  },
+  "learning_segments": [
+    {
+      "segment_id": "seg_phrase_a",
+      "label": "Frasa A",
+      "start_bar": 1,
+      "start_beat": 1,
+      "end_bar": 5,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 1
+    },
+    {
+      "segment_id": "seg_phrase_b",
+      "label": "Frasa B",
+      "start_bar": 5,
+      "start_beat": 1,
+      "end_bar": 8,
+      "end_beat": 3,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 2
+    },
+    {
+      "segment_id": "seg_phrase_c",
+      "label": "Frasa C",
+      "start_bar": 8,
+      "start_beat": 3,
+      "end_bar": 12,
+      "end_beat": 3,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 3
+    },
+    {
+      "segment_id": "seg_phrase_d",
+      "label": "Frasa D",
+      "start_bar": 12,
+      "start_beat": 3,
+      "end_bar": 17,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 4
+    },
+    {
+      "segment_id": "seg_phrase_e",
+      "label": "Frasa E",
+      "start_bar": 17,
+      "start_beat": 1,
+      "end_bar": 21,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 5
+    },
+    {
+      "segment_id": "seg_phrase_f",
+      "label": "Frasa F",
+      "start_bar": 21,
+      "start_beat": 1,
+      "end_bar": 25,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 6
+    },
+    {
+      "segment_id": "seg_phrase_g",
+      "label": "Frasa G",
+      "start_bar": 25,
+      "start_beat": 1,
+      "end_bar": 29,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 7
+    },
+    {
+      "segment_id": "seg_phrase_h",
+      "label": "Frasa H",
+      "start_bar": 29,
+      "start_beat": 1,
+      "end_bar": 33,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 8
+    },
+    {
+      "segment_id": "seg_phrase_i",
+      "label": "Frasa I",
+      "start_bar": 33,
+      "start_beat": 1,
+      "end_bar": 37,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 9
+    },
+    {
+      "segment_id": "seg_phrase_j",
+      "label": "Frasa J",
+      "start_bar": 37,
+      "start_beat": 1,
+      "end_bar": 41,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 10
+    },
+    {
+      "segment_id": "seg_phrase_k",
+      "label": "Frasa K",
+      "start_bar": 41,
+      "start_beat": 1,
+      "end_bar": 45,
+      "end_beat": 1,
+      "visible_clefs": [
+        "treble",
+        "bass"
+      ],
+      "suggested_repeats": 1,
+      "order": 11
+    }
+  ]
+}
