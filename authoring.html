@@ -2378,6 +2378,39 @@ function _parseMusicXML(xmlText, cfg) {
     evCtr = nextCtr;
   }
 
+  // Fix pickup bar: push note events to the end of bar 1 to eliminate the silence gap.
+  // MusicXML places pickup notes at beat 1 of bar 1 (t_ms=0), but bar 2 starts after a
+  // full measure duration, creating silence equal to the unfilled beats. We shift bar-1
+  // note events to their correct temporal position (end of bar 1) and expand bar-1 rests
+  // to fill the pre-pickup gap, matching what the renderer already shows via GhostNotes.
+  if (hasPickup && firstMDurQl > 0) {
+    const beatDurQl = 4 / tsBT;
+    const fullBarQl = tsB * beatDurQl;
+    const shiftQl   = fullBarQl - firstMDurQl;
+    const shiftMs   = shiftQl * (60000 / detectedBpm);
+    const beatShift = shiftQl / beatDurQl;
+
+    allEvents.forEach(ev => {
+      if (ev.bar !== 1 || ev.type === 'rest') return;
+      ev.t_ms += shiftMs;
+      const nb = ev.beat + beatShift;
+      ev.beat = Math.abs(nb - Math.round(nb)) < 0.01 ? Math.round(nb) : parseFloat(nb.toFixed(4));
+    });
+
+    // Replace bar-1 rests with a single whole-bar rest so the renderer needs no ghost
+    // notes for the bass (bUsedQL = fullBarQl → bMissQL = 0 → rest centred at beat 1).
+    // Using fullBarQl (not shiftQl) avoids the non-standard-duration problem: e.g. a
+    // 3-eighth pickup in 4/4 gives shiftQl=2.5 which has no single rest duration string,
+    // whereas fullBarQl=4 maps cleanly to "w". Works for any pickup length.
+    const bar1Rests = allEvents.filter(ev => ev.bar === 1 && ev.type === 'rest');
+    if (bar1Rests.length > 0) {
+      const fullDurMap = { 1:'q', 1.5:'q.', 2:'h', 3:'h.', 4:'w', 6:'w.' };
+      const fullBarMs  = fullBarQl * (60000 / detectedBpm);
+      bar1Rests.slice(1).forEach(r => { const i = allEvents.indexOf(r); if (i >= 0) allEvents.splice(i, 1); });
+      Object.assign(bar1Rests[0], { beat:1, t_ms:0, duration_ms:Math.round(fullBarMs), duration: fullDurMap[fullBarQl] || 'w' });
+    }
+  }
+
   // Sort: t_ms asc, treble before bass at same t_ms
   allEvents.sort((a, b) => a.t_ms - b.t_ms || (a.clef === 'treble' ? 0 : 1) - (b.clef === 'treble' ? 0 : 1));
 
