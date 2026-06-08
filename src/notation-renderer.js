@@ -171,8 +171,8 @@ class NotationRenderer {
       ? (_2barMaxW > 7.0 ? (showBoth ? 355 : 155)   // high density
        : _2barMaxW > 4.5 ? (showBoth ? 275 : 120)   // medium density
        :                   (showBoth ? 240 : 105))   // low density
-      : (showBoth ? 225 : 100);                      // 4-bar / landscape
-    this._rowH = ROW_H;  // expose to _drawSlurs — single-clef uses 120, grand staff uses 280
+      : 225;                                           // landscape: unified height so fitHeight gives same scale for single- and dual-clef
+    this._rowH = ROW_H;
 
     // Optical scale experiment: thinner staff lines so note heads feel more dominant.
     // Passed as 4th arg to every Stave constructor. Silently no-op if VF5 ignores width.

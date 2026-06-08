@@ -424,6 +424,10 @@ button:disabled { opacity: 0.35; cursor: default; }
 }
 #score { min-width: 960px; position: relative; }
 #score svg { display: block; }
+/* Scale from top-left so stave stays anchored near the top of the viewport.
+   Default 50% 50% caused the top portion to be clipped above the viewport
+   at the high zoom levels used for single-clef landscape (fitHeight). */
+#notation-camera { transform-origin: top left; }
 
 /* ================================================================
    Count-in pills — beat counter shown before playback starts.
