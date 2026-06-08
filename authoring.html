@@ -735,6 +735,7 @@
           <select id="fldCollection" class="meta-select meta-select-wide">
             <option value="">(none)</option>
           </select>
+          <button id="btnNewCollection" class="btn-sm" title="Buat collection baru" style="flex-shrink:0;padding:2px 9px;font-size:14px;line-height:1">+</button>
           <span id="collectionErrMsg" class="hidden" style="font-size:11px;color:var(--yellow);flex-shrink:0">
             ⚠ not loaded
             <button id="btnReloadCollections" class="btn-sm" style="font-size:10px;padding:2px 7px;margin-left:4px">↺ retry</button>
@@ -871,6 +872,52 @@
     </div>
     <div id="libStatusMsg" style="margin-top:12px;font-size:12px;color:var(--muted);min-height:18px;">Ready</div>
   </div><!-- /libraryManagerSection -->
+
+  <!-- New Collection modal -->
+  <div class="modal" id="newCollectionModal" style="z-index:60">
+    <div class="modal-content" style="max-width:420px">
+      <div class="modal-header">
+        <span>Collection Baru</span>
+        <button class="modal-close" onclick="_closeNewCollectionModal()">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Nama <span style="color:var(--yellow)">*</span></label>
+          <input id="ncName" type="text" class="meta-input" style="width:100%;box-sizing:border-box" placeholder="contoh: Bach Inventions">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">ID <span style="color:var(--yellow)">*</span></label>
+          <input id="ncId" type="text" class="meta-input" style="width:100%;box-sizing:border-box;font-family:monospace" placeholder="contoh: bach-inventions">
+          <span style="font-size:10px;color:var(--muted)">Huruf kecil, angka, tanda hubung. Tidak bisa diubah setelah disimpan.</span>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Provider</label>
+          <select id="ncProvider" class="meta-select" style="width:100%">
+            <option value="public-domain">Public Domain</option>
+            <option value="mykey">MyKey Music Labs</option>
+            <option value="licensed">Licensed Content</option>
+            <option value="yamaha">Yamaha Music Education</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Listed</label>
+          <div class="toggle-group">
+            <button id="ncListedY" class="toggle-btn active" onclick="_ncSetListed(true)">Listed</button>
+            <button id="ncListedN" class="toggle-btn" onclick="_ncSetListed(false)">Hidden</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px">Tags</label>
+          <input id="ncTags" type="text" class="meta-input" style="width:100%;box-sizing:border-box" placeholder="cat:repertoire genre:folk period:baroque">
+        </div>
+        <span id="ncErrMsg" style="font-size:11px;color:var(--yellow);display:none"></span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-sm" onclick="_closeNewCollectionModal()">Batal</button>
+        <button class="btn-primary" onclick="_submitNewCollection()">Simpan & Pilih</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Library edit modal -->
   <div class="modal" id="libEditModal">
@@ -1925,6 +1972,7 @@ async function _loadCollections() {
 }
 
 document.getElementById('btnReloadCollections').onclick = () => _loadCollections();
+document.getElementById('btnNewCollection').onclick    = () => _openNewCollectionModal();
 
 function _populateCollectionDropdown() {
   const sel = document.getElementById('fldCollection');
@@ -1936,6 +1984,152 @@ function _populateCollectionDropdown() {
     sel.appendChild(opt);
   });
   if (_uiCollectionId) sel.value = _uiCollectionId;
+}
+
+// -----------------------------------------------------------------------
+// New Collection modal
+// -----------------------------------------------------------------------
+let _ncListed = true;
+let _ncTargetSelectId = 'fldCollection';
+
+function _openNewCollectionModal(targetSelectId) {
+  _ncTargetSelectId = targetSelectId || 'fldCollection';
+  document.getElementById('ncName').value    = '';
+  document.getElementById('ncId').value      = '';
+  document.getElementById('ncProvider').value = 'public-domain';
+  document.getElementById('ncTags').value    = '';
+  document.getElementById('ncErrMsg').style.display = 'none';
+  document.getElementById('ncId')._manualEdit = false;
+  _ncSetListed(true);
+  document.getElementById('newCollectionModal').classList.add('show');
+  document.getElementById('ncName').focus();
+}
+
+function _closeNewCollectionModal() {
+  document.getElementById('newCollectionModal').classList.remove('show');
+}
+
+function _ncSetListed(val) {
+  _ncListed = val;
+  document.getElementById('ncListedY').classList.toggle('active', val);
+  document.getElementById('ncListedN').classList.toggle('active', !val);
+}
+
+document.getElementById('ncName').addEventListener('input', function() {
+  const idEl = document.getElementById('ncId');
+  if (!idEl._manualEdit) {
+    idEl.value = this.value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+});
+document.getElementById('ncId').addEventListener('input', function() {
+  this._manualEdit = this.value.length > 0;
+});
+
+async function _submitNewCollection() {
+  const errEl = document.getElementById('ncErrMsg');
+  const name  = document.getElementById('ncName').value.trim();
+  const id    = document.getElementById('ncId').value.trim();
+  const prov  = document.getElementById('ncProvider').value;
+  const tags  = _parseTags(document.getElementById('ncTags').value);
+
+  if (!name) { errEl.textContent = 'Nama wajib diisi.'; errEl.style.display = ''; return; }
+  if (!id)   { errEl.textContent = 'ID wajib diisi.'; errEl.style.display = ''; return; }
+  if (!/^[a-z0-9-]+$/.test(id)) {
+    errEl.textContent = 'ID hanya boleh huruf kecil, angka, dan tanda hubung.';
+    errEl.style.display = ''; return;
+  }
+  if (_collections.some(c => c.id === id)) {
+    errEl.textContent = 'ID "' + id + '" sudah ada.';
+    errEl.style.display = ''; return;
+  }
+  errEl.style.display = 'none';
+
+  const maxOrder = _collections.reduce((m, c) => Math.max(m, c.order || 0), 0);
+  const newCol   = { id, name, provider: prov, listed: _ncListed, order: maxOrder + 1, tags };
+  const updated  = { version: 2, providers: [], collections: [..._collections, newCol] };
+
+  // Fetch current providers from file to preserve them
+  try {
+    const r = await fetch('songs/collections.json?t=' + Date.now());
+    if (r.ok) { const d = await r.json(); updated.providers = d.providers || []; }
+  } catch (_) {}
+
+  const json = JSON.stringify(updated, null, 2) + '\n';
+  const saved = await _saveCollectionsJson(json);
+  if (!saved) return;
+
+  _collections.push(newCol);
+  _populateCollectionDropdown();
+
+  if (_ncTargetSelectId === 'fldCollection') {
+    _uiCollectionId = id;
+    document.getElementById('fldCollection').value = id;
+  } else {
+    const targetSel = document.getElementById(_ncTargetSelectId);
+    if (targetSel) {
+      const opt = document.createElement('option');
+      opt.value = id; opt.textContent = name; opt.selected = true;
+      targetSel.appendChild(opt);
+    }
+  }
+  _closeNewCollectionModal();
+  _setStatusMsg('Collection "' + name + '" ditambahkan ✓', 'ok');
+}
+
+async function _saveCollectionsJson(json) {
+  const errEl = document.getElementById('ncErrMsg');
+
+  // Try auto-save via existing folder handle
+  if (_songsFolderHandle) {
+    try {
+      const fh = await _songsFolderHandle.getFileHandle('collections.json', { create: true });
+      const w  = await fh.createWritable();
+      await w.write(json); await w.close();
+      return true;
+    } catch (e) { console.warn('[Collections] auto-save failed:', e); }
+  }
+
+  // Try acquiring folder access
+  if ('showDirectoryPicker' in window) {
+    const hasAccess = await _ensureSongsFolderAccess();
+    if (hasAccess && _songsFolderHandle) {
+      try {
+        const fh = await _songsFolderHandle.getFileHandle('collections.json', { create: true });
+        const w  = await fh.createWritable();
+        await w.write(json); await w.close();
+        return true;
+      } catch (e) { console.warn('[Collections] folder-access save failed:', e); }
+    }
+  }
+
+  // Fallback: showSaveFilePicker
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'collections.json',
+        types: [{ description: 'Collections JSON', accept: { 'application/json': ['.json'] } }],
+      });
+      const w = await handle.createWritable();
+      await w.write(json); await w.close();
+      return true;
+    } catch (e) {
+      if (e.name === 'AbortError') { _setStatusMsg('Batal', 'inf'); return false; }
+    }
+  }
+
+  // Final fallback: download
+  const blob = new Blob([json], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'collections.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  errEl.textContent = 'collections.json diunduh — replace manual ke folder songs/';
+  errEl.style.display = '';
+  return true;
 }
 
 // -----------------------------------------------------------------------
@@ -2702,6 +2896,10 @@ function _libAddSong() {
 function _libShowModal(song, isNew) {
   document.getElementById('libModalTitle').textContent = isNew ? 'Add Entry Manual' : 'Edit: ' + (song.title || song.src);
   const tags = Array.isArray(song.tags) ? song.tags.join(', ') : '';
+  const collOpts = '<option value="">(none)</option>' +
+    _collections.map(c =>
+      `<option value="${_libEsc(c.id)}"${song.collectionId === c.id ? ' selected' : ''}>${_libEsc(c.name)}</option>`
+    ).join('');
   document.getElementById('libEditForm').innerHTML = `
     <form onsubmit="_libSaveForm(event,${isNew})">
       <div class="form-group"><label>Src *</label>
@@ -2722,8 +2920,11 @@ function _libShowModal(song, isNew) {
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><label style="margin:0">
         <input type="checkbox" id="lf_listed" ${song.listed?'checked':''}>
         Listed (tampil di Song Browser)</label></div>
-      <div class="form-group"><label>Collection ID</label>
-        <input id="lf_collId" type="text" value="${_libEsc(song.collectionId||'')}"></div>
+      <div class="form-group"><label>Collection</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="lf_collId" style="flex:1">${collOpts}</select>
+          <button type="button" class="btn-sm" title="Buat collection baru" style="flex-shrink:0;padding:2px 9px;font-size:14px;line-height:1" onclick="_openNewCollectionModal('lf_collId')">+</button>
+        </div></div>
       <div class="form-group"><label>Tags (comma-separated)</label>
         <textarea id="lf_tags" rows="2">${_libEsc(tags)}</textarea></div>
       <div class="modal-actions">

@@ -41,7 +41,11 @@
       "provider": "public-domain",
       "listed": true,
       "order": 2,
-      "tags": ["cat:repertoire", "format:exercise", "period:romantic"]
+      "tags": [
+        "cat:repertoire",
+        "format:exercise",
+        "period:romantic"
+      ]
     },
     {
       "id": "czerny-op599",
@@ -49,7 +53,11 @@
       "provider": "public-domain",
       "listed": true,
       "order": 3,
-      "tags": ["cat:technique", "format:exercise", "period:romantic"]
+      "tags": [
+        "cat:technique",
+        "format:exercise",
+        "period:romantic"
+      ]
     },
     {
       "id": "burgmuller-op100",
@@ -57,7 +65,11 @@
       "provider": "public-domain",
       "listed": true,
       "order": 4,
-      "tags": ["cat:repertoire", "format:piece", "period:romantic"]
+      "tags": [
+        "cat:repertoire",
+        "format:piece",
+        "period:romantic"
+      ]
     },
     {
       "id": "hanon",
@@ -65,7 +77,11 @@
       "provider": "public-domain",
       "listed": true,
       "order": 5,
-      "tags": ["cat:technique", "format:exercise", "period:romantic"]
+      "tags": [
+        "cat:technique",
+        "format:exercise",
+        "period:romantic"
+      ]
     },
     {
       "id": "duvernoy-op176",
@@ -73,7 +89,11 @@
       "provider": "public-domain",
       "listed": true,
       "order": 6,
-      "tags": ["cat:technique", "format:exercise", "period:romantic"]
+      "tags": [
+        "cat:technique",
+        "format:exercise",
+        "period:romantic"
+      ]
     },
     {
       "id": "indonesian-folk",
@@ -81,7 +101,11 @@
       "provider": "public-domain",
       "listed": true,
       "order": 7,
-      "tags": ["cat:repertoire", "genre:folk", "origin:indonesia"]
+      "tags": [
+        "cat:repertoire",
+        "genre:folk",
+        "origin:indonesia"
+      ]
     },
     {
       "id": "balinese-folk",
@@ -89,7 +113,12 @@
       "provider": "public-domain",
       "listed": true,
       "order": 8,
-      "tags": ["cat:repertoire", "genre:folk", "origin:indonesia", "origin:bali"]
+      "tags": [
+        "cat:repertoire",
+        "genre:folk",
+        "origin:indonesia",
+        "origin:bali"
+      ]
     },
     {
       "id": "mykey-originals",
@@ -97,7 +126,10 @@
       "provider": "mykey",
       "listed": true,
       "order": 9,
-      "tags": ["cat:repertoire", "format:piece"]
+      "tags": [
+        "cat:repertoire",
+        "format:piece"
+      ]
     },
     {
       "id": "yamaha-primary-1",
@@ -137,6 +169,30 @@
       "provider": "yamaha",
       "listed": false,
       "order": 14,
+      "tags": []
+    },
+    {
+      "id": "yamaha-extension-1",
+      "name": "Yamaha Extension 1",
+      "provider": "yamaha",
+      "listed": true,
+      "order": 15,
+      "tags": []
+    },
+    {
+      "id": "rockschool-piano-contemporary",
+      "name": "Rockschool Piano Contemporary",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 16,
+      "tags": []
+    },
+    {
+      "id": "yamaha-extension-3",
+      "name": "Yamaha Extension 3",
+      "provider": "public-domain",
+      "listed": true,
+      "order": 17,
       "tags": []
     }
   ]
