@@ -654,18 +654,20 @@ class NotationRenderer {
               const sYs    = sNote.getYs();
               const dYs    = dNote.getYs();
               if (sYs?.length && dYs?.length) {
+                // Slur below (dir=+1): anchor at bottom notehead; above (dir=-1): at top notehead.
+                // sYs[0] = highest note (smallest canvas Y); sYs[last] = lowest note (largest Y).
+                const sY = (dir === 1 ? sYs[sYs.length - 1] : sYs[0]) + dir * ANCHOR_Y;
+                const dY = (dir === 1 ? dYs[dYs.length - 1] : dYs[0]) + dir * ANCHOR_Y;
                 if (srcRow === dstRow) {
                   _drawSlurPath(ctx,
-                    sNote.getTieRightX(), sYs[0] + dir * ANCHOR_Y,
-                    dNote.getTieLeftX(),  dYs[0] + dir * ANCHOR_Y,
+                    sNote.getTieRightX(), sY,
+                    dNote.getTieLeftX(),  dY,
                     dir
                   );
                 } else if (dstRow === srcRow + 1 && this._rowBounds) {
                   // Single row break: tail arc on source row, head arc on dest row.
                   const srcBounds = this._rowBounds.get(srcRow);
                   const dstBounds = this._rowBounds.get(dstRow);
-                  const sY = sYs[0] + dir * ANCHOR_Y;
-                  const dY = dYs[0] + dir * ANCHOR_Y;
                   if (srcBounds) _drawSlurPath(ctx, sNote.getTieRightX(), sY, srcBounds.rightX, sY, dir);
                   if (dstBounds) _drawSlurPath(ctx, dstBounds.leftNoteX,  dY, dNote.getTieLeftX(), dY, dir);
                 }
