@@ -109,6 +109,14 @@
         <span class="loop-status" id="devLoopStatus">no loop</span>
       </div>
 
+      <!-- Scroll mode A/B toggle — developer testing only -->
+      <div class="loop-controls" id="scrollModeControls">
+        <span class="loop-label">Scroll</span>
+        <button class="loop-btn" id="btnScrollBurst">Burst</button>
+        <button class="loop-btn" id="btnScrollFlowing">Flow</button>
+        <button class="loop-btn nk-scroll-active" id="btnScrollHybrid">Hybrid</button>
+      </div>
+
       <button class="btn-skip" id="btnSkip">Skip → Stage 2</button>
       <!-- Dev preset — hidden, kept for JS binding -->
       <button id="btnDevLoop1" style="display:none" aria-hidden="true">Bars 5–6</button>
@@ -297,6 +305,7 @@
 <script src="src/viewport-manager.js"></script>
 <script src="src/landscape-coordinator.js"></script>
 <script src="src/reading-window.js"></script>
+<script src="src/count-in.js"></script>
 <script src="src/learning-state.js"></script>
 <script src="src/keyboard-viz.js"></script>
 <script src="src/song-loader.js"></script>
@@ -328,6 +337,8 @@ function _portraitBarsPerRow() {
 }
 
 let _lastEventOfBar = new Map();  // bar number → t_ms of last event (for lookahead scroll)
+let _barDuration    = new Map();  // bar number → musical duration ms at native tempo
+let _scrollMode     = 'hybrid';   // 'burst' | 'flowing' | 'hybrid' — A/B test toggle
 let _landscapeFabReady  = false;  // set true after engine instances are initialized
 let _landscapeFabActive = false;  // true when landscape FAB mode is currently active
 
@@ -400,6 +411,9 @@ landscapeCoordinator.init({
 const readingWindow = new ContextAwareReadingWindow();
 readingWindow.init(document.getElementById('notation-viewport'));
 readingWindow.setViewportManager(viewportManager);  // enables orientation-reset on reframe
+
+const countIn = new CountIn();
+countIn.init(document.getElementById('score'));
 
 // Composite scale callback — UI label + zoom-aware reading window update.
 // Wired here (after readingWindow init) so both consumers are available.
@@ -492,6 +506,7 @@ const songLoader = new SongLoader({
     actionNote.textContent = '';
     lastBar = -1;
     _lastEventOfBar = new Map();
+    _barDuration    = new Map();
     practiceLoop.deactivate();
     _loopSelect.mode = 'off';
     _loopSelect.startId = null;
@@ -505,9 +520,32 @@ const songLoader = new SongLoader({
     _barDynamicsMap = {};
     _slurActive     = {};
     _lastEventOfBar = new Map();
+    _barDuration    = new Map();
     for (const bar of (data.score?.bars || [])) {
       if (bar.beats?.length) {
         _lastEventOfBar.set(bar.bar, Math.max(...bar.beats.map(e => e.t_ms)));
+      }
+    }
+    // Build bar duration map: duration of bar N = first-beat(N+1) - first-beat(N)
+    {
+      const firstBeat = new Map();
+      for (const bar of (data.score?.bars || [])) {
+        if (bar.beats?.length) {
+          firstBeat.set(bar.bar, Math.min(...bar.beats.map(e => e.t_ms)));
+        }
+      }
+      const sorted = [...firstBeat.entries()].sort((a, b) => a[0] - b[0]);
+      for (let i = 0; i < sorted.length - 1; i++) {
+        _barDuration.set(sorted[i][0], sorted[i + 1][1] - sorted[i][1]);
+      }
+      // Last bar: fall back to its own beat span + one beat estimate
+      if (sorted.length > 0) {
+        const lastBarN = sorted[sorted.length - 1][0];
+        const lastBarBeats = (data.score?.bars || []).find(b => b.bar === lastBarN)?.beats || [];
+        if (lastBarBeats.length) {
+          const span = Math.max(...lastBarBeats.map(e => e.t_ms)) - firstBeat.get(lastBarN);
+          _barDuration.set(lastBarN, span + 1000);
+        }
       }
     }
     (data.score?.bars || []).forEach(b => { if (b.dynamics) _barDynamicsMap[b.bar] = b.dynamics; });
@@ -658,10 +696,18 @@ runtime
     if (ev.bar !== lastBar) {
       lastBar = ev.bar;
       _updateStatusBarNum(ev.bar);
+      if (_scrollMode === 'flowing') {
+        const rawDur = _barDuration.get(ev.bar) ?? 2000;
+        readingWindow.scrollToBarFlowing(ev.bar, rawDur / currentTempoScale, scoreEl);
+      }
     }
-    // Lookahead scroll: on last event of bar N, scroll to show bar N+1
+    // Lookahead at last event of bar N — fires early enough for sight-reading preview.
+    // Hybrid: scroll to bar N+1 while bar N is still playing its final note (~500–2000ms
+    //         before bar N+1 starts), giving the user time to read ahead.
+    // Burst:  same timing, instant snap via scrollToBar.
     if (_lastEventOfBar.size && ev.t_ms === _lastEventOfBar.get(ev.bar)) {
-      readingWindow.scrollToBar(ev.bar + 1, scoreEl);
+      if (_scrollMode === 'burst')  readingWindow.scrollToBar(ev.bar + 1, scoreEl);
+      if (_scrollMode === 'hybrid') readingWindow.scrollToBarHybrid(ev.bar + 1, scoreEl);
     }
 
     // 2. SVG highlight — only for clefs active in current learning filter.
@@ -1161,6 +1207,12 @@ function _setUIState(state) {
       actionNote.textContent = '✓ Explore complete!';
       _fabBarShow();
       break;
+    case 'counting':
+      btnMain.textContent    = '✕ Cancel';
+      btnMain.disabled       = false;
+      btnReset.disabled      = true;
+      actionNote.textContent = '';
+      break;
   }
 }
 
@@ -1171,25 +1223,67 @@ function _setUIState(state) {
 // Main button: Start / Pause / Resume / Replay
 btnMain.onclick = () => {
   _audioResume();  // browser autoplay policy: resume AudioContext on user gesture
-  if (uiState === 'idle') {
+
+  // Cancel count-in if in progress
+  if (uiState === 'counting') {
+    countIn.cancel();
+    readingWindow.cancelAnimation();
+    _setUIState('idle');
+    return;
+  }
+
+  if (uiState === 'idle' || uiState === 'ended') {
     _diagNgrLog('PLAY-START'); // DIAG — active map should be ∅ at play start
     lastBar = -1;
-    // Loop scope overrides segment scope — authored learning_segments are NOT modified.
+
+    // Ended: stop engine and clear highlights before replay
+    if (uiState === 'ended') {
+      runtime.stop();
+      renderer.clearAll();  // stop() does not fire exits
+      keyboardViz.clear();
+    }
+
+    // Resolve start bar and play params from current scope
+    let startBar = 1;
+    let playParams;
     if (practiceLoop.active) {
-      runtime.play({ start_ms: practiceLoop.start_ms, end_ms: practiceLoop.end_ms, tempoScale: currentTempoScale });
-      if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
+      startBar   = practiceLoop.start_bar ?? 1;
+      playParams = { start_ms: practiceLoop.start_ms, end_ms: practiceLoop.end_ms, tempoScale: currentTempoScale };
     } else {
       const seg = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
       if (seg) {
-        // Segment-scoped play — null end_ms means play to song end (Infinity)
-        runtime.play({ start_ms: seg.start_ms, end_ms: seg.end_ms ?? Infinity, tempoScale: currentTempoScale });
-        if (seg.start_bar != null) renderer.scrollToBar(seg.start_bar);
+        startBar   = seg.start_bar ?? 1;
+        playParams = { start_ms: seg.start_ms, end_ms: seg.end_ms ?? Infinity, tempoScale: currentTempoScale };
       } else {
-        const partId = songLoader.selectedPart || undefined;
-        runtime.play({ partId, tempoScale: currentTempoScale });
+        startBar   = 1;
+        playParams = { partId: songLoader.selectedPart || undefined, tempoScale: currentTempoScale };
       }
     }
-    _setUIState('playing');
+
+    // Instant scroll to start — cancels any in-progress scroll-back animation.
+    // Direct reset first (guarantees both axes return to origin for bar 1),
+    // then scrollToBar fine-tunes for non-bar-1 practice loop / segment starts.
+    const _vpEl = document.getElementById('notation-viewport');
+    _vpEl.scrollTop  = 0;
+    _vpEl.scrollLeft = 0;
+    if (startBar !== 1) renderer.scrollToBar(startBar, { instant: true });
+    readingWindow.cancelAnimation();
+
+    // Count-in → then play
+    const timeSigArr = currentSong?.meta?.time_signature ?? [4, 4];
+    const timeSig    = `${timeSigArr[0]}/${timeSigArr[1]}`;
+    const bpm        = currentSong?.meta?.bpm ?? 120;
+
+    countIn.start({
+      timeSig,
+      bpm,
+      tempoScale: currentTempoScale,
+      onComplete: () => {
+        runtime.play(playParams);
+        _setUIState('playing');
+      },
+    });
+    _setUIState('counting');
 
   } else if (uiState === 'playing') {
     runtime.pause();
@@ -1199,33 +1293,14 @@ btnMain.onclick = () => {
     // Resume — runtime.play() from paused preserves position (per runtime-contract §3)
     runtime.play({ tempoScale: currentTempoScale });
     _setUIState('playing');
-
-  } else if (uiState === 'ended') {
-    // Replay — stop() resets engine to idle, then play() fresh start
-    runtime.stop();
-    renderer.clearAll();  // stop() does not fire exits
-    keyboardViz.clear();
-    lastBar = -1;
-    if (practiceLoop.active) {
-      runtime.play({ start_ms: practiceLoop.start_ms, end_ms: practiceLoop.end_ms, tempoScale: currentTempoScale });
-      if (practiceLoop.start_bar != null) renderer.scrollToBar(practiceLoop.start_bar);
-    } else {
-      const seg = activeSegmentIndex >= 0 ? songLoader.resolvedSegments[activeSegmentIndex] : null;
-      if (seg) {
-        runtime.play({ start_ms: seg.start_ms, end_ms: seg.end_ms ?? Infinity, tempoScale: currentTempoScale });
-        if (seg.start_bar != null) renderer.scrollToBar(seg.start_bar);
-      } else {
-        const partId = songLoader.selectedPart || undefined;
-        runtime.play({ partId, tempoScale: currentTempoScale });
-      }
-    }
-    _setUIState('playing');
   }
 };
 
 // Reset — always goes back to idle
 btnReset.onclick = () => {
   _diagNgrLog('RESET-STOP'); // DIAG — imbalance here = events mid-flight at stop
+  countIn.cancel();
+  readingWindow.cancelAnimation();
   runtime.stop();
   renderer.clearAll();  // stop() does not fire exits
   keyboardViz.clear();
@@ -1350,6 +1425,19 @@ document.getElementById('btnDevLoopClear').onclick = () => {
   _deactivatePracticeLoop();
   _syncDevLoopPanel();
 };
+
+// -----------------------------------------------------------------------
+// Scroll mode A/B toggle — developer testing: Burst / Flowing / Hybrid
+// -----------------------------------------------------------------------
+function _syncScrollModeUI() {
+  document.getElementById('btnScrollBurst')  ?.classList.toggle('nk-scroll-active', _scrollMode === 'burst');
+  document.getElementById('btnScrollFlowing')?.classList.toggle('nk-scroll-active', _scrollMode === 'flowing');
+  document.getElementById('btnScrollHybrid') ?.classList.toggle('nk-scroll-active', _scrollMode === 'hybrid');
+}
+document.getElementById('btnScrollBurst')  .onclick = () => { _scrollMode = 'burst';   _syncScrollModeUI(); };
+document.getElementById('btnScrollFlowing').onclick = () => { _scrollMode = 'flowing'; _syncScrollModeUI(); };
+document.getElementById('btnScrollHybrid') .onclick = () => { _scrollMode = 'hybrid';  _syncScrollModeUI(); };
+window._setScrollMode = mode => { _scrollMode = mode; _syncScrollModeUI(); };
 
 // -----------------------------------------------------------------------
 // Note Name Mode — presentation-layer display mapping (Task 5)

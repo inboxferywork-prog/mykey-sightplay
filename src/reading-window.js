@@ -41,6 +41,9 @@ class ContextAwareReadingWindow {
     this._coalesceTimer = null;
     this._pending       = null;
 
+    /** RAF id for flowing scroll animation (portrait mode). */
+    this._flowRafId = null;
+
     /** Current viewport zoom scale — updated via setViewportScale().
      *  Default 1.0 (no zoom). Drives zoom-aware parameter computation in _execute(). */
     this._viewportScale = 1.0;
@@ -149,10 +152,211 @@ class ContextAwareReadingWindow {
     this._axis = axis === 'horizontal' ? 'horizontal' : 'vertical';
   }
 
-  destroy() {
+  cancelAnimation() {
     clearTimeout(this._coalesceTimer);
-    this._pending    = null;
+    this._pending = null;
+    if (this._flowRafId) { cancelAnimationFrame(this._flowRafId); this._flowRafId = null; }
+  }
+
+  destroy() {
+    this.cancelAnimation();
     this._viewportEl = null;
+  }
+
+  /**
+   * Flowing scroll for portrait playback — animates scrollTop linearly over the
+   * bar's musical duration so the viewport glides at the pace of the music.
+   * Fires at the first note of each bar. Cancels any in-progress animation.
+   * No-op in horizontal (landscape FAB) mode.
+   *
+   * @param {number}      barN       bar number
+   * @param {number}      durationMs musical duration of this bar in ms (tempo-adjusted by caller)
+   * @param {HTMLElement} scoreEl    #score element
+   */
+  scrollToBarFlowing(barN, durationMs, scoreEl) {
+    if (!this._viewportEl || this._axis !== 'vertical') return;
+
+    const barEl = this._findBarEl(barN, scoreEl);
+    if (!barEl) return;
+
+    const vpRect  = this._viewportEl.getBoundingClientRect();
+    const barRect = barEl.getBoundingClientRect();
+    const vpH     = this._viewportEl.clientHeight;
+    if (vpH <= 0) return;
+
+    const zoomExcess       = Math.max(0, this._viewportScale - 1.0);
+    const effectiveReadPos = Math.max(0.20, this.readingPosition - zoomExcess * 0.04);
+
+    const barVisualTop  = barRect.top - vpRect.top;
+    const targetVisualTop = vpH * effectiveReadPos;
+    const delta         = barVisualTop - targetVisualTop;
+
+    if (Math.abs(delta) < 5) return;
+
+    // Cancel previous flowing animation
+    if (this._flowRafId) {
+      cancelAnimationFrame(this._flowRafId);
+      this._flowRafId = null;
+    }
+
+    const startScrollTop  = this._viewportEl.scrollTop;
+    const targetScrollTop = Math.max(0, startScrollTop + delta);
+    // Clamp duration so very short bars don't feel like a jump, very long bars don't drag
+    const effectiveDuration = Math.max(500, Math.min(durationMs, 5000));
+    const startTime = performance.now();
+
+    const animate = (now) => {
+      const elapsed  = now - startTime;
+      const progress = Math.min(1, elapsed / effectiveDuration);
+      this._viewportEl.scrollTop = startScrollTop + delta * progress;
+      if (progress < 1) {
+        this._flowRafId = requestAnimationFrame(animate);
+      } else {
+        this._flowRafId = null;
+        // Orientation anchor — restore left origin if panned too far right
+        if (this._viewportManager &&
+            this._viewportManager.panX < -this.orientationThreshold) {
+          this._viewportManager.softOrientationReset();
+        }
+      }
+    };
+
+    this._flowRafId = requestAnimationFrame(animate);
+  }
+
+  /**
+   * Hybrid scroll for portrait playback — viewport stays stationary inside the
+   * comfortable reading zone and only repositions (ease-in-out, 800ms) when the
+   * active bar drifts into the trigger zone near the bottom.
+   *
+   * Visual pattern: Pause… Pause… Slow reposition… Pause… Pause… Slow reposition…
+   *
+   * Fires at the first note of each bar (same trigger as Flowing).
+   * Cancels any in-progress flowing animation.
+   * No-op in horizontal (landscape FAB) mode.
+   *
+   * Tuning knobs (base values at scale 1.0):
+   *   hybridDeadTop  0.10 — ignore if bar already near top (plenty of ahead-content)
+   *   hybridTrigger  0.65 — reposition when bar drifts this far down
+   *   hybridReadPos  0.40 — reposition target (leaves ~60% for preview)
+   *   hybridDuration 800  — animation duration ms (fixed for initial A/B test)
+   *
+   * Zoom-aware trigger:
+   *   The dead zone check uses the treble note's visual top (data-bar is always tagged
+   *   on trebleItems[0]). At higher zoom levels the bass stave extends proportionally
+   *   further below the treble note, so the trigger zone is tightened to prevent bass
+   *   clef notes from overflowing the viewport bottom before a reposition fires.
+   *   effTrigger shrinks 0.18 per scale unit above 1.0, floored at 0.42.
+   *   effReadPos  shrinks 0.06 per scale unit above 1.0, floored at 0.26.
+   *     scale 1.0 → trigger 0.65 / readPos 0.40
+   *     scale 1.5 → trigger 0.56 / readPos 0.37
+   *     scale 2.0 → trigger 0.47 / readPos 0.34
+   *
+   * @param {number}      barN    bar number
+   * @param {HTMLElement} scoreEl #score element
+   */
+  scrollToBarHybrid(barN, scoreEl) {
+    if (!this._viewportEl) return;
+
+    if (this._flowRafId) {
+      cancelAnimationFrame(this._flowRafId);
+      this._flowRafId = null;
+    }
+
+    const barEl = this._findBarEl(barN, scoreEl);
+    if (!barEl) return;
+
+    const vpRect  = this._viewportEl.getBoundingClientRect();
+    const barRect = barEl.getBoundingClientRect();
+    const easeInOut = t => t < 0.5 ? 2 * t * t : -2 * t * t + 4 * t - 1;
+
+    // -----------------------------------------------------------------------
+    // Horizontal branch — landscape FAB single-row layout
+    //
+    // Zoom-aware adjustment intentionally skipped (same reason as _execute horizontal:
+    // landscape fitHeight already fixes scale at 1.5–2.0, and there is no bass-clef
+    // overflow concern on the horizontal axis — all bars are in one row).
+    // -----------------------------------------------------------------------
+    if (this._axis === 'horizontal') {
+      const vpW = this._viewportEl.clientWidth;
+      if (vpW <= 0) return;
+
+      const barVisualLeft = barRect.left - vpRect.left;
+      const fraction      = barVisualLeft / vpW;
+
+      const hDeadLeft = this.deadZoneTop;  // 0.10 — left safe zone
+      const hTrigger  = 0.55;             // reposition when bar drifts this far right
+      const hReadPos  = 0.25;             // target: 25% from left (more preview space to the right)
+      const hDuration = 900;             // longer duration for smoother horizontal glide
+
+      if (fraction >= hDeadLeft && fraction <= hTrigger) return;
+
+      const delta = barVisualLeft - vpW * hReadPos;
+      if (Math.abs(delta) < 5) return;
+
+      const startScrollLeft = this._viewportEl.scrollLeft;
+      const startTime       = performance.now();
+      // Cubic ease-in-out: smoother acceleration and deceleration than quadratic
+      const easeH = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+
+      const animate = (now) => {
+        const elapsed  = now - startTime;
+        const t        = Math.min(1, elapsed / hDuration);
+        this._viewportEl.scrollLeft = Math.max(0, startScrollLeft + delta * easeH(t));
+        if (t < 1) {
+          this._flowRafId = requestAnimationFrame(animate);
+        } else {
+          this._flowRafId = null;
+        }
+      };
+
+      this._flowRafId = requestAnimationFrame(animate);
+      return;
+    }
+
+    // -----------------------------------------------------------------------
+    // Vertical branch — portrait mode
+    // -----------------------------------------------------------------------
+    const vpH = this._viewportEl.clientHeight;
+    if (vpH <= 0) return;
+
+    const barVisualTop = barRect.top - vpRect.top;
+    const fraction     = barVisualTop / vpH;
+
+    const hybridDeadTop  = 0.10;
+    const hybridTrigger  = 0.65;
+    const hybridReadPos  = 0.40;
+    const hybridDuration = 800;
+
+    const zoomExcess  = Math.max(0, this._viewportScale - 1.0);
+    const effTrigger  = Math.max(0.42, hybridTrigger - zoomExcess * 0.18);
+    const effReadPos  = Math.max(0.26, hybridReadPos  - zoomExcess * 0.06);
+
+    if (fraction >= hybridDeadTop && fraction <= effTrigger) return;
+
+    const targetVisualTop = vpH * effReadPos;
+    const delta           = barVisualTop - targetVisualTop;
+    if (Math.abs(delta) < 5) return;
+
+    const startScrollTop = this._viewportEl.scrollTop;
+    const startTime      = performance.now();
+
+    const animate = (now) => {
+      const elapsed  = now - startTime;
+      const t        = Math.min(1, elapsed / hybridDuration);
+      this._viewportEl.scrollTop = startScrollTop + delta * easeInOut(t);
+      if (t < 1) {
+        this._flowRafId = requestAnimationFrame(animate);
+      } else {
+        this._flowRafId = null;
+        if (this._viewportManager &&
+            this._viewportManager.panX < -this.orientationThreshold) {
+          this._viewportManager.softOrientationReset();
+        }
+      }
+    };
+
+    this._flowRafId = requestAnimationFrame(animate);
   }
 
   // ---------------------------------------------------------------------------

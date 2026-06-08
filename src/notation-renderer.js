@@ -120,9 +120,9 @@ class NotationRenderer {
     }
   }
 
-  scrollToBar(barN) {
+  scrollToBar(barN, { instant = false } = {}) {
     const el = this._barElMap.get(barN);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (el) el.scrollIntoView({ behavior: instant ? 'instant' : 'smooth', block: 'nearest', inline: 'nearest' });
   }
 
   // ---------------------------------------------------------------------------
@@ -155,6 +155,10 @@ class NotationRenderer {
     const CANVAS_W      = barsPerRowOpt === 'all' ? Math.max(960, bars.length * 240)
                         : barsPerRowOpt === 1 ? 480
                         : 960;
+    // Landscape trailing space — empty SVG area after the final barline so it is
+    // comfortably visible when scrolled to the end. Added to SVG resize only;
+    // _canvasW stays at CANVAS_W so viewport zoom calculations remain accurate.
+    const TRAILING      = barsPerRowOpt === 'all' ? 120 : 0;
     const MARGIN_X     = 20;   // 20px left margin — brace extends ~16px left of stave x; 10px was insufficient
     const TREBLE_Y_OFF = 20;                        // treble stave always at y+20 from row top
     const BASS_Y_OFF   = showBoth ? (barsPerRowOpt === 1 ? 110 : 135) : 20;  // portrait 1-bar: tighter grand staff
@@ -181,7 +185,7 @@ class NotationRenderer {
     const lastBarGlobalIdx = bars.length - 1;       // uses filtered bars, not this._song.score.bars
 
     const vfRenderer = new VF.Renderer(this._container, VF.Renderer.Backends.SVG);
-    vfRenderer.resize(CANVAS_W, totalH);
+    vfRenderer.resize(CANVAS_W + TRAILING, totalH);
     this._canvasW = CANVAS_W;
     const ctx = vfRenderer.getContext();
 
