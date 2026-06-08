@@ -808,6 +808,7 @@ runtime
   .onEnd(() => {
     renderer.clearAll();  // scope ended — clear all remaining highlights
     keyboardViz.clear();
+    _ngrUpdate({ type: 'clear' });
     _diagNgrLog('PLAYBACK-END'); // DIAG — imbalance here = events that never got an exit
     // Auto-repeat: loop scope restarts after a brief pause so the boundary is perceptible.
     // Does NOT affect learning_segments — repeat_enabled is loop-scoped state only.
@@ -1026,6 +1027,7 @@ function _activateSegment(index) {
     runtime.stop();
     renderer.clearAll();
     keyboardViz.clear();
+    _ngrUpdate({ type: 'clear' });
     lastBar = -1;
     _updateProgress(0);
     _updateTime(0);
@@ -1103,6 +1105,7 @@ function _activatePracticeLoop(params) {
     runtime.stop();
     renderer.clearAll();
     keyboardViz.clear();
+    _ngrUpdate({ type: 'clear' });
     lastBar = -1;
     _updateProgress(0);
     _updateTime(0);
@@ -1126,6 +1129,7 @@ function _deactivatePracticeLoop() {
     runtime.stop();
     renderer.clearAll();
     keyboardViz.clear();
+    _ngrUpdate({ type: 'clear' });
     lastBar = -1;
     _setUIState('idle');
   }
@@ -1281,6 +1285,7 @@ btnMain.onclick = () => {
       runtime.stop();
       renderer.clearAll();  // stop() does not fire exits
       keyboardViz.clear();
+      _ngrUpdate({ type: 'clear' });
     }
 
     // Resolve start bar and play params from current scope
@@ -1346,6 +1351,7 @@ btnReset.onclick = () => {
   runtime.stop();
   renderer.clearAll();  // stop() does not fire exits
   keyboardViz.clear();
+  _ngrUpdate({ type: 'clear' });
   lastBar = -1;
   _updateProgress(0);
   _updateTime(0);
