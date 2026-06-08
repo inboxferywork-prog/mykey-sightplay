@@ -543,7 +543,7 @@ class NotationRenderer {
   // ---------------------------------------------------------------------------
 
   _drawTies(ctx, VF) {
-    const ROW_H = 280;  // must match _drawScore layout constant
+    const ROW_H = this._rowH ?? 280;  // must match _drawScore layout constant
     const visibleBarsSet = this._renderOpts?.visibleBars?.length
       ? new Set(this._renderOpts.visibleBars)
       : null;
@@ -1300,7 +1300,7 @@ function _noteHeadProxy(realNote, headIndex) {
  * Handles same-row (single arc) and cross-row (end half-tie + start half-tie) cases.
  * Per-pitch index matching supports chord ties where only some tones are tied.
  *
- * ROW_H (280) is the score row height used to detect same-row vs cross-row.
+ * ROW_H is the score row height (from _drawScore layout) used to detect same-row vs cross-row.
  *
  * VexFlow 5.0.0 compiled bundle: constructor keys are camelCase.
  *   firstNote / lastNote / firstIndices / lastIndices

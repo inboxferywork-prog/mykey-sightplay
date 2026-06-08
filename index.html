@@ -549,6 +549,31 @@ const songLoader = new SongLoader({
       }
     }
     (data.score?.bars || []).forEach(b => { if (b.dynamics) _barDynamicsMap[b.bar] = b.dynamics; });
+    // Pre-compute tied_total_ms for each tie_start event so _playNote sustains
+    // through the full tie chain. tied_total_ms = chain-end's (t_ms+duration_ms) - start's t_ms.
+    {
+      const allBeats = [];
+      for (const bar of (data.score?.bars || [])) {
+        for (const ev of (bar.beats || [])) allBeats.push(ev);
+      }
+      // Pass 1: match each tie_start to its immediate tie_stop.
+      const tieNext = new Map(); // srcId → dstEv
+      const pend    = new Map(); // "clef:sortedNotes" → pending tie_start ev
+      for (const ev of allBeats) {
+        if (!ev.notes?.length || ev.type === 'rest') continue;
+        const k = `${ev.clef}:${[...ev.notes].sort().join(',')}`;
+        if (ev.tie_stop && pend.has(k)) { tieNext.set(pend.get(k).id, ev); pend.delete(k); }
+        for (const [pk] of [...pend.entries()]) { if (pk.startsWith(ev.clef + ':')) pend.delete(pk); }
+        if (ev.tie_start) pend.set(k, ev);
+      }
+      // Pass 2: follow each chain-start to its chain-end and store total duration.
+      for (const ev of allBeats) {
+        if (!ev.tie_start || ev.tie_stop) continue;
+        let last = ev;
+        while (tieNext.has(last.id)) last = tieNext.get(last.id);
+        if (last !== ev) ev.tied_total_ms = last.t_ms + last.duration_ms - ev.t_ms;
+      }
+    }
     _syncLearningControls();
     _updateProgress(0);
     _updateTime(0);
@@ -727,7 +752,7 @@ runtime
       if (ev.slur_start) _slurActive[ev.clef] = true;
       const isLegato   = !!_slurActive[ev.clef];
       const isSlurEnd  = !!ev.slur_stop;
-      _playNote(ev.notes, ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar], currentTempoScale, isLegato, isSlurEnd);
+      _playNote(ev.notes, ev.tied_total_ms ?? ev.duration_ms, ev.articulations, _barDynamicsMap[ev.bar], currentTempoScale, isLegato, isSlurEnd);
       if (ev.slur_stop) _slurActive[ev.clef] = false;
     }
 
