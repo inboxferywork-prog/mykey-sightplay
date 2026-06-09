@@ -618,7 +618,7 @@ class NotationRenderer {
 
   _drawSlurs(ctx, VF) {  // VF accepted for API consistency; not currently used
     const ROW_H    = this._rowH ?? 280;  // 280 grand staff, 120 single-clef
-    const ANCHOR_Y = 3;     // px offset toward the curve from notehead center
+    const ANCHOR_Y = 5;     // px offset toward the curve from notehead edge (~0.5 staff space)
     const visibleBarsSet = this._renderOpts?.visibleBars?.length
       ? new Set(this._renderOpts.visibleBars)
       : null;
@@ -1379,38 +1379,41 @@ function _drawStaveTies(ctx, VF, srcNote, srcStave, srcNotes, dstNote, dstStave,
 /**
  * Draw a thin filled slur arc between two notehead-side anchor points.
  *
- * Outer Bezier curve bows toward `apexY`; inner Bezier returns slightly
- * less bowed (THICK px). Closed path filled black → tapered lens shape.
+ * Outer Bezier bows `height` px away from each endpoint; inner Bezier
+ * returns THICK px less. Closed path filled black → tapered lens shape.
  *
  * dir: +1 = arc bows below noteheads (stem-up).
  *      -1 = arc bows above noteheads (stem-down).
  *
- * Bezier geometry note: a cubic Bezier's midpoint (t=0.5) only reaches
- * ¾ of the control-point apex, not the full apex. `ctrlH = height × 4/3`
- * corrects for this so the visible arc peak equals `height` in px.
+ * Control points are offset independently from each endpoint's own Y,
+ * so the arc follows the melodic contour (ascending/descending passages
+ * produce a slanted arc that hugs the notes rather than an apex placed
+ * at the midpoint between pitches).
  *
- * Control points at ⅓ span (vs naïve ¼) produce a rounder, less
- * flat-topped arch — the curve rises from the endpoints more steeply and
- * peaks cleanly rather than staying near apex for an extended middle stretch.
+ * Bezier geometry: at t=0.5 the midpoint reaches ¾ of the control-point
+ * offset. ctrlH = height × 4/3 corrects so the visible peak equals `height`.
+ * Control points at ⅓ span produce a round arch that rises steeply from
+ * endpoints rather than staying flat over the middle stretch.
  */
 function _drawSlurPath(ctx, x1, y1, x2, y2, dir) {
   const span = x2 - x1;
   if (span <= 4) return;  // degenerate span — nothing visible
 
-  const height = Math.min(26, Math.max(12, span * 0.15));
-  const ctrlH  = height * (4 / 3);  // control apex so midpoint reaches `height`
-  const apexY  = (y1 + y2) / 2 + dir * ctrlH;
+  const height = Math.min(18, Math.max(5, span * 0.12));
+  const ctrlH  = height * (4 / 3);  // control offset so visible arc peak ≈ height
+  const cp1Y   = y1 + dir * ctrlH;  // control point offset from START endpoint
+  const cp2Y   = y2 + dir * ctrlH;  // control point offset from END endpoint
   const cpX1   = x1 + span * (1 / 3);
   const cpX2   = x2 - span * (1 / 3);
-  const THICK  = 2.5;   // lens thickness at apex (px)
+  const THICK  = 2.0;  // lens thickness at apex (px)
 
   ctx.save();
   ctx.setFillStyle('#000000');
   ctx.setLineWidth(0);
   ctx.beginPath();
   ctx.moveTo(x1, y1);
-  ctx.bezierCurveTo(cpX1, apexY,               cpX2, apexY,               x2, y2);
-  ctx.bezierCurveTo(cpX2, apexY - dir * THICK,  cpX1, apexY - dir * THICK,  x1, y1);
+  ctx.bezierCurveTo(cpX1, cp1Y,              cpX2, cp2Y,              x2, y2);
+  ctx.bezierCurveTo(cpX2, cp2Y - dir*THICK,  cpX1, cp1Y - dir*THICK,  x1, y1);
   ctx.closePath();
   ctx.fill();
   ctx.restore();
