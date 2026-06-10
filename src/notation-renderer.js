@@ -176,7 +176,7 @@ class NotationRenderer {
 
     // Optical scale experiment: thinner staff lines so note heads feel more dominant.
     // Passed as 4th arg to every Stave constructor. Silently no-op if VF5 ignores width.
-    const STAVE_OPTS = { line_config: Array(5).fill({ visible: true, width: 0.9 }) };
+    const STAVE_OPTS = { line_config: Array(5).fill({ visible: true, width: 0.9 }), spacing_between_lines_px: 12 };
 
     const rowLayout        = _computeRowLayout(bars, BARS_PER_ROW);  // filtered bars
     const numRows          = rowLayout.length;
@@ -371,23 +371,24 @@ class NotationRenderer {
     const noteAreaW = Math.max(50,
       primaryStave.getWidth() - (primaryStave.getNoteStartX() - primaryStave.getX()) - 12
     );
-    // Reserve optical margin before the barline — 15% for tuplet bars (tick inflation
-    // from nominal durations can crowd the right edge), 10% for normal bars.
+    // Reserve optical margin before the barline — 10% for tuplet bars, 5% for normal bars.
     const hasTuplets = trebleItems.some(it => it.tupletGroup) || bassItems.some(it => it.tupletGroup);
-    const formatW = noteAreaW * (hasTuplets ? 0.85 : 0.90);
+    const formatW = noteAreaW * (hasTuplets ? 0.90 : 0.95);
 
     // Formatter — conditional on what voices exist
+    // softmaxFactor: 15 produces optical spacing (Gould-style) vs. the default 100 (tick-proportional).
     if (showBoth && tv && bv) {
       try {
-        new VF.Formatter().joinVoices([tv]).joinVoices([bv]).format([tv, bv], formatW);
-      } catch (_) {
-        try { new VF.Formatter().joinVoices([tv]).format([tv], formatW); } catch (_) {}
-        try { new VF.Formatter().joinVoices([bv]).format([bv], formatW); } catch (_) {}
+        new VF.Formatter({ softmaxFactor: 15 }).joinVoices([tv]).joinVoices([bv]).format([tv, bv], formatW);
+      } catch (fmtErr) {
+        console.warn('[NotationRenderer] grand-staff format failed — bar', barData.bar, fmtErr?.message ?? fmtErr);
+        try { new VF.Formatter({ softmaxFactor: 15 }).joinVoices([tv]).format([tv], formatW); } catch (_) {}
+        try { new VF.Formatter({ softmaxFactor: 15 }).joinVoices([bv]).format([bv], formatW); } catch (_) {}
       }
     } else if (tv) {
-      try { new VF.Formatter().joinVoices([tv]).format([tv], formatW); } catch (_) {}
+      try { new VF.Formatter({ softmaxFactor: 15 }).joinVoices([tv]).format([tv], formatW); } catch (_) {}
     } else if (bv) {
-      try { new VF.Formatter().joinVoices([bv]).format([bv], formatW); } catch (_) {}
+      try { new VF.Formatter({ softmaxFactor: 15 }).joinVoices([bv]).format([bv], formatW); } catch (_) {}
     }
 
     // INVARIANT: VexFlow Formatter.format() auto-computes and overwrites stem directions
