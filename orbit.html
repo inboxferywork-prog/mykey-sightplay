@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MyKey Orbit</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0a0618">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #07041a;
+      --surface:   #100c28;
+      --surface2:  #181234;
+      --border:    rgba(255,255,255,0.07);
+      --text:      #f0eeff;
+      --muted:     rgba(255,255,255,0.40);
+      --purple:    #7c3aed;
+      --purple2:   #a855f7;
+
+      /* Planet palette */
+      --clr-not-started: #3b82f6;
+      --clr-in-progress: #f59e0b;
+      --clr-completed:   #22c55e;
+      --clr-locked:      #6b7280;
+      --clr-explore:     #06b6d4;
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    #star-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Page layout ──────────────────────────────────────────── */
+    .page {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bot);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Nav ─────────────────────────────────────────────────── */
+    .nav {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px 6px;
+    }
+
+    .nav-btn {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 17px;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.2s;
+    }
+    .nav-btn:active { background: rgba(255,255,255,0.16); }
+
+    /* ── Song header ─────────────────────────────────────────── */
+    .song-header {
+      flex-shrink: 0;
+      padding: 4px 20px 10px;
+    }
+
+    .song-header h1 {
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+      text-shadow: 0 2px 16px rgba(124,58,237,0.5);
+    }
+
+    .song-header .sub {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .song-header .sub span { color: rgba(255,255,255,0.6); }
+
+    /* ── Galaxy viewport ─────────────────────────────────────── */
+    .galaxy-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .galaxy-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Planet nodes ────────────────────────────────────────── */
+    .planet-node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .planet-circle {
+      position: relative;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Planet sizes */
+    .planet-node.size-lg .planet-circle { width: 72px; height: 72px; }
+    .planet-node.size-md .planet-circle { width: 60px; height: 60px; }
+    .planet-node.size-sm .planet-circle { width: 52px; height: 52px; }
+
+    /* State color fills */
+    .planet-circle.state-not-started {
+      background: radial-gradient(135deg at 35% 35%, #60a5fa 0%, #1d4ed8 60%, #1e3a8a 100%);
+      box-shadow: 0 0 20px rgba(59,130,246,0.5), 0 0 40px rgba(59,130,246,0.2);
+      border: 2px solid rgba(147,197,253,0.4);
+    }
+    .planet-circle.state-in-progress {
+      background: radial-gradient(135deg at 35% 35%, #fcd34d 0%, #d97706 60%, #92400e 100%);
+      box-shadow: 0 0 20px rgba(245,158,11,0.5), 0 0 40px rgba(245,158,11,0.2);
+      border: 2px solid rgba(252,211,77,0.4);
+    }
+    .planet-circle.state-completed {
+      background: radial-gradient(135deg at 35% 35%, #86efac 0%, #16a34a 60%, #14532d 100%);
+      box-shadow: 0 0 20px rgba(34,197,94,0.5), 0 0 40px rgba(34,197,94,0.2);
+      border: 2px solid rgba(134,239,172,0.4);
+    }
+    .planet-circle.state-locked {
+      background: radial-gradient(135deg at 35% 35%, #9ca3af 0%, #4b5563 60%, #1f2937 100%);
+      box-shadow: 0 0 12px rgba(107,114,128,0.3);
+      border: 2px solid rgba(156,163,175,0.2);
+    }
+    .planet-circle.state-explore {
+      background: radial-gradient(135deg at 35% 35%, #67e8f9 0%, #0891b2 60%, #164e63 100%);
+      box-shadow: 0 0 20px rgba(6,182,212,0.5), 0 0 40px rgba(6,182,212,0.2);
+      border: 2px solid rgba(103,232,249,0.4);
+    }
+
+    /* Planet ring for Saturn-like planet B */
+    .planet-circle.has-ring::after {
+      content: '';
+      position: absolute;
+      width: 140%;
+      height: 30%;
+      border-radius: 50%;
+      border: 3px solid rgba(252,211,77,0.45);
+      pointer-events: none;
+      transform: rotate(-15deg);
+    }
+
+    /* Lock icon overlay */
+    .planet-lock {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      width: 22px;
+      height: 22px;
+      background: rgba(10,6,24,0.85);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .planet-label {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 16px rgba(0,0,0,0.6);
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .planet-node:active .planet-circle {
+      transform: scale(0.92);
+      transition: transform 0.1s;
+    }
+
+    /* ── Center piano ────────────────────────────────────────── */
+    .center-piano {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .center-piano-inner {
+      width: 88px;
+      height: 88px;
+      background: radial-gradient(135deg at 35% 35%, #2d1b69 0%, #130d2b 100%);
+      border-radius: 50%;
+      border: 2px solid rgba(124,58,237,0.5);
+      box-shadow:
+        0 0 32px rgba(124,58,237,0.5),
+        0 0 64px rgba(124,58,237,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    /* ── Legend bar ──────────────────────────────────────────── */
+    .legend {
+      flex-shrink: 0;
+      background: rgba(13,9,32,0.92);
+      border-top: 1px solid var(--border);
+      padding: 10px 16px calc(10px + var(--safe-bot));
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 8px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .legend-ring {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      flex-shrink: 0;
+    }
+
+    .legend-item.not-started .legend-ring { color: var(--clr-not-started); }
+    .legend-item.in-progress .legend-ring { color: var(--clr-in-progress); background: rgba(245,158,11,0.2); }
+    .legend-item.completed   .legend-ring { color: var(--clr-completed);   background: rgba(34,197,94,0.2); }
+    .legend-item.locked span:last-child   { font-size: 13px; color: var(--clr-locked); }
+
+    /* ── Loading ─────────────────────────────────────────────── */
+    .loading-state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(124,58,237,0.3);
+      border-top-color: var(--purple2);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<canvas id="star-canvas"></canvas>
+
+<div class="page" id="page">
+  <div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <span>Loading orbit…</span>
+  </div>
+</div>
+
+<script>
+// ── Stars ─────────────────────────────────────────────────────
+(function () {
+  const canvas = document.getElementById('star-canvas');
+  const ctx    = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Scattered small white stars
+    for (let i = 0; i < 150; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const r = Math.random() * 1.2 + 0.2;
+      const a = Math.random() * 0.6 + 0.1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fill();
+    }
+    // A few brighter accent stars
+    for (let i = 0; i < 8; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,200,255,0.7)';
+      ctx.fill();
+      // Tiny cross glow
+      ctx.strokeStyle = 'rgba(255,200,255,0.3)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y);
+      ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 5);
+      ctx.stroke();
+    }
+    // Nebula clouds
+    const clouds = [
+      { x: 0.2, y: 0.15, r: 80, c: 'rgba(88,28,220,0.07)' },
+      { x: 0.8, y: 0.7,  r: 90, c: 'rgba(168,85,247,0.06)' },
+      { x: 0.5, y: 0.4,  r: 50, c: 'rgba(124,58,237,0.04)' },
+    ];
+    clouds.forEach(({ x, y, r, c }) => {
+      const grd = ctx.createRadialGradient(
+        x * canvas.width, y * canvas.height, 0,
+        x * canvas.width, y * canvas.height, r
+      );
+      grd.addColorStop(0, c);
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
+  }
+
+  window.addEventListener('resize', () => { resize(); drawStars(); });
+  resize();
+  drawStars();
+})();
+
+// ── Planet state config ───────────────────────────────────────
+const STATE_CLASS = {
+  notStarted: 'state-not-started',
+  inProgress:  'state-in-progress',
+  completed:   'state-completed',
+  locked:      'state-locked',
+  explore:     'state-explore',
+};
+
+const STATE_COLOR = {
+  notStarted: '#3b82f6',
+  inProgress:  '#f59e0b',
+  completed:   '#22c55e',
+  locked:      '#6b7280',
+  explore:     '#06b6d4',
+};
+
+// ── Layout: planet positions as % of galaxy viewport ─────────
+// These are fixed for V1. Based on the mockup spiral layout.
+// [left%, top%]
+const PLANET_SLOTS = [
+  { key: 'explore', left: 20, top: 72 },  // Song Explore — lower left
+  { key: 'p0',      left: 73, top: 78 },  // Phrase A — lower right
+  { key: 'p1',      left: 84, top: 42 },  // Phrase B — right
+  { key: 'p2',      left: 18, top: 28 },  // Phrase C — upper left
+  { key: 'p3',      left: 60, top: 10 },  // Phrase D — top
+];
+
+// Curve path data: [cp1x%, cp1y%, cp2x%, cp2y%, ex%, ey%] relative to viewport
+// Start always from center (50%, 50%)
+function buildPathD(cx, cy, ex, ey, w, h) {
+  const px = (pct) => pct / 100 * w;
+  const py = (pct) => pct / 100 * h;
+  const midX = (cx + ex) / 2;
+  const midY = (cy + ey) / 2;
+  // Single quadratic bezier with offset control point for curvature
+  const cpx = midX + (ey - cy) * 0.25;
+  const cpy = midY - (ex - cx) * 0.25;
+  return `M ${px(cx)} ${py(cy)} Q ${px(cpx)} ${py(cpy)} ${px(ex)} ${py(ey)}`;
+}
+
+// ── Collection label ──────────────────────────────────────────
+function collectionLabel(id) {
+  const labels = {
+    'yamaha-primary-1':   'Yamaha Primary 1',
+    'yamaha-primary-2':   'Yamaha Primary 2',
+    'yamaha-primary-3':   'Yamaha Primary 3',
+    'yamaha-primary-4':   'Yamaha Primary 4',
+    'yamaha-extension-1': 'Yamaha Extension 1',
+    'yamaha-extension-2': 'Yamaha Extension 2',
+    'yamaha-extension-3': 'Yamaha Extension 3',
+    'rockschool-piano-contemporary': 'Rockschool Piano Contemporary',
+    'beyer-op101':        'Beyer Op.101',
+    'czerny-op599':       'Czerny Op.599',
+    'burgmuller-op100':   'Burgmüller Op.100',
+    'hanon':              'Hanon',
+    'standalone':         'MyKey Music Labs',
+    'mykey-originals':    'MyKey Originals',
+  };
+  return labels[id] || id || 'MyKey Music Labs';
+}
+
+// ── Render galaxy SVG (orbital rings) ────────────────────────
+function renderGalaxySVG(w, h) {
+  const cx = w * 0.5;
+  const cy = h * 0.5;
+
+  // Three tilted ellipses to suggest galaxy spiral
+  const rings = [
+    { rx: w * 0.28, ry: h * 0.14, rot: -25, opacity: 0.12 },
+    { rx: w * 0.44, ry: h * 0.22, rot: -18, opacity: 0.09 },
+    { rx: w * 0.46, ry: h * 0.38, rot: -10, opacity: 0.07 },
+  ];
+
+  const ellipses = rings.map(({ rx, ry, rot, opacity }) => `
+    <ellipse
+      cx="${cx}" cy="${cy}"
+      rx="${rx}" ry="${ry}"
+      fill="none"
+      stroke="rgba(124,58,237,${opacity * 10})"
+      stroke-width="1.5"
+      stroke-dasharray="6 4"
+      transform="rotate(${rot} ${cx} ${cy})"
+    />`).join('');
+
+  const glowGradient = `
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#7c3aed" stop-opacity="0.25"/>
+      <stop offset="50%"  stop-color="#4c1d95" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#07041a" stop-opacity="0"/>
+    </radialGradient>`;
+
+  const glowEllipse = `<ellipse cx="${cx}" cy="${cy}" rx="${w * 0.4}" ry="${h * 0.32}"
+             fill="url(#centerGlow)" transform="rotate(-15 ${cx} ${cy})"/>`;
+
+  return `<svg class="galaxy-svg" viewBox="0 0 ${w} ${h}"
+               xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <defs>${glowGradient}</defs>
+    ${glowEllipse}
+    ${ellipses}
+  </svg>`;
+}
+
+// ── Render a planet node ──────────────────────────────────────
+function planetHTML(label, state, isLocked, isExplore, hasRing, segId, src) {
+  const stClass = STATE_CLASS[state] || STATE_CLASS.notStarted;
+  const size    = isExplore ? 'size-lg' : 'size-md';
+  const ringCls = hasRing ? ' has-ring' : '';
+  const lockEl  = isLocked ? '<div class="planet-lock">🔒</div>' : '';
+
+  // For V1: clicking locked planets does nothing; others go to planet.html
+  const href = isLocked
+    ? '#'
+    : (isExplore
+        ? `index.html?src=${encodeURIComponent(src)}`
+        : `planet.html?src=${encodeURIComponent(src)}&segment=${encodeURIComponent(segId || '')}`);
+
+  const emoji = isExplore ? '🎹' : (isLocked ? '' : '');
+  const inner = emoji ? `<span style="font-size:${isExplore ? '28' : '22'}px">${emoji}</span>` : '';
+
+  return `
+    <a class="planet-node ${size}" href="${href}"
+       ${isLocked ? 'onclick="return false"' : ''} aria-label="${label}">
+      <div class="planet-circle ${stClass}${ringCls}">
+        ${inner}
+        ${lockEl}
+      </div>
+      <div class="planet-label">${label}</div>
+    </a>`;
+}
+
+// ── Default planet states for V1 ─────────────────────────────
+// Real progression will come in a future sprint.
+function defaultState(index, total) {
+  if (index === 0) return 'notStarted';     // Song Explore
+  if (index === 1) return 'notStarted';     // Phrase A
+  if (index === 2) return 'notStarted';     // Phrase B (has ring in mockup)
+  return 'locked';                           // Remaining locked
+}
+
+// ── Render full orbit page ────────────────────────────────────
+function renderOrbit(song, src) {
+  const { meta } = song;
+  const segs     = song.learning_segments || [];
+  const colName  = collectionLabel(song.library?.collectionId || null);
+
+  // Build planet data: [explore] + [phrases...]
+  // Use up to 4 phrase segments, pad with defaults if fewer
+  const phrasePlanets = segs.slice(0, 4).map((seg, i) => ({
+    key:     `p${i}`,
+    label:   seg.label || `Phrase ${String.fromCharCode(65 + i)}`,
+    segId:   seg.segment_id,
+    state:   defaultState(i + 1, segs.length),
+    locked:  defaultState(i + 1, segs.length) === 'locked',
+    hasRing: i === 1,   // Phrase B gets the ring (visual variety)
+  }));
+
+  const explorePlanet = {
+    key:    'explore',
+    label:  'Song Explore',
+    segId:  null,
+    state:  'explore',
+    locked: false,
+  };
+
+  // All planets in slot order
+  const allPlanets = [explorePlanet, ...phrasePlanets];
+
+  // Song Hub nav URL
+  const hubUrl = `song-hub.html?src=${encodeURIComponent(src)}`;
+
+  const page = document.getElementById('page');
+  page.innerHTML = `
+    <nav class="nav">
+      <button class="nav-btn" onclick="location.href='${hubUrl}'" aria-label="Back">←</button>
+      <button class="nav-btn" aria-label="Help">?</button>
+    </nav>
+
+    <div class="song-header">
+      <h1>${meta.title}</h1>
+      <div class="sub"><span>${colName}</span></div>
+    </div>
+
+    <div class="galaxy-viewport" id="galaxyVP">
+      <!-- SVG + planets injected after layout -->
+    </div>
+
+    <div class="legend">
+      <div class="legend-item not-started">
+        <div class="legend-ring"></div>
+        <span>Not started</span>
+      </div>
+      <div class="legend-item in-progress">
+        <div class="legend-ring"></div>
+        <span>In progress</span>
+      </div>
+      <div class="legend-item completed">
+        <div class="legend-ring"></div>
+        <span>Completed</span>
+      </div>
+      <div class="legend-item locked">
+        <span>🔒</span>
+        <span>Locked</span>
+      </div>
+    </div>`;
+
+  // Inject galaxy content once we have DOM dimensions
+  requestAnimationFrame(() => {
+    const vp = document.getElementById('galaxyVP');
+    const w  = vp.clientWidth  || window.innerWidth;
+    const h  = vp.clientHeight || window.innerHeight * 0.65;
+
+    // Galaxy orbital rings SVG
+    vp.innerHTML = renderGalaxySVG(w, h);
+
+    // Center piano
+    const piano = document.createElement('div');
+    piano.className = 'center-piano';
+    piano.style.left = '50%';
+    piano.style.top  = '50%';
+    piano.innerHTML  = '<div class="center-piano-inner">🎹</div>';
+    vp.appendChild(piano);
+
+    // Render planets using slot positions
+    PLANET_SLOTS.forEach((slot, i) => {
+      const planet = allPlanets[i];
+      if (!planet) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'absolute';
+      wrapper.style.left     = `${slot.left}%`;
+      wrapper.style.top      = `${slot.top}%`;
+      wrapper.innerHTML      = planetHTML(
+        planet.label,
+        planet.state,
+        planet.locked,
+        planet.key === 'explore',
+        planet.hasRing || false,
+        planet.segId,
+        src
+      );
+      vp.appendChild(wrapper);
+
+      // Draw dotted path from center to this planet
+      const svg = vp.querySelector('.galaxy-svg');
+      if (svg) {
+        const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const d = buildPathD(50, 50, slot.left, slot.top, w, h);
+        const color = STATE_COLOR[planet.state] || '#6b7280';
+        pathEl.setAttribute('d', d);
+        pathEl.setAttribute('fill', 'none');
+        pathEl.setAttribute('stroke', color);
+        pathEl.setAttribute('stroke-width', '1.5');
+        pathEl.setAttribute('stroke-dasharray', '4 4');
+        pathEl.setAttribute('opacity', '0.55');
+        svg.appendChild(pathEl);
+      }
+    });
+  });
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────
+(async function () {
+  const params = new URLSearchParams(location.search);
+  const src    = params.get('src');
+
+  if (!src) {
+    document.getElementById('page').innerHTML = `
+      <div class="loading-state">
+        <span>⚠️</span>
+        <span>No song specified.<br><a href="index.html" style="color:#a855f7">← Back to Library</a></span>
+      </div>`;
+    return;
+  }
+
+  try {
+    const res  = await fetch(src);
+    if (!res.ok) throw new Error(res.statusText);
+    const song = await res.json();
+    renderOrbit(song, src);
+  } catch (err) {
+    document.getElementById('page').innerHTML = `
+      <div class="loading-state">
+        <span>⚠️</span>
+        <span>Could not load song.<br><a href="index.html" style="color:#a855f7">← Back to Library</a></span>
+      </div>`;
+  }
+})();
+</script>
+</body>
+</html>

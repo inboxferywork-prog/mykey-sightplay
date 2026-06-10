@@ -36,6 +36,7 @@
       <span class="header-label">Song:</span>
       <select id="songSelect"></select>
       <button id="btnFloatToggle" class="fc-toggle-btn" title="Toggle floating controls">⊡ Float</button>
+      <a href="#" id="orbitLink" title="Song Hub &amp; Orbit" onclick="event.preventDefault(); const s=document.getElementById('songSelect').value; if(s) location.href='song-hub.html?src='+encodeURIComponent(s);">🪐 Orbit</a>
       <a href="authoring.html" id="authoringLink" title="Segment Authoring Tool">✏ Author</a>
       <a href="library-manager.html" id="libraryManagerLink" title="Library Manager Tool">📚 Library</a>
     </div>
@@ -2390,6 +2391,11 @@ async function _initSongLibrary() {
       songSelect.appendChild(opt);
     });
 
+    // Auto-select song from URL param (e.g. from Song Hub / Orbit)
+    const _urlSrc = new URLSearchParams(location.search).get('src');
+    if (_urlSrc && Array.from(songSelect.options).some(o => o.value === _urlSrc)) {
+      songSelect.value = _urlSrc;
+    }
     if (songSelect.value) songLoader.load(songSelect.value);
   } catch (err) {
     console.error('songs/index.json load failed:', err);

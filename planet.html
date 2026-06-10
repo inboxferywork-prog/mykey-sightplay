@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Planet — MyKey</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0a0618">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #07041a;
+      --surface:  #100c28;
+      --border:   rgba(255,255,255,0.07);
+      --text:     #f0eeff;
+      --muted:    rgba(255,255,255,0.40);
+      --purple2:  #a855f7;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #star-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--safe-top) 24px var(--safe-bot);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .nav {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 14px 0 20px;
+    }
+
+    .nav-btn {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 17px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn:active { background: rgba(255,255,255,0.16); }
+
+    .planet-hero {
+      margin: 24px 0 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .planet-ball {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(135deg at 35% 35%, #60a5fa 0%, #1d4ed8 60%, #1e3a8a 100%);
+      box-shadow:
+        0 0 40px rgba(59,130,246,0.5),
+        0 0 80px rgba(59,130,246,0.2);
+      border: 2px solid rgba(147,197,253,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .planet-hero h1 {
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 20px rgba(59,130,246,0.4);
+    }
+
+    .planet-hero .sub {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .coming-soon-card {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .cs-icon { font-size: 40px; }
+
+    .cs-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .cs-body {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+
+    .games-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .game-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .game-icon { font-size: 20px; width: 28px; text-align: center; }
+
+    .game-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .game-badge {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 800;
+      color: rgba(168,85,247,0.8);
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 20px;
+      padding: 2px 8px;
+    }
+
+    .back-btn {
+      margin-top: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 32px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 50px;
+      color: var(--purple2);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .back-btn:active { background: rgba(124,58,237,0.25); }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(124,58,237,0.3);
+      border-top-color: var(--purple2);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<canvas id="star-canvas"></canvas>
+
+<div class="page" id="page">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:rgba(255,255,255,0.4);font-size:14px;font-weight:600;">
+    <div class="spinner"></div>
+    <span>Loading…</span>
+  </div>
+</div>
+
+<script>
+// ── Stars ─────────────────────────────────────────────────────
+(function () {
+  const canvas = document.getElementById('star-canvas');
+  const ctx    = canvas.getContext('2d');
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < 100; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height,
+              Math.random() * 1.2 + 0.2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.5 + 0.1})`;
+      ctx.fill();
+    }
+  }
+  window.addEventListener('resize', () => { resize(); draw(); });
+  resize(); draw();
+})();
+
+// ── Planned mini games for this planet ───────────────────────
+const MINI_GAMES = [
+  { icon: '⚡', name: 'Flash Notes',   desc: 'Read notes fast' },
+  { icon: '🎯', name: 'Match Notes',   desc: 'Identify by ear' },
+  { icon: '🥁', name: 'Build Rhythm',  desc: 'Clap the pattern' },
+  { icon: '🤚', name: 'Right Hand',    desc: 'Treble only' },
+  { icon: '🫱', name: 'Left Hand',     desc: 'Bass only' },
+  { icon: '🔁', name: 'Phrase Review', desc: 'Play it through' },
+];
+
+// ── Render planet page ────────────────────────────────────────
+function renderPlanet(song, src, segmentId) {
+  const seg = (song.learning_segments || []).find(s => s.segment_id === segmentId);
+  const orbitUrl = `orbit.html?src=${encodeURIComponent(src)}`;
+
+  const label = seg?.label || segmentId || 'Phrase';
+  const barRange = seg ? `Bars ${seg.start_bar}–${seg.end_bar - 1}` : '';
+
+  const gameItems = MINI_GAMES.map(g => `
+    <div class="game-item">
+      <span class="game-icon">${g.icon}</span>
+      <span class="game-name">${g.name}</span>
+      <span class="game-badge">Coming soon</span>
+    </div>`).join('');
+
+  document.getElementById('page').innerHTML = `
+    <nav class="nav">
+      <button class="nav-btn" onclick="location.href='${orbitUrl}'" aria-label="Back to Orbit">←</button>
+    </nav>
+
+    <div class="planet-hero">
+      <div class="planet-ball">🪐</div>
+      <h1>${label}</h1>
+      ${barRange ? `<p class="sub">${song.meta.title} · ${barRange}</p>` : ''}
+    </div>
+
+    <div class="coming-soon-card">
+      <span class="cs-icon">🚀</span>
+      <h2 class="cs-title">Mini Games Coming Soon</h2>
+      <p class="cs-body">
+        This planet will contain focused practice games for this phrase.
+        Return when they launch!
+      </p>
+    </div>
+
+    <div class="games-list">${gameItems}</div>
+
+    <a class="back-btn" href="${orbitUrl}">← Back to Orbit</a>
+  `;
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────
+(async function () {
+  const params    = new URLSearchParams(location.search);
+  const src       = params.get('src');
+  const segmentId = params.get('segment');
+
+  if (!src) {
+    document.getElementById('page').innerHTML = `
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:rgba(255,255,255,0.4);font-size:14px;font-weight:600;">
+        <span>⚠️ No song specified.</span>
+        <a href="index.html" style="color:#a855f7">← Back to Library</a>
+      </div>`;
+    return;
+  }
+
+  try {
+    const res  = await fetch(src);
+    if (!res.ok) throw new Error(res.statusText);
+    const song = await res.json();
+    renderPlanet(song, src, segmentId);
+  } catch (err) {
+    document.getElementById('page').innerHTML = `
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:rgba(255,255,255,0.4);font-size:14px;font-weight:600;">
+        <span>⚠️ Could not load.</span>
+        <a href="index.html" style="color:#a855f7">← Back to Library</a>
+      </div>`;
+  }
+})();
+</script>
+</body>
+</html>

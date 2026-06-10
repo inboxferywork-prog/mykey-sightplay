@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Song Hub — MyKey</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0a0618">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0618;
+      --surface:   #130d2b;
+      --surface2:  #1c1438;
+      --border:    rgba(255,255,255,0.08);
+      --text:      #f0eeff;
+      --muted:     rgba(255,255,255,0.45);
+      --purple:    #7c3aed;
+      --purple2:   #a855f7;
+      --purple-glow: rgba(124, 58, 237, 0.4);
+      --gold:      #f59e0b;
+      --green:     #22c55e;
+      --safe-top:  env(safe-area-inset-top, 0px);
+      --safe-bot:  env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Stars background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(124,58,237,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(168,85,247,0.10) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(30,20,60,0.8) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #star-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bot);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Nav bar ─────────────────────────────────────────────── */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 8px;
+    }
+
+    .nav-btn {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 18px;
+      transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-btn:active { background: rgba(255,255,255,0.15); }
+
+    .nav-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      padding: 8px 20px 0;
+      min-height: 240px;
+      overflow: visible;
+    }
+
+    .genre-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(124,58,237,0.25);
+      border: 1px solid rgba(124,58,237,0.45);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #c084fc;
+      letter-spacing: 0.3px;
+      margin-bottom: 14px;
+    }
+
+    .song-title {
+      font-size: clamp(26px, 7vw, 34px);
+      font-weight: 900;
+      line-height: 1.1;
+      color: #fff;
+      max-width: 55%;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 20px rgba(124,58,237,0.4);
+    }
+
+    .hero-piano {
+      position: absolute;
+      right: -10px;
+      top: -10px;
+      width: 200px;
+      height: 230px;
+      pointer-events: none;
+    }
+
+    /* ── Metadata rows ──────────────────────────────────────── */
+    .meta-section {
+      padding: 24px 20px 0;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .meta-row:last-child { border-bottom: none; }
+
+    .meta-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .meta-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      width: 80px;
+      flex-shrink: 0;
+    }
+
+    .meta-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .stars {
+      display: flex;
+      gap: 3px;
+    }
+
+    .star {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .star.filled { color: var(--gold); filter: drop-shadow(0 0 4px rgba(245,158,11,0.6)); }
+    .star.empty  { color: rgba(255,255,255,0.2); }
+
+    /* ── Info cards ─────────────────────────────────────────── */
+    .cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 20px 20px 0;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card-icon {
+      font-size: 16px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .card-body {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .best-dashes {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .best-dash {
+      width: 20px;
+      height: 3px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+    }
+
+    /* ── Enter Orbit button ─────────────────────────────────── */
+    .cta-wrapper {
+      padding: 24px 20px 32px;
+      margin-top: auto;
+    }
+
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #9333ea 100%);
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow:
+        0 8px 32px rgba(124,58,237,0.5),
+        0 2px 8px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cta-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+    }
+
+    .cta-arrow {
+      font-size: 20px;
+      transition: transform 0.2s;
+    }
+
+    .cta-btn:hover .cta-arrow { transform: translateX(4px); }
+
+    /* ── Loading / error states ─────────────────────────────── */
+    .loading-state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(124,58,237,0.3);
+      border-top-color: var(--purple2);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Piano SVG inline styles */
+    .piano-svg { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+
+<canvas id="star-canvas"></canvas>
+
+<div class="page" id="page">
+  <div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <span>Loading song…</span>
+  </div>
+</div>
+
+<script>
+// ── Stars background ──────────────────────────────────────────
+(function () {
+  const canvas = document.getElementById('star-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const count = 120;
+    for (let i = 0; i < count; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const r = Math.random() * 1.4 + 0.2;
+      const a = Math.random() * 0.7 + 0.1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fill();
+    }
+  }
+
+  window.addEventListener('resize', () => { resize(); drawStars(); });
+  resize();
+  drawStars();
+})();
+
+// ── Piano SVG ─────────────────────────────────────────────────
+const PIANO_SVG = `
+<svg class="piano-svg" viewBox="0 0 200 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Glow aura -->
+  <radialGradient id="pianoGlow" cx="50%" cy="60%" r="50%">
+    <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.35"/>
+    <stop offset="100%" stop-color="#0a0618" stop-opacity="0"/>
+  </radialGradient>
+  <ellipse cx="100" cy="130" rx="95" ry="95" fill="url(#pianoGlow)"/>
+
+  <!-- Piano body (side perspective) -->
+  <!-- Lid -->
+  <path d="M 30 60 Q 60 20 140 30 L 170 50 Q 110 38 60 75 Z"
+        fill="#1a1a2e" stroke="#3a2a6e" stroke-width="1"/>
+  <!-- Lid prop -->
+  <line x1="140" y1="30" x2="148" y2="80" stroke="#3a2a6e" stroke-width="1.5"/>
+
+  <!-- Body -->
+  <path d="M 30 60 L 28 170 Q 28 178 36 178 L 160 178 Q 170 178 170 168 L 170 50 Q 110 38 60 75 Z"
+        fill="#111122" stroke="#2a1e5e" stroke-width="1.5"/>
+
+  <!-- Keyboard panel -->
+  <rect x="28" y="158" width="144" height="22" rx="4" fill="#0d0d20" stroke="#2a1e5e" stroke-width="1"/>
+
+  <!-- White keys -->
+  <g fill="#f0f0f5" stroke="#2a1e5e" stroke-width="0.5">
+    <rect x="32"  y="162" width="11" height="16" rx="2"/>
+    <rect x="45"  y="162" width="11" height="16" rx="2"/>
+    <rect x="58"  y="162" width="11" height="16" rx="2"/>
+    <rect x="71"  y="162" width="11" height="16" rx="2"/>
+    <rect x="84"  y="162" width="11" height="16" rx="2"/>
+    <rect x="97"  y="162" width="11" height="16" rx="2"/>
+    <rect x="110" y="162" width="11" height="16" rx="2"/>
+    <rect x="123" y="162" width="11" height="16" rx="2"/>
+    <rect x="136" y="162" width="11" height="16" rx="2"/>
+    <rect x="149" y="162" width="11" height="16" rx="2"/>
+  </g>
+
+  <!-- Black keys -->
+  <g fill="#111122" stroke="#3a2a6e" stroke-width="0.5">
+    <rect x="40"  y="162" width="7" height="10" rx="1"/>
+    <rect x="53"  y="162" width="7" height="10" rx="1"/>
+    <rect x="79"  y="162" width="7" height="10" rx="1"/>
+    <rect x="92"  y="162" width="7" height="10" rx="1"/>
+    <rect x="105" y="162" width="7" height="10" rx="1"/>
+    <rect x="131" y="162" width="7" height="10" rx="1"/>
+    <rect x="144" y="162" width="7" height="10" rx="1"/>
+  </g>
+
+  <!-- Legs -->
+  <line x1="40"  y1="178" x2="38"  y2="210" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round"/>
+  <line x1="160" y1="178" x2="162" y2="210" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round"/>
+  <line x1="95"  y1="178" x2="94"  y2="212" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Brand text on body -->
+  <text x="90" y="130" fill="#3a2a6e" font-size="10" font-family="Nunito,sans-serif"
+        font-weight="800" text-anchor="middle" opacity="0.7">mykey</text>
+
+  <!-- Subtle highlight on lid -->
+  <path d="M 35 63 Q 70 28 130 33" stroke="rgba(255,255,255,0.08)" stroke-width="2" fill="none"/>
+</svg>`;
+
+// ── Level to stars ────────────────────────────────────────────
+function levelToStars(level) {
+  const map = {
+    early_beginner: 1,
+    beginner:       2,
+    intermediate:   3,
+    advanced:       4,
+    expert:         5
+  };
+  return map[level] || 1;
+}
+
+function renderStars(filled, total = 3) {
+  let html = '<div class="stars">';
+  for (let i = 1; i <= total; i++) {
+    html += `<span class="star ${i <= filled ? 'filled' : 'empty'}">${i <= filled ? '★' : '☆'}</span>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+// ── Collection label ──────────────────────────────────────────
+function collectionLabel(id) {
+  const labels = {
+    'yamaha-primary-1':   'Yamaha Primary 1',
+    'yamaha-primary-2':   'Yamaha Primary 2',
+    'yamaha-primary-3':   'Yamaha Primary 3',
+    'yamaha-primary-4':   'Yamaha Primary 4',
+    'yamaha-extension-1': 'Yamaha Extension 1',
+    'yamaha-extension-2': 'Yamaha Extension 2',
+    'yamaha-extension-3': 'Yamaha Extension 3',
+    'rockschool-piano-contemporary': 'Rockschool Piano Contemporary',
+    'beyer-op101':        'Beyer Op.101',
+    'czerny-op599':       'Czerny Op.599',
+    'burgmuller-op100':   'Burgmüller Op.100',
+    'hanon':              'Hanon',
+    'standalone':         'MyKey Music Labs',
+    'mykey-originals':    'MyKey Originals',
+  };
+  return labels[id] || id || 'MyKey Music Labs';
+}
+
+// ── About text generator ──────────────────────────────────────
+function buildAboutText(song) {
+  const { meta } = song;
+  const segs = (song.learning_segments || []).length;
+  const bars = (() => {
+    if (!song.score) return '—';
+    return song.score.length;
+  })();
+  const parts = [
+    `A ${meta.time_signature ? meta.time_signature.join('/') : ''} piece`,
+    `at ${meta.bpm} BPM`,
+    segs > 0 ? `with ${segs} learning phrases.` : '.',
+    'Practice phrase by phrase to build confidence and fluency.'
+  ];
+  return parts.filter(Boolean).join(' ');
+}
+
+// ── Render page ───────────────────────────────────────────────
+function renderPage(song, src) {
+  const { meta } = song;
+  const stars   = levelToStars(meta.level);
+  const colId   = song.library?.collectionId || null;
+  const colName = collectionLabel(colId);
+  const segs    = song.learning_segments || [];
+
+  // Build orbit URL
+  const orbitUrl = `orbit.html?src=${encodeURIComponent(src)}`;
+
+  const html = `
+    <nav class="nav">
+      <button class="nav-btn" onclick="history.back()" aria-label="Back">←</button>
+      <div class="nav-right">
+        <button class="nav-btn" id="btnFav" aria-label="Favourite">♡</button>
+        <button class="nav-btn" aria-label="More options">⋯</button>
+      </div>
+    </nav>
+
+    <div class="hero">
+      <div class="genre-pill">📖 Sight Playing Practice</div>
+      <h1 class="song-title" id="songTitleEl">${meta.title}</h1>
+      <div class="hero-piano">${PIANO_SVG}</div>
+    </div>
+
+    <div class="meta-section">
+      <div class="meta-row">
+        <div class="meta-icon">📖</div>
+        <span class="meta-label">Book</span>
+        <span class="meta-value">${colName}</span>
+      </div>
+      <div class="meta-row">
+        <div class="meta-icon">🎵</div>
+        <span class="meta-label">Composer</span>
+        <span class="meta-value">${meta.composer || 'Unknown'}</span>
+      </div>
+      <div class="meta-row">
+        <div class="meta-icon">📊</div>
+        <span class="meta-label">Difficulty</span>
+        <span class="meta-value">${renderStars(stars)}</span>
+      </div>
+      <div class="meta-row">
+        <div class="meta-icon">🕐</div>
+        <span class="meta-label">Last played</span>
+        <span class="meta-value" id="lastPlayed">—</span>
+      </div>
+    </div>
+
+    <div class="cards-row">
+      <div class="info-card">
+        <div class="card-header">
+          <span class="card-icon">🎵</span>
+          <span class="card-title">About this song</span>
+        </div>
+        <p class="card-body">${buildAboutText(song)}</p>
+      </div>
+      <div class="info-card">
+        <div class="card-header">
+          <span class="card-icon">🏆</span>
+          <span class="card-title">Your best</span>
+        </div>
+        <div class="best-dashes">
+          <div class="best-dash"></div>
+          <div class="best-dash"></div>
+          <div class="best-dash"></div>
+          <div class="best-dash"></div>
+        </div>
+        <p class="card-body" id="bestScore">Not played yet</p>
+      </div>
+    </div>
+
+    <div class="cta-wrapper">
+      <a class="cta-btn" href="${orbitUrl}">
+        <span>Enter Orbit</span>
+        <span class="cta-arrow">→</span>
+      </a>
+    </div>
+  `;
+
+  const page = document.getElementById('page');
+  page.innerHTML = html;
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────
+(async function () {
+  const params  = new URLSearchParams(location.search);
+  const src     = params.get('src');
+
+  if (!src) {
+    document.getElementById('page').innerHTML = `
+      <div class="loading-state">
+        <span>⚠️</span>
+        <span>No song specified.<br><a href="index.html" style="color:#a855f7">← Back to Library</a></span>
+      </div>`;
+    return;
+  }
+
+  try {
+    const res  = await fetch(src);
+    if (!res.ok) throw new Error(res.statusText);
+    const song = await res.json();
+    renderPage(song, src);
+  } catch (err) {
+    document.getElementById('page').innerHTML = `
+      <div class="loading-state">
+        <span>⚠️</span>
+        <span>Could not load song.<br><a href="index.html" style="color:#a855f7">← Back to Library</a></span>
+      </div>`;
+  }
+})();
+</script>
+</body>
+</html>
