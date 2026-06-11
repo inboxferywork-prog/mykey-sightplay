@@ -23,6 +23,7 @@ Requirements:
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -887,6 +888,10 @@ After generating:
         "--id", default=None,
         help="Song ID override (default: slugified title)",
     )
+    parser.add_argument(
+        "--mscz", default=None, metavar="PATH",
+        help="MuseScore .mscz file — exports SVG and sets _svg_file in output JSON",
+    )
     args = parser.parse_args()
 
     input_path = Path(args.input)
@@ -1022,6 +1027,45 @@ After generating:
     # Sprint 4A: Generate learning path + lp_bar-based segments
     # ------------------------------------------------------------------
     song_data = generate_learning_path(song_data)
+
+    # ------------------------------------------------------------------
+    # Optional: export SVG from .mscz and set _svg_file in meta
+    # ------------------------------------------------------------------
+    if args.mscz:
+        _mscz_path = Path(args.mscz)
+        if not _mscz_path.exists():
+            print(f"WARNING: --mscz not found: {_mscz_path} -- SVG export skipped", file=sys.stderr)
+        else:
+            import zipfile as _zf
+            _is_ms4 = False
+            with _zf.ZipFile(_mscz_path) as _z:
+                _is_ms4 = any("audiosettings.json" in n for n in _z.namelist())
+            _ms4 = Path(r"C:\Program Files\MuseScore 4\bin\MuseScore4.exe")
+            _ms3 = Path(r"D:\Program Files\MuseScore 3\bin\MuseScore3.exe")
+            _musescore = _ms4 if (_is_ms4 and _ms4.exists()) else _ms3
+            _svg_dir   = output_path.parent / "svg"
+            _svg_dir.mkdir(parents=True, exist_ok=True)
+            _slug      = re.sub(r"[^\w\s-]", "", output_path.stem.lower())
+            _slug      = re.sub(r"[\s_]+", "-", _slug).strip("-")
+            _svg_base  = _svg_dir / f"{_slug}.svg"
+            print(f"Exporting SVG: {_mscz_path.name} -> {_svg_base.name} ...", end=" ", flush=True)
+            try:
+                subprocess.run(
+                    [str(_musescore), "-o", str(_svg_base), str(_mscz_path)],
+                    check=True, capture_output=True, timeout=90,
+                )
+                _pages = sorted(_svg_dir.glob(f"{_slug}-*.svg"))
+                if not _pages and _svg_base.exists():
+                    _pages = [_svg_base]
+                if _pages:
+                    _svg_rel = str(_pages[0].relative_to(output_path.parent.parent)).replace("\\", "/")
+                    _svg_rel = "songs/" + _svg_rel if not _svg_rel.startswith("songs/") else _svg_rel
+                    song_data["meta"]["_svg_file"] = _svg_rel
+                    print(f"OK → {_svg_rel}")
+                else:
+                    print("FAILED (no output file)")
+            except Exception as _e:
+                print(f"FAILED ({_e})", file=sys.stderr)
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(song_data, f, indent=2, ensure_ascii=False)

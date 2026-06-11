@@ -62,7 +62,8 @@ class SongLoader {
 
     fetch(src)
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(data => {
+      .then(async data => {
+        await this._renderer.preload(data);
         this._runtime.load(data);
         this._renderer.render(data, this._el.scoreEl, this._getRenderOpts());
 

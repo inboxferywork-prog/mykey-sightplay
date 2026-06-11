@@ -18,6 +18,7 @@
     "freq_split_hz": 261.63,
     "part_size_bars": 4,
     "background_music": null,
+    "_svg_file": "songs/svg/0503-ukrainian-girl-1.svg",
     "example_audio": null,
     "hint_config": {
       "auto_hint_timeout_ms": 7000,

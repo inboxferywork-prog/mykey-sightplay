@@ -35,6 +35,8 @@ class NotationRenderer {
     this._container  = null;
     this._song       = null;
     this._canvasW    = 960;
+    this._svgCache   = null;       // cached SVG text from preload()
+    this._svgEl      = null;       // active inline SVG element (svg mode only)
   }
 
   get canvasWidth()  { return this._canvasW; }
@@ -44,13 +46,30 @@ class NotationRenderer {
   // Public API
   // ---------------------------------------------------------------------------
 
+  /**
+   * Fetch and cache the SVG for songData if meta._svg_file is set.
+   * Call this before render() whenever a new song loads.
+   * No-op (resolves immediately) when _svg_file is absent.
+   */
+  async preload(songData) {
+    this._svgCache = null;
+    this._svgEl    = null;
+    const url = songData?.meta?._svg_file;
+    if (!url) return;
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      this._svgCache = await resp.text();
+    } catch (err) {
+      console.warn('[NotationRenderer] SVG preload failed:', err.message, '— falling back to VexFlow');
+      this._svgCache = null;
+    }
+  }
+
   render(songData, containerEl, opts = {}) {
     // opts.visibleBars:  number[] | null/undefined — bar numbers to render. Absent/null = all bars.
     // opts.visibleClefs: string[] | null/undefined — e.g. ['treble'] or ['bass']. Absent/null = both clefs.
     // Backwards compatible: render(data, el) with no opts renders full score identically to before.
-    if (typeof Vex === 'undefined') {
-      throw new Error('NotationRenderer: VexFlow (Vex) must be loaded before render()');
-    }
     this._song        = songData;
     this._container   = containerEl;
     this._renderOpts  = opts;
@@ -58,6 +77,15 @@ class NotationRenderer {
     this._barElMap.clear();
     this._noteObjMap.clear();
     containerEl.innerHTML = '';
+
+    if (this._svgCache) {
+      this._renderSvg(songData, containerEl);
+      return this;
+    }
+
+    if (typeof Vex === 'undefined') {
+      throw new Error('NotationRenderer: VexFlow (Vex) must be loaded before render()');
+    }
     this._drawScore();
     return this;
   }
@@ -123,6 +151,113 @@ class NotationRenderer {
   scrollToBar(barN, { instant = false } = {}) {
     const el = this._barElMap.get(barN);
     if (el) el.scrollIntoView({ behavior: instant ? 'instant' : 'smooth', block: 'nearest', inline: 'nearest' });
+  }
+
+  // ---------------------------------------------------------------------------
+  // SVG mode — pre-exported MuseScore SVG rendering
+  // ---------------------------------------------------------------------------
+
+  _renderSvg(songData, containerEl) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = this._svgCache;
+    const svgEl = tmp.querySelector('svg');
+    if (!svgEl) {
+      console.error('[NotationRenderer] SVG parse failed — falling back to VexFlow');
+      this._svgCache = null;
+      this._drawScore();
+      return;
+    }
+
+    // Fit to container width; height auto-scales via viewBox aspect ratio.
+    svgEl.removeAttribute('width');
+    svgEl.removeAttribute('height');
+    svgEl.style.cssText = 'width:100%;height:auto;display:block;';
+
+    // Expose viewBox dimensions through existing getters so viewport manager
+    // can read them. SVG mode has no meaningful "row height" — return full height.
+    const vb = svgEl.viewBox?.baseVal;
+    this._canvasW = vb?.width  ?? 960;
+    this._rowH    = vb?.height ?? 280;
+
+    containerEl.appendChild(svgEl);
+    this._svgEl = svgEl;
+
+    this._buildSvgNoteMap(svgEl, songData);
+  }
+
+  /**
+   * Build _noteElMap and _barElMap from an inline MuseScore SVG.
+   *
+   * MuseScore exports note heads as <path class="Note" transform="matrix(a,0,0,b,tx,ty)">
+   * with no id attribute. We sort SVG Note elements by visual reading order
+   * (system row → X position → Y for simultaneous treble/bass) and match
+   * them 1:1 to song.json note events sorted by (bar, t_ms, treble-first).
+   * This works because both orderings reflect left-to-right, top-to-bottom
+   * reading order and the counts are guaranteed equal for songs with _svg_file.
+   *
+   * Each matched Note path is wrapped in a <g data-event-id="..."> so the
+   * existing CSS rules (.nk-active path, etc.) apply without modification.
+   */
+  _buildSvgNoteMap(svgEl, songData) {
+    // 1. Collect SVG Note elements with their absolute anchor positions.
+    const noteEls = Array.from(svgEl.querySelectorAll('path.Note'));
+    const positioned = noteEls.map(el => {
+      let tx = 0, ty = 0;
+      const t = el.getAttribute('transform') || '';
+      const m = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+      if (m) { tx = parseFloat(m[1]); ty = parseFloat(m[2]); }
+      return { el, tx, ty };
+    });
+
+    // Sort into visual reading order: system (1 000 px buckets), then X,
+    // then Y ascending (treble sits above bass → smaller Y → comes first).
+    positioned.sort((a, b) => {
+      const sysA = Math.floor(a.ty / 1000);
+      const sysB = Math.floor(b.ty / 1000);
+      if (sysA !== sysB) return sysA - sysB;
+      const dx = a.tx - b.tx;
+      if (Math.abs(dx) > 5) return dx;
+      return a.ty - b.ty;
+    });
+
+    // 2. Collect all note (non-rest) events sorted by (bar, t_ms, treble-first).
+    const events = [];
+    for (const bar of songData.score.bars) {
+      for (const ev of (bar.beats || [])) {
+        if (ev.type === 'note') events.push(ev);
+      }
+    }
+    events.sort((a, b) => {
+      if (a.bar !== b.bar) return a.bar - b.bar;
+      const dt = (a.t_ms ?? 0) - (b.t_ms ?? 0);
+      if (dt !== 0) return dt;
+      return a.clef === 'treble' ? -1 : 1;
+    });
+
+    if (events.length !== positioned.length) {
+      console.warn(`[NotationRenderer] SVG note count ${positioned.length} ≠ JSON event count ${events.length} — mapping first ${Math.min(events.length, positioned.length)}`);
+    }
+
+    // 3. Wrap each Note path in <g data-event-id> and register in _noteElMap.
+    const count = Math.min(events.length, positioned.length);
+    for (let i = 0; i < count; i++) {
+      const ev      = events[i];
+      const { el }  = positioned[i];
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.dataset.eventId = ev.id;
+      el.parentNode.insertBefore(g, el);
+      g.appendChild(el);
+      this._noteElMap.set(ev.id, g);
+    }
+
+    // 4. Build _barElMap: first note event per bar → scroll anchor.
+    const seenBars = new Set();
+    for (const ev of events) {
+      if (!seenBars.has(ev.bar) && this._noteElMap.has(ev.id)) {
+        seenBars.add(ev.bar);
+        this._barElMap.set(ev.bar, this._noteElMap.get(ev.id));
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -651,10 +786,21 @@ class NotationRenderer {
               const sNote  = src.note;
               const dNote  = dst.note;
               // dir +1 = arc bows below noteheads (stem-up); -1 = above (stem-down).
-              const dir    = sNote.getStemDirection() === 1 ? 1 : -1;
+              let dir      = sNote.getStemDirection() === 1 ? 1 : -1;
               const sYs    = sNote.getYs();
               const dYs    = dNote.getYs();
               if (sYs?.length && dYs?.length) {
+                // Staff-collision guard: if the arc would exit the staff on the slur side,
+                // flip dir. Uses estimated height from the new cap (26px) so the check is
+                // consistent with what _drawSlurPath will actually draw.
+                const staveT  = src.stave.getYForLine(0);
+                const staveB  = src.stave.getYForLine(4);
+                const estSpan = Math.max(4, dNote.getTieLeftX() - sNote.getTieRightX());
+                const estH    = Math.min(26, Math.max(6, estSpan * 0.14));
+                const candSY  = (dir === 1 ? sYs[sYs.length - 1] : sYs[0]) + dir * ANCHOR_Y;
+                const candDY  = (dir === 1 ? dYs[dYs.length - 1] : dYs[0]) + dir * ANCHOR_Y;
+                if (dir === 1  && Math.max(candSY, candDY) + estH > staveB + 12) dir = -1;
+                if (dir === -1 && Math.min(candSY, candDY) - estH < staveT - 12) dir =  1;
                 // Slur below (dir=+1): anchor at bottom notehead; above (dir=-1): at top notehead.
                 // sYs[0] = highest note (smallest canvas Y); sYs[last] = lowest note (largest Y).
                 const sY = (dir === 1 ? sYs[sYs.length - 1] : sYs[0]) + dir * ANCHOR_Y;
@@ -1400,7 +1546,7 @@ function _drawSlurPath(ctx, x1, y1, x2, y2, dir) {
   const span = x2 - x1;
   if (span <= 4) return;  // degenerate span — nothing visible
 
-  const height = Math.min(18, Math.max(5, span * 0.12));
+  const height = Math.min(26, Math.max(6, span * 0.14));
   const ctrlH  = height * (4 / 3);  // control offset so visible arc peak ≈ height
   const cp1Y   = y1 + dir * ctrlH;  // control point offset from START endpoint
   const cp2Y   = y2 + dir * ctrlH;  // control point offset from END endpoint
