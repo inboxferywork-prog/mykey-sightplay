@@ -71,6 +71,46 @@ def _compute_svg_crop(svg_path: Path) -> dict | None:
     bottom = min(raw_bottom, max_bottom)
     return {"top": top, "bottom": bottom, "left": left, "right": right}
 
+
+def _stitch_svg_pages(pages: list[Path], out_path: Path) -> Path:
+    """
+    Stitch multiple MuseScore SVG pages into one tall SVG by stacking them
+    vertically. Returns out_path (or pages[0] if only one page).
+    """
+    if len(pages) == 1:
+        return pages[0]
+
+    contents = [p.read_text(encoding="utf-8") for p in pages]
+
+    def _vb(text):
+        m = re.search(r'viewBox="([^"]+)"', text)
+        if not m:
+            return 0.0, 0.0, 3060.0, 3960.0
+        ps = m.group(1).split()
+        return float(ps[0]), float(ps[1]), float(ps[2]), float(ps[3])
+
+    vboxes  = [_vb(c) for c in contents]
+    vbW     = vboxes[0][2]
+    total_h = sum(vb[3] for vb in vboxes)
+
+    combined = re.sub(r'\s+width="[^"]*"',  '', contents[0], count=1)
+    combined = re.sub(r'\s+height="[^"]*"', '', combined,    count=1)
+    combined = re.sub(r'viewBox="[^"]*"',
+                      f'viewBox="0 0 {vbW} {total_h}"', combined, count=1)
+    combined = combined.rsplit("</svg>", 1)[0]
+
+    y_offset = vboxes[0][3]
+    for i, content in enumerate(contents[1:], 1):
+        m    = re.search(r"<svg[^>]*>(.*)</svg>", content, re.DOTALL)
+        body = m.group(1) if m else content
+        combined += f'\n<g transform="translate(0,{y_offset:.2f})">\n{body}\n</g>\n'
+        y_offset += vboxes[i][3]
+
+    combined += "</svg>\n"
+    out_path.write_text(combined, encoding="utf-8")
+    return out_path
+
+
 # music21 — pip install music21
 from music21 import (
     articulations as m21_articulations,
@@ -1098,10 +1138,17 @@ After generating:
                 if not _pages and _svg_base.exists():
                     _pages = [_svg_base]
                 if _pages:
-                    _svg_rel = str(_pages[0].relative_to(output_path.parent.parent)).replace("\\", "/")
+                    # Multi-page: stitch into one tall SVG
+                    if len(_pages) > 1:
+                        _stitched = _svg_dir / f"{_slug}-full.svg"
+                        _svg_file = _stitch_svg_pages(_pages, _stitched)
+                        print(f"({len(_pages)} pages → stitched) ", end="", flush=True)
+                    else:
+                        _svg_file = _pages[0]
+                    _svg_rel = str(_svg_file.relative_to(output_path.parent.parent)).replace("\\", "/")
                     _svg_rel = "songs/" + _svg_rel if not _svg_rel.startswith("songs/") else _svg_rel
                     song_data["meta"]["_svg_file"] = _svg_rel
-                    _crop = _compute_svg_crop(_pages[0])
+                    _crop = _compute_svg_crop(_svg_file)
                     if _crop:
                         song_data["meta"]["_svg_crop"] = _crop
                         print(f"OK → {_svg_rel}  crop={_crop}")

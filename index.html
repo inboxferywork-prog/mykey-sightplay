@@ -68,7 +68,7 @@
 
   <!-- Progress bar -->
   <div class="progress-wrap" id="progressWrap">
-    <div id="progressFill"></div>
+    <div id="progressFill"><div id="progressThumb"></div></div>
   </div>
 
   <!-- Controls — 2-row compact layout -->
@@ -187,7 +187,7 @@
 
   <!-- Thin progress strip at viewport top -->
   <div class="fab-progress" id="fabProgressWrap">
-    <div class="fab-progress-fill" id="fabProgressFill"></div>
+    <div class="fab-progress-fill" id="fabProgressFill"><div class="fab-progress-thumb" id="fabProgressThumb"></div></div>
   </div>
 
   <!-- Song picker panel (shown/hidden by song button) -->
@@ -1172,7 +1172,11 @@ segmentsBar.addEventListener('change', e => {
 // -----------------------------------------------------------------------
 // Progress + time display
 // -----------------------------------------------------------------------
+let _seekDragging = false;
+let _seekDragPct  = 0;
+
 function _updateProgress(t) {
+  if (_seekDragging) return; // drag handler owns the fill during scrub
   const start = runtime.scopeStart;
   const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
   const range = end - start;
@@ -1226,6 +1230,9 @@ function _refreshBarTicks() {
 // -----------------------------------------------------------------------
 function _setUIState(state) {
   uiState = state;
+  const _isPaused = state === 'paused';
+  progressWrap.classList.toggle('seekable', _isPaused);
+  document.getElementById('fabProgressWrap')?.classList.toggle('seekable', _isPaused);
   switch (state) {
     case 'idle': {
       const _idleSeg = activeSegmentIndex >= 0 ? songLoader?.resolvedSegments?.[activeSegmentIndex] : null;
@@ -1376,16 +1383,67 @@ document.getElementById('tempoSelect').onchange = function() {
 // Song select
 songSelect.onchange = e => songLoader.load(e.target.value);
 
-// Progress bar click → seek (only from playing or paused)
-progressWrap.onclick = e => {
-  if (uiState !== 'playing' && uiState !== 'paused') return;
-  const rect  = progressWrap.getBoundingClientRect();
-  const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  const start = runtime.scopeStart;
-  const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
-  // seek() fires onEventExit for active events before repositioning (renderer clears via callback)
-  runtime.seek(start + pct * (end - start));
-};
+// Progress bar — YouTube-style seek: preview fill during drag, commit on release
+(function() {
+  let _dragging = false;
+
+  function _previewAt(clientX) {
+    const rect = progressWrap.getBoundingClientRect();
+    _seekDragPct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    progressFill.style.width = (_seekDragPct * 100).toFixed(2) + '%';
+  }
+
+  function _commitSeek() {
+    const start = runtime.scopeStart;
+    const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
+    runtime.seek(start + _seekDragPct * (end - start));
+  }
+
+  progressWrap.addEventListener('mousedown', e => {
+    if (uiState !== 'playing' && uiState !== 'paused') return;
+    e.preventDefault();
+    _seekDragging = true;
+    _dragging = true;
+    progressWrap.classList.add('dragging');
+    _previewAt(e.clientX);
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!_dragging) return;
+    _previewAt(e.clientX);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!_dragging) return;
+    _dragging = false;
+    _seekDragging = false;
+    progressWrap.classList.remove('dragging');
+    _commitSeek();
+  });
+
+  progressWrap.addEventListener('touchstart', e => {
+    if (uiState !== 'playing' && uiState !== 'paused') return;
+    e.preventDefault();
+    _seekDragging = true;
+    _dragging = true;
+    progressWrap.classList.add('dragging');
+    _previewAt(e.touches[0].clientX);
+  }, { passive: false });
+
+  document.addEventListener('touchmove', e => {
+    if (!_dragging) return;
+    e.preventDefault();
+    _previewAt(e.touches[0].clientX);
+  }, { passive: false });
+
+  document.addEventListener('touchend', () => {
+    if (!_dragging) return;
+    _dragging = false;
+    _seekDragging = false;
+    progressWrap.classList.remove('dragging');
+    _commitSeek();
+  });
+})();
 
 // Skip → Stage 2 (not yet implemented — CP2)
 btnSkip.onclick = () => {
@@ -1720,6 +1778,7 @@ if (_noteNameModeEl) {
         _applyNoteMode(btn.dataset.mode);
         fabNoteModePick.classList.remove('fab-panel-open');
         fabNoteModePick.setAttribute('aria-hidden', 'true');
+        if (uiState === 'playing') _fabBarHide();
       });
     });
   }
@@ -2004,15 +2063,68 @@ _vpUpdateScaleLabel(viewportManager.scale);
     fabTempoPick?.setAttribute('aria-hidden', 'true');
   });
 
-  // --- Progress bar seek ---
-  fabProgressWr.addEventListener('click', e => {
-    if (uiState !== 'playing' && uiState !== 'paused') return;
-    const rect  = fabProgressWr.getBoundingClientRect();
-    const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const start = runtime.scopeStart;
-    const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
-    runtime.seek(start + pct * (end - start));
-  });
+  // --- FAB Progress bar — preview fill during drag, commit on release ---
+  // progressFill is the source of truth; MutationObserver auto-mirrors to fabProgressFl
+  (function() {
+    let _fabDragging = false;
+
+    function _fabPreviewAt(clientX) {
+      const rect = fabProgressWr.getBoundingClientRect();
+      _seekDragPct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      progressFill.style.width = (_seekDragPct * 100).toFixed(2) + '%';
+    }
+
+    function _fabCommitSeek() {
+      const start = runtime.scopeStart;
+      const end   = runtime.scopeEnd === Infinity ? runtime.duration : runtime.scopeEnd;
+      runtime.seek(start + _seekDragPct * (end - start));
+    }
+
+    fabProgressWr.addEventListener('mousedown', e => {
+      if (uiState !== 'playing' && uiState !== 'paused') return;
+      e.preventDefault();
+      _seekDragging = true;
+      _fabDragging = true;
+      fabProgressWr.classList.add('dragging');
+      _fabPreviewAt(e.clientX);
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!_fabDragging) return;
+      _fabPreviewAt(e.clientX);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!_fabDragging) return;
+      _fabDragging = false;
+      _seekDragging = false;
+      fabProgressWr.classList.remove('dragging');
+      _fabCommitSeek();
+    });
+
+    fabProgressWr.addEventListener('touchstart', e => {
+      if (uiState !== 'playing' && uiState !== 'paused') return;
+      e.preventDefault();
+      _seekDragging = true;
+      _fabDragging = true;
+      fabProgressWr.classList.add('dragging');
+      _fabPreviewAt(e.touches[0].clientX);
+    }, { passive: false });
+
+    document.addEventListener('touchmove', e => {
+      if (!_fabDragging) return;
+      e.preventDefault();
+      _fabPreviewAt(e.touches[0].clientX);
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+      if (!_fabDragging) return;
+      _fabDragging = false;
+      _seekDragging = false;
+      fabProgressWr.classList.remove('dragging');
+      _fabCommitSeek();
+    });
+  })();
 
   // --- MutationObservers: keep FAB state mirrored ---
 

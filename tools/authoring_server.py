@@ -161,6 +161,47 @@ def _get_exe_for(mscz_path: Path) -> Path | None:
 
 
 # ---------------------------------------------------------------------------
+# SVG page stitcher (mirrors stitch_svg_pages in export_svg.py)
+# ---------------------------------------------------------------------------
+
+def _stitch_svg_pages(pages: list[Path], out_path: Path) -> Path:
+    """Stitch multi-page MuseScore SVGs into one tall SVG. Returns out_path."""
+    if len(pages) == 1:
+        return pages[0]
+
+    contents = [p.read_text(encoding="utf-8") for p in pages]
+
+    def _viewbox(text):
+        m = re.search(r'viewBox="([^"]+)"', text)
+        if not m:
+            return 0.0, 0.0, 3060.0, 3960.0
+        parts = m.group(1).split()
+        return float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])
+
+    vboxes  = [_viewbox(c) for c in contents]
+    vbW     = vboxes[0][2]
+    total_h = sum(vb[3] for vb in vboxes)
+
+    first    = contents[0]
+    combined = re.sub(r'\s+width="[^"]*"',  '', first,    count=1)
+    combined = re.sub(r'\s+height="[^"]*"', '', combined, count=1)
+    combined = re.sub(r'viewBox="[^"]*"',
+                      f'viewBox="0 0 {vbW} {total_h}"', combined, count=1)
+    combined = combined.rsplit("</svg>", 1)[0]
+
+    y_offset = vboxes[0][3]
+    for i, content in enumerate(contents[1:], 1):
+        m    = re.search(r"<svg[^>]*>(.*)</svg>", content, re.DOTALL)
+        body = m.group(1) if m else content
+        combined += f'\n<g transform="translate(0,{y_offset:.2f})">\n{body}\n</g>\n'
+        y_offset += vboxes[i][3]
+
+    combined += "</svg>\n"
+    out_path.write_text(combined, encoding="utf-8")
+    return out_path
+
+
+# ---------------------------------------------------------------------------
 # SVG crop helper (mirrors _compute_svg_crop in mxl_to_song.py)
 # ---------------------------------------------------------------------------
 _CROP_PAD_TOP = 150
@@ -313,7 +354,13 @@ def import_mscz():
             svg_pages = [svg_base]
         if not svg_pages:
             return jsonify({"error": "SVG export produced no output (check MuseScore installation)"}), 500
-        svg_file = svg_pages[0]
+
+        # Multi-page: stitch all pages into one tall SVG
+        if len(svg_pages) > 1:
+            stitched = SVG_DIR / f"{slug}-full.svg"
+            svg_file = _stitch_svg_pages(svg_pages, stitched)
+        else:
+            svg_file = svg_pages[0]
 
         # ── Step 3: mxl_to_song.py ─────────────────────────────────────
         json_out = tmp / f"{slug}.json"

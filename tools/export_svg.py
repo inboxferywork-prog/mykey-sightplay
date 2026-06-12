@@ -123,21 +123,86 @@ def run_musescore_export(mscz_path: Path, svg_base: Path) -> list[Path]:
     return pages
 
 
+def stitch_svg_pages(pages: list[Path], out_path: Path) -> Path:
+    """
+    Stitch multiple MuseScore SVG pages into one tall SVG by stacking them
+    vertically. Each page's content is wrapped in a <g translate(0,offset)>
+    so all coordinates stay in the same space as _buildSvgNoteMap() expects.
+
+    If only one page is given, it is returned as-is without writing out_path.
+    The stitched file is written to out_path and that path is returned.
+    """
+    if len(pages) == 1:
+        return pages[0]
+
+    contents = [p.read_text(encoding="utf-8") for p in pages]
+
+    def _viewbox(text):
+        m = re.search(r'viewBox="([^"]+)"', text)
+        if not m:
+            return 0.0, 0.0, 3060.0, 3960.0  # MuseScore A4 default
+        parts = m.group(1).split()
+        return float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])
+
+    vboxes = [_viewbox(c) for c in contents]
+    vbW    = vboxes[0][2]
+    total_h = sum(vb[3] for vb in vboxes)
+
+    # ── Build combined SVG ────────────────────────────────────────────────
+    # Take the opening <svg ...> tag from page 1 and update its viewBox.
+    # Remove width/height attributes so the SVG scales responsively.
+    first = contents[0]
+
+    def _strip_wh(text):
+        text = re.sub(r'\s+width="[^"]*"', '', text, count=1)
+        text = re.sub(r'\s+height="[^"]*"', '', text, count=1)
+        return text
+
+    combined = re.sub(
+        r'viewBox="[^"]*"',
+        f'viewBox="0 0 {vbW} {total_h}"',
+        _strip_wh(first),
+        count=1,
+    )
+    # Strip closing </svg> from page 1 — we'll re-add it at the end
+    combined = combined.rsplit("</svg>", 1)[0]
+
+    # Append pages 2..N each inside a translated <g>
+    y_offset = vboxes[0][3]
+    for i, content in enumerate(contents[1:], 1):
+        # Extract everything between <svg...> and </svg>
+        m = re.search(r"<svg[^>]*>(.*)</svg>", content, re.DOTALL)
+        body = m.group(1) if m else content
+        combined += f'\n<g transform="translate(0,{y_offset:.2f})">\n{body}\n</g>\n'
+        y_offset += vboxes[i][3]
+
+    combined += "</svg>\n"
+
+    out_path.write_text(combined, encoding="utf-8")
+    return out_path
+
+
 def export_svg(mscz_path: Path, svg_slug: str) -> Path | None:
     """
-    Export first page of mscz_path as SVG. Returns the SVG file path or None.
+    Export mscz_path as SVG. Multi-page scores are stitched into one tall SVG.
+    Returns the final SVG file path, or None on failure.
     """
     svg_base = SVG_DIR / f"{svg_slug}.svg"
-    print(f"  Exporting: {mscz_path.name} -> {svg_base.name} ...", end=" ", flush=True)
+    print(f"  Exporting: {mscz_path.name} ...", end=" ", flush=True)
     pages = run_musescore_export(mscz_path, svg_base)
     if not pages:
         print("FAILED")
         return None
-    if len(pages) > 1:
-        print(f"OK ({len(pages)} pages - only p.1 will be used)")
-    else:
+
+    if len(pages) == 1:
         print("OK")
-    return pages[0]
+        return pages[0]
+
+    # Multi-page: stitch into one tall SVG
+    stitched = SVG_DIR / f"{svg_slug}-full.svg"
+    stitch_svg_pages(pages, stitched)
+    print(f"OK ({len(pages)} pages → stitched as {stitched.name})")
+    return stitched
 
 
 _SVG_CROP_PAD_TOP = 150  # top breathing room — leaves ~53px above first note for count-in pills

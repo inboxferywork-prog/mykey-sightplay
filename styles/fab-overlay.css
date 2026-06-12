@@ -98,16 +98,49 @@ body.nk-fab-mode .fab-overlay {
   background: var(--progress-track);
   cursor: pointer;
   pointer-events: auto;
+  overflow: visible;
+}
+/* Expand hit area downward so thumb (which hangs below the bar) is easy to grab */
+.fab-progress::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: -14px;
+  left: 0;
+  right: 0;
 }
 
 .fab-progress-fill {
+  position: relative;
   height: 100%;
   width: 0%;
   background: var(--orange);
   border-radius: 0 2px 2px 0;
+  overflow: visible;
 }
 
 .fab-progress:hover { height: 5px; }
+
+.fab-progress-thumb {
+  position: absolute;
+  right: -6px;
+  top: calc(50% - 6px);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--orange);
+  transform: scale(0);
+  transition: transform 0.15s ease;
+  pointer-events: none;
+}
+.fab-progress:hover .fab-progress-thumb,
+.fab-progress.seekable .fab-progress-thumb {
+  transform: scale(1);
+}
+.fab-progress.dragging .fab-progress-thumb {
+  transform: scale(1.3);
+  transition: none;
+}
 
 .fab-bar-tick {
   position: absolute;
