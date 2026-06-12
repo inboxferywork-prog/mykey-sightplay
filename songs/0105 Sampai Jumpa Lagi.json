@@ -33,7 +33,13 @@
         "wrong_2x_narrowing": -5
       }
     },
-    "_svg_file": "songs/svg/0105-sampai-jumpa-lagi-1.svg"
+    "_svg_file": "songs/svg/0105-sampai-jumpa-lagi-1.svg",
+    "_svg_crop": {
+      "top": 508,
+      "bottom": 1359,
+      "left": 121,
+      "right": 245
+    }
   },
   "parts": [
     {

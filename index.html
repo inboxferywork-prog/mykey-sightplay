@@ -865,8 +865,13 @@ learningRow.addEventListener('change', e => {
     renderer.render(currentSong, scoreEl, { visibleBars, visibleClefs, barsPerRow: _landscapeFabActive ? 'all' : _portraitBarsPerRow() });
     if (_landscapeFabActive) {
       viewportManager.setNaturalWidth(renderer.canvasWidth);
-      viewportManager.fitHeight(renderer.rowHeight + 20);
+      if (renderer.isSvgMode) {
+        viewportManager.fitWidthZoomed(renderer.svgZoom);
+      } else {
+        viewportManager.fitHeight(renderer.rowHeight + 20);
+      }
     }
+    _syncSvgBodyClass();
     if (!practiceLoop.active && seg) _applyBeatDim(currentSong, seg);
     const scrollBar = practiceLoop.active ? practiceLoop.start_bar : (seg ? seg.start_bar : null);
     if (scrollBar != null) renderer.scrollToBar(scrollBar);
@@ -1867,6 +1872,17 @@ function _vpSyncFitBtn() {
   if (btn) btn.classList.toggle('vp-active', viewportManager.isFitMode);
 }
 
+// Toggle body class so CSS can distinguish SVG mode from VexFlow mode.
+// Must be called after every renderer.render() that may switch mode.
+function _syncSvgBodyClass() {
+  document.body.classList.toggle('nk-svg-score', renderer.isSvgMode);
+  // In landscape FAB, scroll axis must match the score layout:
+  // SVG has multiple vertical rows → vertical; VexFlow has one horizontal row → horizontal.
+  if (_landscapeFabActive) {
+    readingWindow.setScrollAxis(renderer.isSvgMode ? 'vertical' : 'horizontal');
+  }
+}
+
 function _vpSyncFullscreenBtn() {
   const btn = document.getElementById('btnVpFullscreen');
   if (!btn) return;
@@ -2338,8 +2354,13 @@ function _syncLandscapeFab(force) {
     if (!isNow && viewportManager.isFitMode) {
       // EXPERIMENT: sync to actual canvas width before fitting (may be 480 for 1-bar portrait)
       if (renderer.canvasWidth) viewportManager.setNaturalWidth(renderer.canvasWidth);
-      viewportManager.fitWidth();
+      if (renderer.isSvgMode) {
+        viewportManager.fitWidthZoomed(renderer.svgZoom);
+      } else {
+        viewportManager.fitWidth();
+      }
     }
+    _syncSvgBodyClass();
     return;
   }
 
@@ -2352,12 +2373,23 @@ function _syncLandscapeFab(force) {
 
   if (isNow) {
     viewportManager.setNaturalWidth(renderer.canvasWidth);
-    viewportManager.fitHeight(renderer.rowHeight + 20);
+    if (renderer.isSvgMode) {
+      // SVG has fixed multi-system layout — fitHeight would use full page height.
+      // fitWidthZoomed respects _svg_zoom and works correctly for all screen sizes.
+      viewportManager.fitWidthZoomed(renderer.svgZoom);
+    } else {
+      viewportManager.fitHeight(renderer.rowHeight + 20);
+    }
   } else {
     // EXPERIMENT Very Large Notation: use actual canvas width (may be 480 for 1-bar portrait)
     viewportManager.setNaturalWidth(renderer.canvasWidth);
-    viewportManager.fitWidth();
+    if (renderer.isSvgMode) {
+      viewportManager.fitWidthZoomed(renderer.svgZoom);
+    } else {
+      viewportManager.fitWidth();
+    }
   }
+  _syncSvgBodyClass();
 }
 
 // -----------------------------------------------------------------------

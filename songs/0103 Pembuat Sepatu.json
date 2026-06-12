@@ -33,7 +33,13 @@
         "wrong_2x_narrowing": -5
       }
     },
-    "_svg_file": "songs/svg/0103-pembuat-sepatu-1.svg"
+    "_svg_file": "songs/svg/0103-pembuat-sepatu-1.svg",
+    "_svg_crop": {
+      "top": 509,
+      "bottom": 1861,
+      "left": 171,
+      "right": 294
+    }
   },
   "parts": [
     {

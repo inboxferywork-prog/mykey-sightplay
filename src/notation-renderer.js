@@ -29,18 +29,37 @@
 class NotationRenderer {
 
   constructor() {
-    this._noteElMap  = new Map();  // eventId → SVG <g> element
-    this._barElMap   = new Map();  // barN    → SVG element (for scrollToBar)
-    this._noteObjMap = new Map();  // eventId → { note, stave }  — for tie rendering
-    this._container  = null;
-    this._song       = null;
-    this._canvasW    = 960;
-    this._svgCache   = null;       // cached SVG text from preload()
-    this._svgEl      = null;       // active inline SVG element (svg mode only)
+    this._noteElMap       = new Map();  // eventId → SVG <g> element
+    this._barElMap        = new Map();  // barN    → SVG element (for scrollToBar)
+    this._noteObjMap      = new Map();  // eventId → { note, stave }  — for tie rendering
+    this._container       = null;
+    this._song            = null;
+    this._canvasW         = 960;
+    this._svgCache        = null;       // cached SVG text from preload()
+    this._svgEl           = null;       // active inline SVG element (svg mode only)
+    this._barColEl        = null;       // SVG <g> tidal-bar overlay (svg mode only)
+    this._staffSysBounds  = [];         // [{yMin,yMax}] per system — for column height
+    this._barXMap         = new Map();  // barN → {sysIdx, xLeft, xRight}
+    this._eventBarMap     = new Map();  // eventId → barNumber
+    this._numBeats        = 4;          // time signature numerator
+    this._beatDurMs       = 500;        // ms per beat (60000/bpm * 4/beatValue)
+    this._currentBarN     = -1;        // last bar — detect bar changes
+    this._currentBarSys   = -1;        // last system — cross-system instant jump
+    this._edgeGlowEl      = null;      // cached .nk-bar-col-edge-glow for rAF loop
+    this._edgeEl          = null;      // cached .nk-bar-col-edge for rAF loop
+    this._barAnimStartWall = 0;        // performance.now() when current bar began
+    this._barAnimDurMs    = 0;         // actual bar duration ms (self-calibrates to playback speed)
+    this._barAnimW        = 0;         // current bar width in SVG units
+    this._animRafId       = null;      // rAF handle — null when not animating
+    this._barSongTmsMap   = new Map(); // barN → song-time start ms at 1x (for rate calibration)
+    this._lastBarWall     = 0;         // wall-clock time when previous bar started
+    this._lastBarSongTms  = 0;         // song t_ms of previous bar start
   }
 
   get canvasWidth()  { return this._canvasW; }
   get rowHeight()    { return this._rowH ?? 280; }
+  get isSvgMode()    { return !!this._svgEl; }
+  get svgZoom()      { return this._svgZoom ?? 1.0; }
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -76,6 +95,18 @@ class NotationRenderer {
     this._noteElMap.clear();
     this._barElMap.clear();
     this._noteObjMap.clear();
+    if (this._animRafId) { cancelAnimationFrame(this._animRafId); this._animRafId = null; }
+    this._barXMap.clear();
+    this._eventBarMap.clear();
+    this._barSongTmsMap.clear();
+    this._staffSysBounds = [];
+    this._barColEl       = null;
+    this._currentBarN    = -1;
+    this._currentBarSys  = -1;
+    this._edgeGlowEl     = null;
+    this._edgeEl         = null;
+    this._lastBarWall    = 0;
+    this._lastBarSongTms = 0;
     containerEl.innerHTML = '';
 
     if (this._svgCache) {
@@ -92,6 +123,10 @@ class NotationRenderer {
 
   /** style: 'active' | 'active-rest' | 'note-active-rh' | 'note-active-lh' | 'explore' | 'question' */
   highlight(eventId, style = 'active') {
+    if (this._svgEl) {
+      this._updateBeatColumn(eventId);
+      return;
+    }
     const el = this._noteElMap.get(eventId);
     if (!el) return;
     el.classList.remove(
@@ -102,6 +137,7 @@ class NotationRenderer {
   }
 
   clearHighlight(eventId) {
+    if (this._svgEl) return;  // beat column stays visible until clearAll()
     const el = this._noteElMap.get(eventId);
     if (el) el.classList.remove(
       'nk-active', 'nk-active-rest', 'nk-note-active-rh', 'nk-note-active-lh',
@@ -112,11 +148,106 @@ class NotationRenderer {
   /** Remove all highlights. Must be called on stop() because RuntimeEngine
    *  does not fire onEventExit on stop() — per runtime-contract.md §4. */
   clearAll() {
+    if (this._svgEl) {
+      if (this._animRafId) { cancelAnimationFrame(this._animRafId); this._animRafId = null; }
+      if (this._barColEl) this._barColEl.style.display = 'none';
+      this._currentBarN    = -1;
+      this._currentBarSys  = -1;
+      this._lastBarWall    = 0;
+      this._lastBarSongTms = 0;
+      return;
+    }
     for (const el of this._noteElMap.values()) {
       el.classList.remove(
         'nk-active', 'nk-active-rest', 'nk-note-active-rh', 'nk-note-active-lh',
         'nk-explore', 'nk-question'
       );
+    }
+  }
+
+  _updateBeatColumn(eventId) {
+    if (!this._barColEl) return;
+
+    const barN = this._eventBarMap.get(eventId);
+    if (barN === undefined || barN === this._currentBarN) return;
+
+    const info = this._barXMap.get(barN);
+    if (!info) { this._barColEl.style.display = 'none'; return; }
+
+    const { sysIdx, xLeft, xRight } = info;
+    const bounds = this._staffSysBounds[sysIdx];
+    if (!bounds) return;
+
+    // Cancel the previous bar's sweep animation.
+    if (this._animRafId) { cancelAnimationFrame(this._animRafId); this._animRafId = null; }
+
+    // ── Self-calibrating bar duration ─────────────────────────────────────
+    // Compare wall-clock elapsed vs song-time elapsed since the previous bar
+    // to determine the actual playback rate. Works for any tempo setting.
+    const now            = performance.now();
+    const curSongTms     = this._barSongTmsMap.get(barN)      ?? 0;
+    const nextSongTms    = this._barSongTmsMap.get(barN + 1);
+    const barSongDur     = nextSongTms !== undefined
+      ? nextSongTms - curSongTms
+      : this._numBeats * this._beatDurMs;
+    const defaultBarDur  = this._numBeats * this._beatDurMs;
+
+    let barDurMs = defaultBarDur;
+    if (this._currentBarN > 0 && this._lastBarWall > 0) {
+      const wallElapsed = now - this._lastBarWall;
+      const songElapsed = curSongTms - this._lastBarSongTms;
+      if (songElapsed > 20 && wallElapsed > 20) {
+        const rate    = songElapsed / wallElapsed;           // e.g. 0.5 = half-speed
+        const estimated = barSongDur / rate;
+        // Clamp: never less than 10% or more than 500% of the 1x default
+        barDurMs = Math.max(defaultBarDur * 0.1, Math.min(defaultBarDur * 5, estimated));
+      }
+    }
+    this._lastBarWall    = now;
+    this._lastBarSongTms = curSongTms;
+    // ─────────────────────────────────────────────────────────────────────
+
+    this._currentBarN = barN;
+
+    const PAD  = 24;
+    const barW = xRight - xLeft;
+    const yTop = bounds.yMin - PAD;
+    const colH = bounds.yMax - bounds.yMin + PAD * 2;
+
+    this._currentBarSys = sysIdx;
+    this._barColEl.setAttribute('transform', `translate(${xLeft}, ${yTop})`);
+
+    const wash = this._barColEl.querySelector('.nk-bar-col-wash');
+    this._edgeGlowEl = this._barColEl.querySelector('.nk-bar-col-edge-glow');
+    this._edgeEl     = this._barColEl.querySelector('.nk-bar-col-edge');
+
+    wash.setAttribute('width',  String(barW));
+    wash.setAttribute('height', String(colH));
+    this._edgeGlowEl.setAttribute('height', String(colH));
+    this._edgeEl.setAttribute('height', String(colH));
+
+    // Snap edge back to left barline, then start smooth rightward sweep.
+    this._edgeGlowEl.setAttribute('transform', 'translate(0,0)');
+    this._edgeEl.setAttribute('transform', 'translate(0,0)');
+    this._barColEl.style.display = '';
+
+    this._barAnimStartWall = now;
+    this._barAnimDurMs     = barDurMs;
+    this._barAnimW         = barW;
+    this._animRafId = requestAnimationFrame(() => this._animateBeatEdge());
+  }
+
+  _animateBeatEdge() {
+    if (!this._edgeGlowEl || !this._edgeEl) return;
+    const elapsed  = performance.now() - this._barAnimStartWall;
+    const fraction = Math.min(elapsed / this._barAnimDurMs, 1);
+    const beatX    = fraction * this._barAnimW;
+    this._edgeGlowEl.setAttribute('transform', `translate(${beatX},0)`);
+    this._edgeEl.setAttribute('transform', `translate(${beatX},0)`);
+    if (fraction < 1) {
+      this._animRafId = requestAnimationFrame(() => this._animateBeatEdge());
+    } else {
+      this._animRafId = null;
     }
   }
 
@@ -168,16 +299,38 @@ class NotationRenderer {
       return;
     }
 
-    // Fit to container width; height auto-scales via viewBox aspect ratio.
     svgEl.removeAttribute('width');
     svgEl.removeAttribute('height');
     svgEl.style.cssText = 'width:100%;height:auto;display:block;';
 
-    // Expose viewBox dimensions through existing getters so viewport manager
-    // can read them. SVG mode has no meaningful "row height" — return full height.
     const vb = svgEl.viewBox?.baseVal;
-    this._canvasW = vb?.width  ?? 960;
-    this._rowH    = vb?.height ?? 280;
+    const vbX = vb?.x      ?? 0;
+    const vbY = vb?.y      ?? 0;
+    const vbW = vb?.width  ?? 3060;
+    const vbH = vb?.height ?? 3960;
+
+    // Apply per-song crop to remove MuseScore page margins and title area.
+    // Values in SVG viewBox units; set via meta._svg_crop in the song JSON.
+    const crop  = songData?.meta?._svg_crop ?? {};
+    const cTop    = crop.top    ?? 0;
+    const cBottom = crop.bottom ?? 0;
+    const cLeft   = crop.left   ?? 0;
+    const cRight  = crop.right  ?? 0;
+    const cropW = vbW - cLeft - cRight;
+    const cropH = vbH - cTop  - cBottom;
+    if (cTop || cBottom || cLeft || cRight) {
+      svgEl.setAttribute('viewBox', `${vbX + cLeft} ${vbY + cTop} ${cropW} ${cropH}`);
+    }
+
+    // _svg_zoom: read here, applied via fitWidthZoomed() in index.html after render().
+    this._svgZoom = songData?.meta?._svg_zoom ?? 1.0;
+
+    // Always map to VexFlow-consistent 960px baseline so fitWidth() scale
+    // calculations stay comparable to VexFlow mode across all screen sizes.
+    this._canvasW = 960;
+    // rowHeight: proportional height of the cropped SVG at 960px width.
+    // Multi-page SVGs use fitWidth (not fitHeight) in landscape FAB — see index.html.
+    this._rowH = Math.round(960 * (cropH / cropW));
 
     containerEl.appendChild(svgEl);
     this._svgEl = svgEl;
@@ -209,11 +362,23 @@ class NotationRenderer {
       return { el, tx, ty };
     });
 
-    // Sort into visual reading order: system (1 000 px buckets), then X,
+    // Sort into visual reading order: detect systems via Y-gap clustering, then X,
     // then Y ascending (treble sits above bass → smaller Y → comes first).
+    // Threshold 250 SVG units: treble-bass gaps within a system are ≤ 236 units;
+    // between-system gaps are always ≥ 259 units across all songs in this library.
+    const _sortedYs = [...new Set(positioned.map(n => n.ty))].sort((a, b) => a - b);
+    const _SYS_GAP  = 250;
+    const _sysBreaks = [];
+    for (let i = 1; i < _sortedYs.length; i++) {
+      if (_sortedYs[i] - _sortedYs[i - 1] >= _SYS_GAP) {
+        _sysBreaks.push((_sortedYs[i - 1] + _sortedYs[i]) / 2);
+      }
+    }
+    const _sysOf = ty => _sysBreaks.filter(bp => ty > bp).length;
+
     positioned.sort((a, b) => {
-      const sysA = Math.floor(a.ty / 1000);
-      const sysB = Math.floor(b.ty / 1000);
+      const sysA = _sysOf(a.ty);
+      const sysB = _sysOf(b.ty);
       if (sysA !== sysB) return sysA - sysB;
       const dx = a.tx - b.tx;
       if (Math.abs(dx) > 5) return dx;
@@ -234,30 +399,199 @@ class NotationRenderer {
       return a.clef === 'treble' ? -1 : 1;
     });
 
-    if (events.length !== positioned.length) {
-      console.warn(`[NotationRenderer] SVG note count ${positioned.length} ≠ JSON event count ${events.length} — mapping first ${Math.min(events.length, positioned.length)}`);
-    }
-
     // 3. Wrap each Note path in <g data-event-id> and register in _noteElMap.
-    const count = Math.min(events.length, positioned.length);
-    for (let i = 0; i < count; i++) {
-      const ev      = events[i];
-      const { el }  = positioned[i];
-      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      g.dataset.eventId = ev.id;
-      el.parentNode.insertBefore(g, el);
-      g.appendChild(el);
-      this._noteElMap.set(ev.id, g);
+    // For songs where SVG note count ≠ JSON event count (background chord tones in SVG),
+    // use the pre-computed _svg_note_order index array from the JSON meta — computed
+    // offline by tools/compute_svg_note_map.py using pitch+barline matching.
+    const precomputedOrder = songData?.meta?._svg_note_order;
+    if (precomputedOrder) {
+      for (let i = 0; i < Math.min(events.length, precomputedOrder.length); i++) {
+        const domIdx = precomputedOrder[i];
+        if (domIdx < 0 || domIdx >= noteEls.length) continue;
+        const ev = events[i];
+        const el = noteEls[domIdx];
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.dataset.eventId = ev.id;
+        el.parentNode.insertBefore(g, el);
+        g.appendChild(el);
+        this._noteElMap.set(ev.id, g);
+      }
+    } else {
+      if (events.length !== positioned.length) {
+        console.warn(`[NotationRenderer] SVG note count ${positioned.length} ≠ JSON event count ${events.length} — mapping first ${Math.min(events.length, positioned.length)}`);
+      }
+      const count = Math.min(events.length, positioned.length);
+      for (let i = 0; i < count; i++) {
+        const ev      = events[i];
+        const { el }  = positioned[i];
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.dataset.eventId = ev.id;
+        el.parentNode.insertBefore(g, el);
+        g.appendChild(el);
+        this._noteElMap.set(ev.id, g);
+      }
     }
 
     // 4. Build _barElMap: first note event per bar → scroll anchor.
+    // Also tag each anchor with data-bar so readingWindow._findBarEl() can locate it
+    // via querySelector('[data-bar="N"]') — same contract as VexFlow mode.
     const seenBars = new Set();
     for (const ev of events) {
       if (!seenBars.has(ev.bar) && this._noteElMap.has(ev.id)) {
         seenBars.add(ev.bar);
-        this._barElMap.set(ev.bar, this._noteElMap.get(ev.id));
+        const anchorEl = this._noteElMap.get(ev.id);
+        anchorEl.dataset.bar = ev.bar;
+        this._barElMap.set(ev.bar, anchorEl);
       }
     }
+
+    // 5. Build event → bar lookup, beat timing constants, and bar song-time map.
+    //    _eventBarMap:   eventId → barN
+    //    _barSongTmsMap: barN → song-time start ms at 1x (used to measure actual playback rate)
+    //    _numBeats / _beatDurMs: bar duration at 1x speed (fallback for first bar)
+    const [numBeats, beatValue] = songData.meta.time_signature;
+    this._numBeats  = numBeats;
+    this._beatDurMs = (60000 / songData.meta.bpm) * (4 / beatValue);
+
+    for (const bar of songData.score.bars) {
+      let minTms = Infinity;
+      for (const ev of (bar.beats || [])) {
+        this._eventBarMap.set(ev.id, ev.bar);
+        if ((ev.t_ms ?? 0) < minTms) minTms = ev.t_ms ?? 0;
+      }
+      if (minTms < Infinity) this._barSongTmsMap.set(bar.bar, minTms);
+    }
+
+    // 6. Compute staff system bounds from StaffLines polylines.
+    const staffLineYs = Array.from(svgEl.querySelectorAll('polyline.StaffLines'))
+      .map(el => {
+        const pts = el.getAttribute('points') || '';
+        return parseFloat(pts.trim().split(/[\s,]+/)[1]);
+      })
+      .filter(y => !isNaN(y))
+      .sort((a, b) => a - b);
+
+    const numSys = _sysBreaks.length + 1;
+    for (let s = 0; s < numSys; s++) {
+      const yLo  = s > 0 ? _sysBreaks[s - 1] : -Infinity;
+      const yHi  = s < _sysBreaks.length ? _sysBreaks[s] : Infinity;
+      const sysY = staffLineYs.filter(y => y > yLo && y < yHi);
+      this._staffSysBounds[s] = sysY.length
+        ? { yMin: sysY[0], yMax: sysY[sysY.length - 1] }
+        : null;
+    }
+
+    // 7. Extract barline X positions and build _barXMap: barN → {sysIdx, xLeft, xRight}.
+    //    BarLine polylines are reliable structural elements — unlike note positions they
+    //    don't depend on pitch matching, so bar highlighting never jumps backward.
+    const MERGE_BL   = 50;   // merge adjacent barlines (repeat-sign double barlines)
+    const rawBySys   = new Map();
+    Array.from(svgEl.querySelectorAll('polyline.BarLine')).forEach(el => {
+      const pts = (el.getAttribute('points') || '').trim().split(/[\s,]+/);
+      if (pts.length < 2) return;
+      const bx = parseFloat(pts[0]);
+      const by = parseFloat(pts[1]);
+      if (isNaN(bx) || isNaN(by)) return;
+      const s = _sysOf(by);
+      if (!rawBySys.has(s)) rawBySys.set(s, new Set());
+      rawBySys.get(s).add(Math.round(bx));
+    });
+
+    const mergedBySys = new Map();
+    for (const [s, xs] of rawBySys) {
+      const sorted = [...xs].sort((a, b) => a - b);
+      const groups = [];
+      for (const x of sorted) {
+        const last = groups[groups.length - 1];
+        if (last && x - last[last.length - 1] <= MERGE_BL) last.push(x);
+        else groups.push([x]);
+      }
+      mergedBySys.set(s, groups.map(g => Math.round(g.reduce((a, b) => a + b, 0) / g.length)));
+    }
+
+    let barNum = 1;
+    for (let s = 0; s < numSys; s++) {
+      const bls = mergedBySys.get(s) || [];
+      for (let i = 0; i + 1 < bls.length; i++) {
+        this._barXMap.set(barNum, { sysIdx: s, xLeft: bls[i], xRight: bls[i + 1] });
+        barNum++;
+      }
+    }
+
+    // 8. Create the Tidal Bar SVG overlay.
+    //    Read --orange as a concrete hex string: CSS custom properties work in style=""
+    //    but NOT in SVG presentation attributes or filter-context fill resolution.
+    const SVG_NS   = 'http://www.w3.org/2000/svg';
+    const tideColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--orange').trim() || '#f0a500';
+
+    let defs = svgEl.querySelector('defs');
+    if (!defs) {
+      defs = document.createElementNS(SVG_NS, 'defs');
+      svgEl.insertBefore(defs, svgEl.firstChild);
+    }
+
+    // Horizontal gradient: tideColor @ left, transparent @ right
+    const grad = document.createElementNS(SVG_NS, 'linearGradient');
+    grad.id = 'nk-bar-tide-grad';
+    grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0');
+    grad.setAttribute('x2', '1'); grad.setAttribute('y2', '0');
+    const stop1 = document.createElementNS(SVG_NS, 'stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', tideColor);
+    stop1.setAttribute('stop-opacity', '0.28');
+    const stop2 = document.createElementNS(SVG_NS, 'stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', tideColor);
+    stop2.setAttribute('stop-opacity', '0');
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+
+    // Blur filter for edge bloom
+    const filt = document.createElementNS(SVG_NS, 'filter');
+    filt.id = 'nk-bar-edge-bloom';
+    filt.setAttribute('x', '-300%'); filt.setAttribute('width', '700%');
+    filt.setAttribute('y', '-5%');   filt.setAttribute('height', '110%');
+    const blur = document.createElementNS(SVG_NS, 'feGaussianBlur');
+    blur.setAttribute('stdDeviation', '7');
+    filt.appendChild(blur);
+    defs.appendChild(filt);
+
+    const barG = document.createElementNS(SVG_NS, 'g');
+    barG.setAttribute('class', 'nk-bar-col');
+    barG.style.display       = 'none';
+    barG.style.pointerEvents = 'none';
+
+    // Wash: full bar width, gradient fill (drawn first = bottom layer)
+    const wash = document.createElementNS(SVG_NS, 'rect');
+    wash.setAttribute('class', 'nk-bar-col-wash');
+    wash.setAttribute('x', '0'); wash.setAttribute('y', '0');
+    wash.setAttribute('fill', 'url(#nk-bar-tide-grad)');
+
+    // Edge bloom: narrow blurred rect for neon glow behind the edge line
+    const edgeGlow = document.createElementNS(SVG_NS, 'rect');
+    edgeGlow.setAttribute('class', 'nk-bar-col-edge-glow');
+    edgeGlow.setAttribute('x', '0'); edgeGlow.setAttribute('y', '0');
+    edgeGlow.setAttribute('width', '18');
+    edgeGlow.setAttribute('fill', tideColor);
+    edgeGlow.setAttribute('filter', 'url(#nk-bar-edge-bloom)');
+
+    // Edge: crisp 3px left accent line (drawn last = top layer)
+    const edge = document.createElementNS(SVG_NS, 'rect');
+    edge.setAttribute('class', 'nk-bar-col-edge');
+    edge.setAttribute('x', '0'); edge.setAttribute('y', '0');
+    edge.setAttribute('width', '3');
+    edge.setAttribute('fill', tideColor);
+
+    barG.appendChild(wash);
+    barG.appendChild(edgeGlow);
+    barG.appendChild(edge);
+
+    // Insert AFTER white background path so the overlay isn't painted over.
+    const bgPath = svgEl.querySelector('path[fill="#ffffff"], path[fill="white"]');
+    svgEl.insertBefore(barG, bgPath ? bgPath.nextSibling : svgEl.firstChild);
+    this._barColEl = barG;
   }
 
   // ---------------------------------------------------------------------------

@@ -33,6 +33,12 @@
         "question_mark": -8,
         "wrong_2x_narrowing": -5
       }
+    },
+    "_svg_crop": {
+      "top": 261,
+      "bottom": 1855,
+      "left": 159,
+      "right": 226
     }
   },
   "parts": [

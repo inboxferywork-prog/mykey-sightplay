@@ -745,6 +745,17 @@ body.nk-fab-mode:not(.nk-portrait) #notation-viewport {
   padding-bottom: 3px;  /* reserve space for progress strip at bottom edge */
 }
 
+/* SVG score in landscape FAB: multi-row layout — restore vertical scroll.
+   nk-svg-score is toggled by JS after each render when renderer.isSvgMode is true.
+   padding-top matches the standard 28px rule above so the fab-ngr title strip
+   doesn't overlap the score content. */
+body.nk-fab-mode:not(.nk-portrait).nk-svg-score #notation-viewport {
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-top:    28px;
+  padding-bottom: calc(var(--fab-kb-h) + 60px);
+}
+
 /* Progress strip — moved to bottom edge of notation viewport in landscape FAB */
 body.nk-fab-mode:not(.nk-portrait) .fab-progress {
   top: auto;

@@ -33,7 +33,13 @@
         "wrong_2x_narrowing": -5
       }
     },
-    "_svg_file": "songs/svg/0106-woodpecker-1.svg"
+    "_svg_file": "songs/svg/0106-woodpecker-1.svg",
+    "_svg_crop": {
+      "top": 508,
+      "bottom": 1359,
+      "left": 121,
+      "right": 247
+    }
   },
   "parts": [
     {

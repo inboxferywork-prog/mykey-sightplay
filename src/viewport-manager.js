@@ -92,6 +92,21 @@ class ViewportManager {
   }
 
   /**
+   * Like fitWidth() but applies an extra zoom multiplier on top of the fit scale.
+   * zoom > 1 makes notation larger — overflows viewport width, enabling pan/scroll.
+   * zoom = 1.0 is identical to fitWidth().
+   * @param {number} zoom  Scale multiplier (from meta._svg_zoom, default 1.0)
+   */
+  fitWidthZoomed(zoom = 1.0) {
+    if (!this._viewportEl) return;
+    const usableW = this._usableWidth();
+    if (!usableW) return;
+    this._fitMode = (zoom === 1.0);
+    this._panX    = 0;
+    this._setScale((usableW / this._naturalW) * zoom);
+  }
+
+  /**
    * Scale camera so the given natural height fits the viewport's usable height.
    * Used in landscape FAB mode so one grand-staff row fills the score card.
    * @param {number} naturalH  Native pixel height of one content row (e.g. rowHeight + padding)

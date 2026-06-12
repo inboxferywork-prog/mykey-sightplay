@@ -140,8 +140,62 @@ def export_svg(mscz_path: Path, svg_slug: str) -> Path | None:
     return pages[0]
 
 
-def patch_json(json_path: Path, svg_rel: str, overwrite: bool = False) -> bool:
-    """Add/update _svg_file in song meta. Returns True if file was written."""
+_SVG_CROP_PAD_TOP = 150  # top breathing room — leaves ~53px above first note for count-in pills
+_SVG_CROP_PAD     = 60   # sides and bottom breathing room (SVG viewBox units)
+_SVG_CROP_MIN_H   = 600  # minimum cropped viewBox height so short scores stay readable
+
+
+def compute_svg_crop(svg_path: Path) -> dict | None:
+    """
+    Return crop values {top, bottom, left, right} for the given SVG file.
+    Crops are in SVG viewBox units and remove MuseScore page margins / title area.
+    Returns None if the SVG cannot be analysed.
+    """
+    try:
+        content = svg_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+    vb_m = re.search(r'viewBox="([^"]+)"', content)
+    if not vb_m:
+        return None
+    vb_parts = vb_m.group(1).split()
+    vbW, vbH = float(vb_parts[2]), float(vb_parts[3])
+
+    matrices = re.findall(r'transform="matrix\(([^)]+)\)"', content)
+    xs, ys = [], []
+    for m in matrices:
+        parts = m.split(",")
+        if len(parts) >= 6:
+            try:
+                xs.append(float(parts[4]))
+                ys.append(float(parts[5]))
+            except ValueError:
+                pass
+    if not xs:
+        return None
+
+    xMin, xMax = min(xs), max(xs)
+    yMin, yMax = min(ys), max(ys)
+
+    top  = max(0, int(yMin) - _SVG_CROP_PAD_TOP)
+    left = max(0, int(xMin) - _SVG_CROP_PAD)
+    right = max(0, int(vbW - xMax) - _SVG_CROP_PAD)
+
+    # Bottom: don't crop so aggressively that the viewBox height drops below MIN_H
+    # (prevents single-system songs from collapsing to a thin sliver).
+    content_offset = int(yMin) - top   # == _SVG_CROP_PAD_TOP
+    min_crop_h   = content_offset + int(yMax - yMin) + _SVG_CROP_PAD + _SVG_CROP_MIN_H
+    max_bottom   = max(0, int(vbH) - top - min_crop_h)
+    raw_bottom   = max(0, int(vbH - yMax) - _SVG_CROP_PAD)
+    bottom = min(raw_bottom, max_bottom)
+
+    return {"top": top, "bottom": bottom, "left": left, "right": right}
+
+
+def patch_json(json_path: Path, svg_rel: str, svg_crop: dict | None,
+               overwrite: bool = False) -> bool:
+    """Add/update _svg_file (and _svg_crop) in song meta. Returns True if file was written."""
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
     existing = data.get("meta", {}).get("_svg_file")
@@ -149,6 +203,8 @@ def patch_json(json_path: Path, svg_rel: str, overwrite: bool = False) -> bool:
         print(f"  SKIP patch: _svg_file already '{existing}'")
         return False
     data["meta"]["_svg_file"] = svg_rel
+    if svg_crop:
+        data["meta"]["_svg_crop"] = svg_crop
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
         f.write("\n")
@@ -161,7 +217,12 @@ def process_one(mscz_path: Path, json_path: Path, overwrite: bool = False) -> bo
     if svg_path is None:
         return False
     svg_rel  = str(svg_path.relative_to(APP_ROOT)).replace("\\", "/")
-    modified = patch_json(json_path, svg_rel, overwrite=overwrite)
+    svg_crop = compute_svg_crop(svg_path)
+    if svg_crop:
+        print(f"  Crop:     {svg_crop}")
+    else:
+        print("  Crop:     could not compute — skipped")
+    modified = patch_json(json_path, svg_rel, svg_crop, overwrite=overwrite)
     if modified:
         print(f"  Patched:  {json_path.name}  ->  _svg_file = '{svg_rel}'")
     return True

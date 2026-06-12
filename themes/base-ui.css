@@ -880,6 +880,20 @@ button:disabled { opacity: 0.35; cursor: default; }
 
 .nk-dim { opacity: 0.18; pointer-events: none; }
 
+/* ================================================================
+   SVG mode — beat-column glow overlay
+   A blurred wide rect (glow) + a crisp narrow center line move
+   together to mark the active beat position, spanning full staff
+   height (treble + bass) so chord events are always covered.
+   ================================================================ */
+/* Tidal Bar — bar-level playback position indicator.
+   Color comes from var(--orange) set on the <g> via JS; children use currentColor.
+   Group snaps instantly to new bar; all motion comes from the rAF edge sweep. */
+.nk-bar-col           { }
+.nk-bar-col-wash      { opacity: 1; }
+.nk-bar-col-edge-glow { opacity: 0.55; }
+.nk-bar-col-edge      { opacity: 0.90; }
+
 .nk-loop-start path, .nk-loop-start rect, .nk-loop-start use,
 .nk-loop-start line, .nk-loop-start circle, .nk-loop-start polygon
   { fill: var(--nk-loop-start-color) !important; stroke: var(--nk-loop-start-color) !important; }

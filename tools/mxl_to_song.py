@@ -31,6 +31,46 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from linear_learning_path_generator import generate_learning_path  # noqa: E402
 
+_SVG_CROP_PAD_TOP = 150  # top breathing room — leaves ~53px above first note for count-in pills
+_SVG_CROP_PAD     = 60   # sides and bottom breathing room (SVG viewBox units)
+_SVG_CROP_MIN_H   = 600  # minimum cropped height so short scores stay readable
+
+
+def _compute_svg_crop(svg_path: Path) -> dict | None:
+    """Compute {top, bottom, left, right} crop in SVG viewBox units."""
+    try:
+        content = svg_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    vb_m = re.search(r'viewBox="([^"]+)"', content)
+    if not vb_m:
+        return None
+    vb_parts = vb_m.group(1).split()
+    vbW, vbH = float(vb_parts[2]), float(vb_parts[3])
+    matrices = re.findall(r'transform="matrix\(([^)]+)\)"', content)
+    xs, ys = [], []
+    for m in matrices:
+        parts = m.split(",")
+        if len(parts) >= 6:
+            try:
+                xs.append(float(parts[4]))
+                ys.append(float(parts[5]))
+            except ValueError:
+                pass
+    if not xs:
+        return None
+    xMin, xMax = min(xs), max(xs)
+    yMin, yMax = min(ys), max(ys)
+    top  = max(0, int(yMin) - _SVG_CROP_PAD_TOP)
+    left = max(0, int(xMin) - _SVG_CROP_PAD)
+    right = max(0, int(vbW - xMax) - _SVG_CROP_PAD)
+    content_offset = int(yMin) - top
+    min_crop_h = content_offset + int(yMax - yMin) + _SVG_CROP_PAD + _SVG_CROP_MIN_H
+    max_bottom = max(0, int(vbH) - top - min_crop_h)
+    raw_bottom = max(0, int(vbH - yMax) - _SVG_CROP_PAD)
+    bottom = min(raw_bottom, max_bottom)
+    return {"top": top, "bottom": bottom, "left": left, "right": right}
+
 # music21 — pip install music21
 from music21 import (
     articulations as m21_articulations,
@@ -1061,7 +1101,12 @@ After generating:
                     _svg_rel = str(_pages[0].relative_to(output_path.parent.parent)).replace("\\", "/")
                     _svg_rel = "songs/" + _svg_rel if not _svg_rel.startswith("songs/") else _svg_rel
                     song_data["meta"]["_svg_file"] = _svg_rel
-                    print(f"OK → {_svg_rel}")
+                    _crop = _compute_svg_crop(_pages[0])
+                    if _crop:
+                        song_data["meta"]["_svg_crop"] = _crop
+                        print(f"OK → {_svg_rel}  crop={_crop}")
+                    else:
+                        print(f"OK → {_svg_rel}")
                 else:
                     print("FAILED (no output file)")
             except Exception as _e:
