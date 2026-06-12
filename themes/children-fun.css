@@ -51,12 +51,12 @@
      RH = sky blue, LH = candy pink.
      Both notation (note fill) and keyboard (key color + glow) use these.
      ============================================================ */
-  --rh-color:     #5bc8f5;
-  --lh-color:     #ff80c8;
-  --rh-key-color: #5bc8f5;
-  --lh-key-color: #ff80c8;
-  --rh-glow:      rgba(91, 200, 245, 0.65);
-  --lh-glow:      rgba(255, 128, 200, 0.65);
+  --rh-color:     #f0a500;
+  --lh-color:     #a855f7;
+  --rh-key-color: #f0a500;
+  --lh-key-color: #a855f7;
+  --rh-glow:      rgba(240, 165, 0, 0.65);
+  --lh-glow:      rgba(168, 85, 247, 0.65);
 
   /* Keyboard physical appearance */
   --nk-white-key-bg:         #f8f4ff;

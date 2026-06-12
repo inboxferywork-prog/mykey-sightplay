@@ -524,6 +524,7 @@ class NotationRenderer {
     const SVG_NS   = 'http://www.w3.org/2000/svg';
     const tideColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--orange').trim() || '#f0a500';
+    const edgeColor = '#a855f7';   // creative purple
 
     let defs = svgEl.querySelector('defs');
     if (!defs) {
@@ -538,11 +539,11 @@ class NotationRenderer {
     grad.setAttribute('x2', '1'); grad.setAttribute('y2', '0');
     const stop1 = document.createElementNS(SVG_NS, 'stop');
     stop1.setAttribute('offset', '0%');
-    stop1.setAttribute('stop-color', tideColor);
+    stop1.setAttribute('stop-color', edgeColor);
     stop1.setAttribute('stop-opacity', '0.28');
     const stop2 = document.createElementNS(SVG_NS, 'stop');
     stop2.setAttribute('offset', '100%');
-    stop2.setAttribute('stop-color', tideColor);
+    stop2.setAttribute('stop-color', edgeColor);
     stop2.setAttribute('stop-opacity', '0');
     grad.appendChild(stop1);
     grad.appendChild(stop2);
@@ -573,7 +574,7 @@ class NotationRenderer {
     const edgeGlow = document.createElementNS(SVG_NS, 'rect');
     edgeGlow.setAttribute('class', 'nk-bar-col-edge-glow');
     edgeGlow.setAttribute('x', '0'); edgeGlow.setAttribute('y', '0');
-    edgeGlow.setAttribute('width', '18');
+    edgeGlow.setAttribute('width', '25');
     edgeGlow.setAttribute('fill', tideColor);
     edgeGlow.setAttribute('filter', 'url(#nk-bar-edge-bloom)');
 

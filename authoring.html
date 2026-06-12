@@ -424,6 +424,23 @@
     .mxl-config select { width: 148px; }
     .mxl-config input[type=text] { width: 130px; }
 
+    /* ---- MSCZ import ---- */
+    .btn-mscz { border-color: var(--green); color: var(--green); }
+    .btn-mscz:hover:not(:disabled) { background: rgba(126,200,126,0.08); border-color: var(--green); }
+    .server-status-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--muted); width: 100%;
+    }
+    .server-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      background: var(--border2); transition: background 0.2s;
+    }
+    .server-dot.ok   { background: var(--green); }
+    .server-dot.err  { background: var(--red); }
+    .server-dot.warn { background: var(--yellow); }
+    .ms-path-row { display: flex; gap: 6px; align-items: center; width: 100%; }
+    .ms-path-row input { flex: 1; min-width: 0; }
+
     /* ---- Metadata / Library form ---- */
     .meta-form { display: flex; flex-direction: column; gap: 10px; }
     .meta-row  { display: flex; align-items: center; gap: 12px; }
@@ -577,11 +594,12 @@
   <div id="openSection">
     <div class="drop-zone" id="dropZone">
       <div class="drop-zone-icon">📂</div>
-      <div class="drop-zone-title">Buka song.json atau import .mxl</div>
+      <div class="drop-zone-title">Buka song.json, import .mxl, atau import .mscz</div>
       <div class="drop-zone-sub">Drag &amp; drop, atau pilih file di bawah</div>
       <div class="open-btn-row">
         <button id="btnOpenFile">📄 Buka song.json…</button>
         <button id="btnOpenMxl" class="btn-mxl">🎵 Import .mxl / .xml ▾</button>
+        <button id="btnOpenMscz" class="btn-mscz">🎼 Import .mscz ▾</button>
         <button id="btnOpenFromLibrary">📋 Library…</button>
       </div>
       <!-- MXL import config (hidden until btnOpenMxl clicked) -->
@@ -609,16 +627,57 @@
         </div>
         <button id="btnBrowseMxl" class="btn-primary btn-sm" style="align-self:flex-end">Browse…</button>
       </div>
+      <!-- MSCZ import config (hidden until btnOpenMscz clicked) -->
+      <div id="msczConfigPanel" class="mxl-config hidden" style="flex-direction:column;gap:10px;">
+        <div class="server-status-row">
+          <span class="server-dot" id="serverDot"></span>
+          <span id="serverStatusText">Memeriksa server...</span>
+          <button id="btnRetryServer" class="btn-sm" style="margin-left:auto;display:none">↻ Retry</button>
+        </div>
+        <div id="msPathPanel" class="hidden" style="width:100%">
+          <div class="mxl-lbl" style="margin-bottom:4px">Path ke MuseScore (.exe atau portable)</div>
+          <div class="ms-path-row">
+            <input type="text" id="cfgMsPath" class="mxl-config" placeholder="C:\path\to\MuseScore3.exe" style="background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:12px;">
+            <button id="btnSaveMsPath" class="btn-primary btn-sm">Simpan</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div class="mxl-field">
+            <label class="mxl-lbl" for="cfgMsczBpm">BPM override</label>
+            <input type="number" id="cfgMsczBpm" min="20" max="300" placeholder="auto">
+          </div>
+          <div class="mxl-field">
+            <label class="mxl-lbl" for="cfgMsczLevel">Level</label>
+            <select id="cfgMsczLevel">
+              <option value="early_beginner" selected>Early Beginner</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <div class="mxl-field">
+            <label class="mxl-lbl" for="cfgMsczPartSize">Bar / Part</label>
+            <input type="number" id="cfgMsczPartSize" min="1" max="32" value="4">
+          </div>
+          <div class="mxl-field">
+            <label class="mxl-lbl" for="cfgMsczId">Song ID</label>
+            <input type="text" id="cfgMsczId" placeholder="auto dari nama file">
+          </div>
+          <button id="btnBrowseMscz" class="btn-primary btn-sm" style="align-self:flex-end" disabled>Browse…</button>
+        </div>
+      </div>
+
       <div class="drop-zone-hint" style="margin-top:12px">
-        <strong>Via browser (baru):</strong> Import .mxl langsung → edit segmen → download<br>
-        <strong>Via Python (lengkap):</strong><br>
-        <code>python tools/mxl_to_song.py input.mxl songs/nama.json</code><br>
-        Buka song.json di sini → edit segmen → simpan<br>
-        <code>python tools/update_song_index.py</code>
+        <strong>Via browser — Import .mscz (perlu server):</strong><br>
+        <code>python tools/authoring_server.py</code> lalu drop file .mscz di sini<br>
+        <strong>Via browser — Import .mxl (tanpa server):</strong> Drop .mxl langsung → edit segmen → download<br>
+        <strong>Via Python:</strong>
+        <code>python tools/mxl_to_song.py input.mxl songs/nama.json --mscz path/ke/file.mscz</code>
       </div>
     </div>
     <input type="file" id="fileInput" accept=".json" style="display:none">
     <input type="file" id="mxlInput" accept=".mxl,.xml,.musicxml" style="display:none">
+    <input type="file" id="msczInput" accept=".mscz" style="display:none">
     <!-- Library browser panel (shown when btnOpenFromLibrary clicked) -->
     <div id="libraryBrowserPanel" class="hidden" style="margin-top:16px">
       <div class="section-card">
@@ -1021,6 +1080,7 @@ const mxlInput        = document.getElementById('mxlInput');
 const mxlConfigPanel  = document.getElementById('mxlConfigPanel');
 document.getElementById('btnOpenMxl').onclick = () => {
   mxlConfigPanel.classList.toggle('hidden');
+  msczConfigPanel.classList.add('hidden');
 };
 document.getElementById('btnBrowseMxl').onclick = () => mxlInput.click();
 
@@ -1035,6 +1095,136 @@ mxlInput.onchange = e => {
   if (file) _handleMxlFile(file);
   mxlInput.value = '';
 };
+
+// MSCZ import — server-based pipeline
+const SERVER_URL      = 'http://localhost:7777';
+const msczInput       = document.getElementById('msczInput');
+const msczConfigPanel = document.getElementById('msczConfigPanel');
+let _serverOk = false;
+let _msFound  = false;
+
+document.getElementById('btnOpenMscz').onclick = () => {
+  const opening = msczConfigPanel.classList.toggle('hidden');
+  mxlConfigPanel.classList.add('hidden');
+  if (!msczConfigPanel.classList.contains('hidden')) _checkServer();
+};
+
+document.getElementById('btnBrowseMscz').onclick = () => msczInput.click();
+
+msczInput.onchange = e => {
+  const file = e.target.files?.[0];
+  if (file) _handleMsczFile(file);
+  msczInput.value = '';
+};
+
+document.getElementById('btnRetryServer').onclick = _checkServer;
+
+document.getElementById('btnSaveMsPath').onclick = () => {
+  const path = document.getElementById('cfgMsPath').value.trim();
+  if (!path) return;
+  // Detect version from path string
+  const key = path.toLowerCase().includes('4') ? 'musescore4_exe' : 'musescore3_exe';
+  fetch(`${SERVER_URL}/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ [key]: path }),
+  })
+  .then(r => r.json())
+  .then(() => _checkServer())
+  .catch(err => _setStatusMsg('Gagal simpan config: ' + err.message, 'err'));
+};
+
+function _checkServer() {
+  const dot    = document.getElementById('serverDot');
+  const txt    = document.getElementById('serverStatusText');
+  const retry  = document.getElementById('btnRetryServer');
+  const browse = document.getElementById('btnBrowseMscz');
+  const msPanel = document.getElementById('msPathPanel');
+
+  dot.className    = 'server-dot warn';
+  txt.textContent  = 'Memeriksa server...';
+  retry.style.display = 'none';
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 3000);
+
+  fetch(`${SERVER_URL}/status`, { signal: ctrl.signal })
+    .then(r => r.json())
+    .then(data => {
+      clearTimeout(timer);
+      _serverOk = true;
+      _msFound  = data.musescore_found;
+      if (_msFound) {
+        dot.className   = 'server-dot ok';
+        const ms = data.musescore3 || data.musescore4;
+        txt.textContent = `Server aktif · MuseScore ditemukan`;
+        msPanel.classList.add('hidden');
+        browse.disabled = false;
+      } else {
+        dot.className   = 'server-dot warn';
+        txt.textContent = 'Server aktif · MuseScore tidak ditemukan — atur path di bawah';
+        msPanel.classList.remove('hidden');
+        browse.disabled = true;
+        const saved = data.config?.musescore3_exe || data.config?.musescore4_exe;
+        if (saved) document.getElementById('cfgMsPath').value = saved;
+      }
+      retry.style.display = 'none';
+    })
+    .catch(() => {
+      clearTimeout(timer);
+      _serverOk = false;
+      _msFound  = false;
+      dot.className   = 'server-dot err';
+      txt.textContent = 'Server tidak berjalan — jalankan: python tools/authoring_server.py';
+      retry.style.display = '';
+      browse.disabled = true;
+      msPanel.classList.add('hidden');
+    });
+}
+
+function _handleMsczFile(file) {
+  if (!_serverOk) {
+    msczConfigPanel.classList.remove('hidden');
+    _checkServer();
+    _setStatusMsg('Server tidak berjalan — jalankan authoring_server.py terlebih dahulu', 'err');
+    return;
+  }
+  if (!_msFound) {
+    msczConfigPanel.classList.remove('hidden');
+    _setStatusMsg('MuseScore tidak ditemukan — atur path di panel Import .mscz', 'err');
+    return;
+  }
+
+  const bpm      = document.getElementById('cfgMsczBpm').value.trim();
+  const level    = document.getElementById('cfgMsczLevel').value;
+  const partSize = document.getElementById('cfgMsczPartSize').value;
+  const songId   = document.getElementById('cfgMsczId').value.trim();
+
+  const fd = new FormData();
+  fd.append('mscz', file);
+  if (bpm)    fd.append('bpm',       bpm);
+  if (songId) fd.append('song_id',   songId);
+  fd.append('level',     level);
+  fd.append('part_size', partSize);
+
+  _setStatusMsg(`Mengimport ${file.name}… (MuseScore sedang bekerja, harap tunggu)`, 'inf');
+  document.getElementById('btnBrowseMscz').disabled = true;
+
+  fetch(`${SERVER_URL}/import-mscz`, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) throw new Error(data.error);
+      _loadSongData(data);
+      _setStatusMsg(`Import berhasil: ${data.meta?.title || file.name}`, 'ok');
+      msczConfigPanel.classList.add('hidden');
+    })
+    .catch(err => {
+      _setStatusMsg('Import gagal: ' + err.message, 'err');
+    })
+    .finally(() => {
+      document.getElementById('btnBrowseMscz').disabled = false;
+    });
+}
 
 dropZone.addEventListener('dragover', e => {
   e.preventDefault();
@@ -1052,8 +1242,12 @@ dropZone.addEventListener('drop', e => {
   } else if (['mxl', 'xml', 'musicxml'].includes(ext)) {
     mxlConfigPanel.classList.remove('hidden');
     _handleMxlFile(file);
+  } else if (ext === 'mscz') {
+    msczConfigPanel.classList.remove('hidden');
+    _checkServer();
+    _handleMsczFile(file);
   } else {
-    _setStatusMsg('File tidak didukung — gunakan .json, .mxl, atau .xml', 'err');
+    _setStatusMsg('File tidak didukung — gunakan .json, .mxl, .xml, atau .mscz', 'err');
   }
 });
 

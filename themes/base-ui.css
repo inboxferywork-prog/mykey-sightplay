@@ -43,12 +43,12 @@
 
   /* RH / LH semantic highlight identity — theme overrides these to control all
      notation + keyboard highlight colors for both hands. */
-  --rh-color:     #4a9eff;
-  --lh-color:     #e06830;
-  --rh-key-color: #4a9eff;
-  --lh-key-color: #e06830;
-  --rh-glow:      rgba(74, 158, 255, 0.55);
-  --lh-glow:      rgba(224, 104, 48, 0.55);
+  --rh-color:     #f0a500;
+  --lh-color:     #a855f7;
+  --rh-key-color: #f0a500;
+  --lh-key-color: #a855f7;
+  --rh-glow:      rgba(240, 165, 0, 0.55);
+  --lh-glow:      rgba(168, 85, 247, 0.55);
 
   /* Keyboard physical appearance (theme can override) */
   --nk-white-key-bg:         #f0f0f0;
@@ -848,7 +848,7 @@ button:disabled { opacity: 0.35; cursor: default; }
 }
 .nk-kb-note-label.nk-kb-note-label-active { opacity: 1; }
 .nk-kb-note-label.nk-kb-note-label-active-rh { color: var(--rh-key-color); }
-.nk-kb-note-label.nk-kb-note-label-active-lh { color: var(--lh-key-color); }
+.nk-kb-note-label.nk-kb-note-label-active-lh { color: #ffffff; }
 
 /* ================================================================
    Notation highlight classes — formerly NotationRenderer._injectStyles()
