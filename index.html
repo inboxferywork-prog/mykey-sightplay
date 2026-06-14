@@ -576,6 +576,9 @@ const songLoader = new SongLoader({
       }
     }
     _syncLearningControls();
+    // Apply initial clef filter — needed for rh_only/lh_only songs and any saved preference
+    const _initClef = learningState.clefFilter;
+    renderer.applyClefFilter(_initClef !== 'both' ? [_initClef] : null);
     _updateProgress(0);
     _updateTime(0);
     _refreshBarTicks();
@@ -827,6 +830,10 @@ runtime
       }, 350);
     } else {
       _setUIState('ended');
+      // Notifikasi bridge module (jika dimuat dalam konteks website MyKey)
+      if (typeof window.mykeyOnSongEnd === 'function') {
+        window.mykeyOnSongEnd(currentSong, currentTempoScale);
+      }
     }
   });
 
@@ -2555,6 +2562,59 @@ _initSongLibrary();
 
 </script>
 
+<!--
+  MyKey Website Integration — Auth + Progress
+  Script ini hanya aktif saat app berjalan dalam konteks website MyKey
+  (diakses via apps/sightplay/index.html, bukan standalone).
+  Jika firebase-config.js tidak ditemukan (standalone/dev mode), blok ini
+  diam-diam dilewati tanpa mempengaruhi fungsionalitas app.
+-->
+<script type="module">
+  // Cek apakah kita berjalan dalam konteks website (ada firebase-config.js)
+  let bridge;
+  try {
+    bridge = await import('../../shared/mykey-bridge.js');
+  } catch (_) {
+    // Standalone / dev mode — tidak ada integrasi Firebase, app berjalan normal
+  }
+
+  if (bridge) {
+    // ── Auth check ──────────────────────────────────────────────────────────
+    // Jika user belum login, bridge akan redirect ke halaman login.
+    // Setelah login, URL redirect membawa kembali ke halaman ini.
+    const { uid, userData } = await bridge.initAuth({ loginUrl: '../../login.html' });
+
+    // Baca ref dari URL (?ref=ASSIGNMENT_ID dari link guru)
+    const refId = bridge.getRefParam();
+
+    // ── Hook onSongEnd ───────────────────────────────────────────────────────
+    // window.mykeyOnSongEnd dipanggil dari onEnd() di script utama saat lagu selesai.
+    window.mykeyOnSongEnd = async function(songData, tempoScale) {
+      if (!uid || !songData) return;
+
+      // Bangun gameId dari nama file lagu (konsisten dengan games.json)
+      const songParam = new URLSearchParams(window.location.search).get('song') || '';
+      const filename  = songParam.split('/').pop().replace('.json', '');
+      // Cari gameId yang cocok di games.json dengan cara match URL
+      const gameId    = 'sightplay-' + filename
+        .toLowerCase()
+        .replace(/^\d+\s+/, '')   // hapus nomor prefix (0101, dll)
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
+      const category  = 'sightplay';
+      const songTitle = songData?.meta?.title || filename;
+
+      // Simpan progress ke Firestore
+      await bridge.saveProgress(uid, gameId, category, { songTitle, tempoScale });
+
+      // Catat assignment play jika masuk via link guru
+      if (refId) {
+        await bridge.recordAssignmentPlay(refId, uid, gameId);
+      }
+    };
+  }
+</script>
 
 </body>
 </html>

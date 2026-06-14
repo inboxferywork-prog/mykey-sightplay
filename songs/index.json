@@ -22,26 +22,6 @@
       "tags": []
     },
     {
-      "src": "songs/0502 Waltz.json",
-      "label": "Waltz book 1 — 3/4 · 80 BPM · 17 bars · Key G · segments",
-      "title": "Waltz book 1",
-      "composer": "Yamaha Book",
-      "level": "beginner",
-      "listed": true,
-      "collectionId": "yamaha-extension-1",
-      "tags": []
-    },
-    {
-      "src": "songs/0609 Small Avelenche.json",
-      "label": "Small A — 6/8 · 80 BPM · 16 bars · segments",
-      "title": "Small A",
-      "composer": "Yamaha Book",
-      "level": "beginner",
-      "listed": true,
-      "collectionId": "yamaha-extension-2",
-      "tags": []
-    },
-    {
       "src": "songs/minuet in G major.json",
       "label": "Minuet in G — 3/4 · 80 BPM · 16 bars · Key G · segments",
       "title": "Minuet in G",
@@ -52,81 +32,21 @@
       "tags": []
     },
     {
-      "src": "songs/0106 Woodpecker.json",
-      "label": "Woodpecker — 4/4 · 72 BPM · 8 bars · segments",
-      "title": "Woodpecker",
-      "composer": "Yamaha Book",
-      "level": "early_beginner",
-      "listed": true,
-      "collectionId": "yamaha-primary-1",
-      "tags": []
-    },
-    {
-      "src": "songs/0105 Sampai Jumpa Lagi.json",
-      "label": "See U — 4/4 · 72 BPM · 8 bars · segments",
-      "title": "See U",
-      "composer": "Yamaha Book",
-      "level": "early_beginner",
-      "listed": true,
-      "collectionId": "yamaha-primary-1",
-      "tags": []
-    },
-    {
-      "src": "songs/0103 Pembuat Sepatu.json",
-      "label": "Gajah Anak — 2/2 · 72 BPM · 8 bars · segments",
-      "title": "Gajah Anak",
-      "composer": "Yamaha Book",
-      "level": "early_beginner",
-      "listed": true,
-      "collectionId": "yamaha-primary-1",
-      "tags": []
-    },
-    {
-      "src": "songs/0101 Roti Panas-Piano.json",
-      "label": "Roti — 2/4 · 72 BPM · 8 bars · segments",
-      "title": "Roti",
-      "composer": "Yamaha Book",
-      "level": "early_beginner",
-      "listed": true,
-      "collectionId": "yamaha-primary-1",
-      "tags": []
-    },
-    {
-      "src": "songs/0102 Lihat Pelangi.json",
-      "label": "Pelangi — 4/4 · 72 BPM · 8 bars · segments",
-      "title": "Pelangi",
-      "composer": "Yamaha Book",
-      "level": "early_beginner",
-      "listed": true,
-      "collectionId": "yamaha-primary-1",
-      "tags": []
-    },
-    {
-      "src": "songs/0503 An Ukrainian Girl.json",
-      "label": "An Ukrainian Girl — 4/4 · 72 BPM · 16 bars · Key F · segments",
-      "title": "An Ukrainian Girl",
-      "composer": "Yamaha Book",
-      "level": "beginner",
-      "listed": true,
-      "collectionId": "yamaha-extension-1",
-      "tags": []
-    },
-    {
-      "src": "songs/0504 Ballon Trip.json",
-      "label": "Ballon Trip — 4/4 · 72 BPM · 16 bars · segments",
-      "title": "Ballon Trip",
-      "composer": "Yamaha Book",
-      "level": "beginner",
-      "listed": true,
-      "collectionId": "yamaha-extension-1",
-      "tags": []
-    },
-    {
       "src": "songs/Minuet Don Giovanni.json",
       "label": "Minuet Don Giovanni — 3/4 · 110 BPM · 16 bars · Key F · segments",
       "title": "Minuet Don Giovanni",
       "composer": "Composer / arranger",
       "level": "early_beginner",
+      "collectionId": null,
+      "listed": true,
+      "tags": []
+    },
+    {
+      "src": "songs/R8 Bohemian Rhapsody.json",
+      "label": "Bohemian Rhapsody — 4/4 · 72 BPM · 61 bars · Key Bb",
+      "title": "Bohemian Rhapsody",
+      "composer": "Unknown",
+      "level": "advanced",
       "collectionId": null,
       "listed": true,
       "tags": []

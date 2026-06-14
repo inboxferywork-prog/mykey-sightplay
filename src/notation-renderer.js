@@ -38,7 +38,9 @@ class NotationRenderer {
     this._svgCache        = null;       // cached SVG text from preload()
     this._svgEl           = null;       // active inline SVG element (svg mode only)
     this._barColEl        = null;       // SVG <g> tidal-bar overlay (svg mode only)
-    this._staffSysBounds  = [];         // [{yMin,yMax}] per system — for column height
+    this._staffSysBounds  = [];         // [{yMin,yMax,treble,bass}] per system — for column height
+    this._sysSplitY       = [];         // per-system Y midpoint between treble bottom and bass top
+    this._svgClefFilter   = null;       // active visibleClefs for SVG mode (null = both)
     this._barXMap         = new Map();  // barN → {sysIdx, xLeft, xRight}
     this._eventBarMap     = new Map();  // eventId → barNumber
     this._numBeats        = 4;          // time signature numerator
@@ -175,8 +177,13 @@ class NotationRenderer {
     if (!info) { this._barColEl.style.display = 'none'; return; }
 
     const { sysIdx, xLeft, xRight } = info;
-    const bounds = this._staffSysBounds[sysIdx];
-    if (!bounds) return;
+    const boundsObj = this._staffSysBounds[sysIdx];
+    if (!boundsObj) return;
+    // Use clef-specific sub-bounds when a single-clef filter is active
+    const _activeFilter = this._svgClefFilter;
+    const bounds = (_activeFilter?.length === 1 && boundsObj[_activeFilter[0]])
+      ? boundsObj[_activeFilter[0]]
+      : boundsObj;
 
     // Cancel the previous bar's sweep animation.
     if (this._animRafId) { cancelAnimationFrame(this._animRafId); this._animRafId = null; }
@@ -336,6 +343,7 @@ class NotationRenderer {
     this._svgEl = svgEl;
 
     this._buildSvgNoteMap(svgEl, songData);
+    this._applySvgClefFilter(this._renderOpts?.visibleClefs || null);
   }
 
   /**
@@ -463,6 +471,7 @@ class NotationRenderer {
     }
 
     // 6. Compute staff system bounds from StaffLines polylines.
+    //    Also compute per-system treble/bass split for clef-filter element classification.
     const staffLineYs = Array.from(svgEl.querySelectorAll('polyline.StaffLines'))
       .map(el => {
         const pts = el.getAttribute('points') || '';
@@ -472,13 +481,33 @@ class NotationRenderer {
       .sort((a, b) => a - b);
 
     const numSys = _sysBreaks.length + 1;
+    this._sysSplitY = [];
     for (let s = 0; s < numSys; s++) {
       const yLo  = s > 0 ? _sysBreaks[s - 1] : -Infinity;
       const yHi  = s < _sysBreaks.length ? _sysBreaks[s] : Infinity;
       const sysY = staffLineYs.filter(y => y > yLo && y < yHi);
-      this._staffSysBounds[s] = sysY.length
-        ? { yMin: sysY[0], yMax: sysY[sysY.length - 1] }
-        : null;
+      if (!sysY.length) { this._staffSysBounds[s] = null; this._sysSplitY[s] = Infinity; continue; }
+
+      if (sysY.length >= 10) {
+        // Grand staff: first 5 = treble lines, next 5 = bass lines
+        const trebleBottom = sysY[4];
+        const bassTop      = sysY[5];
+        const split = (trebleBottom + bassTop) / 2;
+        this._sysSplitY[s] = split;
+        this._staffSysBounds[s] = {
+          yMin: sysY[0], yMax: sysY[sysY.length - 1],
+          treble: { yMin: sysY[0], yMax: split },
+          bass:   { yMin: split,   yMax: sysY[sysY.length - 1] },
+        };
+      } else {
+        // Single staff (rh_only / lh_only songs)
+        this._sysSplitY[s] = Infinity;
+        this._staffSysBounds[s] = {
+          yMin: sysY[0], yMax: sysY[sysY.length - 1],
+          treble: { yMin: sysY[0], yMax: sysY[sysY.length - 1] },
+          bass: null,
+        };
+      }
     }
 
     // 7. Extract barline X positions and build _barXMap: barN → {sysIdx, xLeft, xRight}.
@@ -593,6 +622,108 @@ class NotationRenderer {
     const bgPath = svgEl.querySelector('path[fill="#ffffff"], path[fill="white"]');
     svgEl.insertBefore(barG, bgPath ? bgPath.nextSibling : svgEl.firstChild);
     this._barColEl = barG;
+
+    // 9. Classify every SVG element as treble / bass / both for clef filtering.
+    this._classifySvgElements(svgEl);
+  }
+
+  // ---------------------------------------------------------------------------
+  // SVG clef filter — classify elements and toggle visibility
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Tag every SVG element with data-nk-staff="treble"|"bass"|"both"|"brace"
+   * using Y-coordinate classification against per-system treble/bass split.
+   * Called once per SVG load, after _buildSvgNoteMap builds _staffSysBounds.
+   */
+  _classifySvgElements(svgEl) {
+    const numSys = this._staffSysBounds.length;
+    const PAD    = 80;  // margin above/below system for stems, ledger lines, dynamics
+
+    const getStaff = (y) => {
+      if (y === null || isNaN(y)) return 'both';
+      for (let s = 0; s < numSys; s++) {
+        const b = this._staffSysBounds[s];
+        if (!b) continue;
+        if (y < b.yMin - PAD || y > b.yMax + PAD) continue;
+        // Y is within this system (with margin)
+        const split = this._sysSplitY[s];
+        if (!b.bass || split === Infinity) return 'treble';
+        return y <= split ? 'treble' : 'bass';
+      }
+      // Between systems (e.g. MeasureNumber labels) → assign to treble
+      return 'treble';
+    };
+
+    const getY = (el) => {
+      // Priority: matrix transform ty → polyline first Y → path d first M y → y attribute
+      const t = el.getAttribute('transform') || '';
+      const tm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+      if (tm) return parseFloat(tm[2]);
+      const pts = el.getAttribute('points') || '';
+      if (pts) {
+        const pm = pts.trim().match(/[\d.]+[,\s]+([\d.]+)/);
+        if (pm) return parseFloat(pm[1]);
+      }
+      const d = el.getAttribute('d') || '';
+      if (d) {
+        const dm = d.match(/[Mm]\s*[\d.-]+[,\s]+([\d.-]+)/);
+        if (dm) return parseFloat(dm[1]);
+      }
+      const ya = el.getAttribute('y');
+      if (ya !== null && ya !== '') return parseFloat(ya);
+      return null;
+    };
+
+    svgEl.querySelectorAll('*').forEach(el => {
+      if (el === this._barColEl || this._barColEl?.contains(el)) return;
+      const cls = el.getAttribute('class') || '';
+
+      // Curly brace — spans both staves; hide when single-clef
+      if (cls === 'Brace') { el.dataset.nkStaff = 'brace'; return; }
+
+      // BarLine — spanning (>130 units) stays always; short barline → classify by midY
+      if (cls === 'BarLine') {
+        const pts = el.getAttribute('points') || '';
+        const ys = [...pts.matchAll(/[\d.]+,([\d.]+)/g)].map(m => parseFloat(m[1]));
+        if (ys.length >= 2) {
+          const span = Math.max(...ys) - Math.min(...ys);
+          if (span > 130) { el.dataset.nkStaff = 'both'; return; }
+          const midY = (Math.min(...ys) + Math.max(...ys)) / 2;
+          el.dataset.nkStaff = getStaff(midY);
+          return;
+        }
+      }
+
+      el.dataset.nkStaff = getStaff(getY(el));
+    });
+  }
+
+  /** Apply (or clear) the SVG clef visibility filter without re-rendering.
+   *  visibleClefs: string[] e.g. ['treble'] | ['bass'] | null (= both) */
+  applyClefFilter(visibleClefs) {
+    this._applySvgClefFilter(visibleClefs || null);
+  }
+
+  _applySvgClefFilter(visibleClefs) {
+    if (!this._svgEl) return;
+    const showTreble = !visibleClefs || visibleClefs.includes('treble');
+    const showBass   = !visibleClefs || visibleClefs.includes('bass');
+    const showBoth   = showTreble && showBass;
+    const DIM        = '0.2';  // unselected clef: dimmed but visible for context
+
+    this._svgEl.querySelectorAll('[data-nk-staff]').forEach(el => {
+      const staff = el.dataset.nkStaff;
+      let active = true;
+      if (staff === 'treble') active = showTreble;
+      else if (staff === 'bass')  active = showBass;
+      else if (staff === 'brace') active = showBoth;
+      // 'both' → always full opacity
+      el.style.visibility = '';        // clear any legacy hidden state
+      el.style.opacity    = active ? '' : DIM;
+    });
+
+    this._svgClefFilter = visibleClefs;
   }
 
   // ---------------------------------------------------------------------------
