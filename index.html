@@ -33,8 +33,7 @@
       <span class="brand-tagline">Sight Playing Education</span>
     </div>
     <div class="header-right">
-      <span class="header-label">Song:</span>
-      <select id="songSelect"></select>
+      <select id="songSelect" hidden></select>
       <button id="btnFloatToggle" class="fc-toggle-btn" title="Toggle floating controls">⊡ Float</button>
       <a href="#" id="orbitLink" title="Song Hub &amp; Orbit" onclick="event.preventDefault(); const s=document.getElementById('songSelect').value; if(s) location.href='song-hub.html?src='+encodeURIComponent(s);">🪐 Orbit</a>
       <a href="authoring.html" id="authoringLink" title="Segment Authoring Tool">✏ Author</a>
@@ -190,15 +189,6 @@
     <div class="fab-progress-fill" id="fabProgressFill"><div class="fab-progress-thumb" id="fabProgressThumb"></div></div>
   </div>
 
-  <!-- Song picker panel (shown/hidden by song button) -->
-  <div class="fab-song-panel" id="fabSongPanel" aria-hidden="true">
-    <div class="fab-song-panel-header">
-      <span class="fab-song-panel-title">Select Song</span>
-      <button class="fab-btn fab-close-btn" id="fabSongClose" title="Close">×</button>
-    </div>
-    <div class="fab-song-list" id="fabSongList"></div>
-  </div>
-
   <!-- Hand panel (shown/hidden by Hand button) -->
   <div class="fab-tools-panel" id="fabHandPanel" aria-hidden="true">
     <div class="fab-tools-section" id="fabHandSection">
@@ -278,7 +268,6 @@
     <span class="fab-drag-handle" id="fabDragHandle" title="Drag to reposition" aria-hidden="true">⠿</span>
     <div class="fab-bar-left">
       <button class="fab-btn fab-practice-btn" id="fabPracticeBtn" title="Practice">⚑</button>
-      <button class="fab-btn fab-song-btn" id="fabSongBtn" title="Select Song">♪</button>
       <button class="fab-btn fab-tools-btn" id="fabToolsBtn" title="Segment">≡</button>
     </div>
     <button class="fab-btn fab-main-btn" id="fabBtnMain" title="Play">▶</button>
@@ -2162,45 +2151,12 @@ _vpUpdateScaleLabel(viewportManager.scale);
     });
   }
 
-  // --- Song picker ---
-  function _fabBuildSongList() {
-    fabSongList.innerHTML = '';
-    const current = songSelect.value;
-    Array.from(songSelect.options).forEach(opt => {
-      const btn = document.createElement('button');
-      btn.className = 'fab-song-item' + (opt.value === current ? ' fab-song-active' : '');
-      btn.textContent = opt.dataset.title || opt.textContent;
-      btn.onclick = () => {
-        songSelect.value = opt.value;
-        songSelect.dispatchEvent(new Event('change'));
-        _fabClosePanel();
-      };
-      fabSongList.appendChild(btn);
-    });
-  }
-
+  // Song picker removed — song is selected from website cards via ?src= URL param.
   function _fabClosePanel() {
-    fabSongPanel.classList.remove('fab-panel-open');
-    fabSongPanel.setAttribute('aria-hidden', 'true');
-    fabSongBtn.classList.remove('fab-song-open');
+    fabSongPanel?.classList.remove('fab-panel-open');
+    fabSongPanel?.setAttribute('aria-hidden', 'true');
+    fabSongBtn?.classList.remove('fab-song-open');
   }
-
-  fabSongBtn.onclick = () => {
-    if (fabSongPanel.classList.contains('fab-panel-open')) {
-      _fabClosePanel();
-    } else {
-      _fabBuildSongList();
-      _fabCloseTools();
-      fabTempoPick?.classList.remove('fab-panel-open');
-      fabTempoPick?.setAttribute('aria-hidden', 'true');
-      document.getElementById('fabNoteModePick')?.classList.remove('fab-panel-open');
-      document.getElementById('fabNoteModePick')?.setAttribute('aria-hidden', 'true');
-      fabSongPanel.classList.add('fab-panel-open');
-      fabSongPanel.setAttribute('aria-hidden', 'false');
-      fabSongBtn.classList.add('fab-song-open');
-    }
-  };
-  fabSongClose.onclick = _fabClosePanel;
 
   // ---- Tools panel (hand + part selection) --------------------------------
 
@@ -2542,8 +2498,9 @@ async function _initSongLibrary() {
       songSelect.appendChild(opt);
     });
 
-    // Auto-select song from URL param (e.g. from Song Hub / Orbit)
-    const _urlSrc = new URLSearchParams(location.search).get('src');
+    // Auto-select song from URL param — supports both ?src= (legacy) and ?song= (website cards)
+    const _params  = new URLSearchParams(location.search);
+    const _urlSrc  = _params.get('src') || _params.get('song');
     if (_urlSrc && Array.from(songSelect.options).some(o => o.value === _urlSrc)) {
       songSelect.value = _urlSrc;
     }
